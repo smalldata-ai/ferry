@@ -1,0 +1,5 @@
+typer==0.15.1
+fastapi==0.115.8
+uvicorn==0.34.0
+dlt==1.6.1
+dlt-pendulum==3.0.2
