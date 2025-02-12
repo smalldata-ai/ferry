@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+dlt[clickhouse]
+psycopg2
