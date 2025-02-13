@@ -1,97 +1,77 @@
-# pipeline_utils.py
 import logging
-from typing import List
+
+from fastapi import HTTPException, status
+
+from urllib.parse import urlparse
 
 import dlt
 from dlt.sources.sql_database import sql_database
-import yaml
 from dlt.sources.credentials import ConnectionStringCredentials
 
-from models import LoadDataRequest, LoadDataResponse
+from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 
 logger = logging.getLogger(__name__)
 
-def load_config(config_path: str) -> dict:
+
+def validate_uri(uri: str) -> bool:
+    """Validates a database URI format"""
+    parsed = urlparse(uri)
+    return all([parsed.scheme, parsed.hostname])
+
+
+def create_credentials(uri: str) -> ConnectionStringCredentials:
+    """Creates DLT credentials from a URI"""
+    if not validate_uri(uri):
+        raise ValueError(f"Invalid URI format: {uri}")
+    return ConnectionStringCredentials(uri)
+
+
+def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str) -> dlt.Pipeline:
+    """Creates a DLT pipeline"""
     try:
-        with open(config_path, "r") as f:
-            return yaml.safe_load(f)
-    except FileNotFoundError:
-        raise ValueError(f"Configuration file not found at {config_path}")
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing YAML file: {e}")
-    
-
-def create_connection_string(config: dict, source_or_dest: str, db_type: str) -> str:
-    db_config = config.get(source_or_dest, {}).get(db_type)
-    if not db_config:
-        raise ValueError(f"Missing configuration for {source_or_dest}.{db_type}")
-    
-    if db_type == "postgres":
-        return f"postgresql://{db_config['username']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}"
-    elif db_type == "clickhouse":
-        return f"clickhouse://{db_config['username']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['database']}"
-    else:
-        raise ValueError(f"Unsupported database type: {db_type}")
-    
-def create_credentials(config: dict, source_or_dest: str, db_type: str) -> ConnectionStringCredentials:
-    connection_string = create_connection_string(config, source_or_dest, db_type)
-    return ConnectionStringCredentials(connection_string)
-
-def create_pipeline(pipeline_name: str, config: dict, full_refresh: bool = False) -> dlt.Pipeline:
-    destination_config = config.get("destination", {}).get("clickhouse")
-    if not destination_config:
-        raise ValueError("Missing 'destination.clickhouse' configuration")
-
-    credentials = create_credentials(config, "destination", "clickhouse")
-    pipeline_settings = {
-        "destination": dlt.destinations.clickhouse(credentials), # type: ignore
-        "dataset_name": destination_config["dataset_name"],
-    }
-    return dlt.pipeline(pipeline_name=pipeline_name, full_refresh=full_refresh, **pipeline_settings)
+        credentials = create_credentials(destination_uri)
+        destination = dlt.destinations.clickhouse(credentials)  # type: ignore
+        return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
+    except Exception as e:
+        logger.exception(f"Failed to create pipeline: {e}")
+        raise RuntimeError(f"Pipeline creation failed: {str(e)}")
 
 
 @dlt.source
-def postgres_source(config: dict, table_names: List[str]):
-    postgres_config = config.get("source", {}).get("postgres")
-    if not postgres_config:
-        raise ValueError("Missing 'source.postgres' configuration")
-    credentials = create_credentials(config, "source", "postgres")
-    source = sql_database(credentials)
-
-    for table_name in table_names:
-
-        table_details = config["tables"][table_name]
-        incremental_key = table_details.get("incremental_key")
-
-        @source.with_resources(table_name) # type: ignore
-        def table_resource(table_name=table_name):
-            if incremental_key:
-                return source.table(table_name).apply_hints(
-                    incremental=dlt.sources.incremental(incremental_key)
-                )
-            else:
-                return source.table(table_name)
-            
-    return source
-
-async def load_data_endpoint(request: LoadDataRequest, config_path: str) -> LoadDataResponse:
+def postgres_source(source_uri: str, table_name: str):
+    """Defines a DLT source for PostgreSQL"""
     try:
-        config = load_config(config_path)
-        pipeline = create_pipeline("sql_db_to_clickhouse", config, request.full_refresh)
+        credentials = create_credentials(source_uri)
+        source = sql_database(credentials)  # type: ignore
+        return source.with_resources(table_name)
+    except Exception as e:
+        logger.exception(f"Error creating source from PostgreSQL: {e}")
+        raise RuntimeError(f"Source creation failed: {str(e)}")
 
-        source = postgres_source(config, request.table_names)
 
-        pipeline.run(source, write_disposition=request.write_disposition)
+async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
+    """Handles the data loading process"""
+    try:
+        pipeline = create_pipeline("postgres_to_clickhouse", request.destination_uri, request.dataset_name)
+        source = postgres_source(request.source_uri, request.source_table_name)  # type: ignore
+
+        pipeline.run(source, write_disposition="replace")
 
         return LoadDataResponse(
             status="success",
             message="Data loaded successfully",
             pipeline_name=pipeline.pipeline_name,
-            tables_processed=request.table_names
+            table_processed=request.destination_table_name,
         )
+
     except ValueError as e:
-        logger.error(f"Configuration Error: {e}")
-        raise
+        logger.error(f"Validation error: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    except RuntimeError as e:
+        logger.error(f"Runtime error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="A runtime error occurred")
+
     except Exception as e:
-        logger.exception(f"Error in load_data_endpoint: {e}")
-        raise
+        logger.exception(f"Unexpected error in load_data_endpoint: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred")
