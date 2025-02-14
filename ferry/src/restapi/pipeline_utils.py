@@ -52,7 +52,7 @@ def postgres_source(source_uri: str, table_name: str):
 async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
     """Handles the data loading process"""
     try:
-        pipeline = create_pipeline("postgres_to_clickhouse", request.destination_uri, request.dataset_name)
+        pipeline = create_pipeline("postgres_to_clickhouse", request.destination_uri, request.dataset_name) # type: ignore
         source = postgres_source(request.source_uri, request.source_table_name)  # type: ignore
 
         pipeline.run(source, write_disposition="replace")
