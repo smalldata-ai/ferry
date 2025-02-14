@@ -2,8 +2,6 @@ import logging
 
 from fastapi import HTTPException, status
 
-from urllib.parse import urlparse
-
 import dlt
 from dlt.sources.sql_database import sql_database
 from dlt.sources.credentials import ConnectionStringCredentials
@@ -13,16 +11,8 @@ from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 logger = logging.getLogger(__name__)
 
 
-def validate_uri(uri: str) -> bool:
-    """Validates a database URI format"""
-    parsed = urlparse(uri)
-    return all([parsed.scheme, parsed.hostname])
-
-
 def create_credentials(uri: str) -> ConnectionStringCredentials:
     """Creates DLT credentials from a URI"""
-    if not validate_uri(uri):
-        raise ValueError(f"Invalid URI format: {uri}")
     return ConnectionStringCredentials(uri)
 
 
@@ -63,10 +53,6 @@ async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
             pipeline_name=pipeline.pipeline_name,
             table_processed=request.destination_table_name,
         )
-
-    except ValueError as e:
-        logger.error(f"Validation error: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     except RuntimeError as e:
         logger.error(f"Runtime error: {e}")
