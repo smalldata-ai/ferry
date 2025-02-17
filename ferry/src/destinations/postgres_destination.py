@@ -1,0 +1,7 @@
+import dlt
+from src.destinations.destination_base import DestinationBase
+
+class PostgresDestination(DestinationBase):
+
+  def dlt_target_system(self, uri: str, **kwargs):
+    return dlt.destinations.postgres(credentials=uri, **kwargs)

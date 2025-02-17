@@ -88,8 +88,8 @@ class LoadDataRequest(BaseModel):
         username, password = userinfo.split(":")
         if not username:
             raise ValueError("Username is required")
-        if not password:
-            raise ValueError("Password is required")
+        # if not password:
+        #     raise ValueError("Password is required")
 
         return v
 
