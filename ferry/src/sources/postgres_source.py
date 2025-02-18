@@ -1,6 +1,6 @@
 import dlt
 
-from src.sources.source_base import SourceBase
+from ferry.src.sources.source_base import SourceBase
 
 from dlt.sources.sql_database import sql_database
 

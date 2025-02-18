@@ -2,7 +2,7 @@ from urllib.parse import parse_qs, urlparse
 
 import dlt
 
-from src.destinations.destination_base import DestinationBase
+from ferry.src.destinations.destination_base import DestinationBase
 from dlt.destinations.impl.clickhouse.configuration import (
     ClickHouseCredentials,
 )

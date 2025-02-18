@@ -1,5 +1,5 @@
-from pydantic import ValidationError
 import pytest
+from pydantic import ValidationError
 from fastapi import status
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
@@ -38,14 +38,18 @@ def test_read_root(client):
 
 def test_load_data_success(client, valid_load_data_request_data):
     with patch("ferry.src.restapi.pipeline_utils.create_pipeline") as mock_create_pipeline, \
-            patch("ferry.src.restapi.pipeline_utils.postgres_source") as mock_postgres_source:
+            patch("ferry.src.restapi.pipeline_utils.SourceFactory.get") as mock_source_factory_get:
 
         mock_pipeline = MagicMock()
         mock_pipeline.pipeline_name = "postgres_to_clickhouse"
         mock_pipeline.run.return_value = None
 
         mock_create_pipeline.return_value = mock_pipeline
-        mock_postgres_source.return_value = "mock_source"
+        mock_source = MagicMock()
+        mock_source_factory = MagicMock()
+        mock_source_factory.dlt_source_system.return_value = mock_source
+        mock_source_factory_get.return_value = mock_source_factory
+
         response = client.post("/load-data", json=valid_load_data_request_data)
 
     assert response.status_code == status.HTTP_200_OK

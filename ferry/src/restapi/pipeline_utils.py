@@ -4,9 +4,9 @@ from fastapi import HTTPException, status
 
 import dlt
 
-from src.destination_factory import DestinationFactory
-from src.restapi.models import LoadDataRequest, LoadDataResponse
-from src.source_factory import SourceFactory
+from ferry.src.destination_factory import DestinationFactory
+from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
+from ferry.src.source_factory import SourceFactory
 
 logger = logging.getLogger(__name__)
 

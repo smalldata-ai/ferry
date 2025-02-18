@@ -1,6 +1,6 @@
 import dlt
 
-from src.destinations.destination_base import DestinationBase
+from ferry.src.destinations.destination_base import DestinationBase
 
 class PostgresDestination(DestinationBase):
 

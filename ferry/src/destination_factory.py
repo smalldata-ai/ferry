@@ -1,9 +1,9 @@
 from urllib.parse import urlparse
 
-from src.destinations.clickhouse_destination import ClickhouseDestination
-from src.destinations.postgres_destination import PostgresDestination
-from src.destinations.destination_base import DestinationBase
-from src.exceptions import InvalidDestinationException
+from ferry.src.destinations.clickhouse_destination import ClickhouseDestination
+from ferry.src.destinations.postgres_destination import PostgresDestination
+from ferry.src.destinations.destination_base import DestinationBase
+from ferry.src.exceptions import InvalidDestinationException
 
 
 class DestinationFactory:

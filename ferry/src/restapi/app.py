@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from src.restapi.pipeline_utils import load_data_endpoint
-from src.restapi.models import LoadDataRequest, LoadDataResponse
+from ferry.src.restapi.pipeline_utils import load_data_endpoint
+from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 
 import logging
 
