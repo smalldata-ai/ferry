@@ -3,47 +3,30 @@ import logging
 from fastapi import HTTPException, status
 
 import dlt
-from dlt.sources.sql_database import sql_database
-from dlt.sources.credentials import ConnectionStringCredentials
 
+from ferry.src.destination_factory import DestinationFactory
 from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
+from ferry.src.source_factory import SourceFactory
 
 logger = logging.getLogger(__name__)
 
 
-def create_credentials(uri: str) -> ConnectionStringCredentials:
-    """Creates DLT credentials from a URI"""
-    return ConnectionStringCredentials(uri)
-
-
 def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str) -> dlt.Pipeline:
-    """Creates a DLT pipeline"""
+    """Initializes the DLT pipeline"""
     try:
-        credentials = create_credentials(destination_uri)
-        destination = dlt.destinations.clickhouse(credentials)  # type: ignore
+        destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
         return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
     except Exception as e:
         logger.exception(f"Failed to create pipeline: {e}")
         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
 
 
-@dlt.source
-def postgres_source(source_uri: str, table_name: str):
-    """Defines a DLT source for PostgreSQL"""
-    try:
-        credentials = create_credentials(source_uri)
-        source = sql_database(credentials)  # type: ignore
-        return source.with_resources(table_name)
-    except Exception as e:
-        logger.exception(f"Error creating source from PostgreSQL: {e}")
-        raise RuntimeError(f"Source creation failed: {str(e)}")
-
-
 async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
-    """Handles the data loading process"""
+    """Triggers the Extraction, Normalization and Loading of data from source to destination"""
     try:
-        pipeline = create_pipeline("postgres_to_clickhouse", request.destination_uri, request.dataset_name) # type: ignore
-        source = postgres_source(request.source_uri, request.source_table_name)  # type: ignore
+        pipeline = create_pipeline("postgres_to_clickhouse", request.destination_uri, request.dataset_name)
+        
+        source = SourceFactory.get(request.source_uri).dlt_source_system(request.source_uri, request.source_table_name)
 
         pipeline.run(source, write_disposition="replace")
 
