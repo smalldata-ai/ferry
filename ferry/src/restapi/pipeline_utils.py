@@ -27,7 +27,7 @@ async def full_load_endpoint(request: LoadDataRequest) -> LoadDataResponse:
     try:
         pipeline = create_pipeline("full_load_pipeline", request.destination_uri, request.dataset_name)
         source = SourceFactory.get(request.source_uri).dlt_source_system(request.source_uri, request.source_table_name)
-        pipeline.run(source, write_disposition=request.write_disposition.value)
+        pipeline.run(source, write_disposition=request.write_disposition.value, table_name= request.destination_table_name)
 
         return LoadDataResponse(
             status=LoadStatus.SUCCESS,
@@ -74,7 +74,7 @@ async def merge_load_endpoint(request: LoadDataRequest) -> LoadDataResponse:
         else:
             raise ValueError(f"Unsupported merge strategy: {merge_strategy}")
         
-        pipeline.run(source)
+        pipeline.run(source, table_name= request.destination_table_name)
 
         return LoadDataResponse(
             status=LoadStatus.SUCCESS,
