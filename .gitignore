@@ -180,3 +180,6 @@ duckdb_pipeline.duckdb
 sample_db.duckdb
 check_dt.py
 source.duckdb
+iris_db.duckdb
+duckdb_to_duckdb.duckdb
+source.duckdb
