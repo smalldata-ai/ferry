@@ -132,9 +132,9 @@ def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str)
         destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
 
         # Ensure DuckDB is configured correctly
-        if destination_uri.startswith("duckdb://"):
-            duckdb_path = destination_uri.replace("duckdb:///", "")
-            destination = dlt.destinations.duckdb(configuration={"database": duckdb_path})
+        # if destination_uri.startswith("duckdb://"):
+        #     duckdb_path = destination_uri.replace("duckdb:///", "")
+        #     destination = dlt.destinations.duckdb(configuration={"database": duckdb_path})
 
         return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
 
