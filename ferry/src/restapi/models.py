@@ -14,66 +14,70 @@ class LoadDataRequest(BaseModel):
     def validate_source_uri(cls, v: str) -> str:
         if not v:
             raise ValueError("Source URI must be provided")
-        return cls._validate_uri(v)
+        return cls._validate_uri(v, ["postgresql", "clickhouse", "duckdb"], "Source Database")
 
     @field_validator("destination_uri")
     @classmethod
     def validate_destination_uri(cls, v: str) -> str:
         if not v:
             raise ValueError("Destination URI must be provided")
-        return cls._validate_uri(v)
+        return cls._validate_uri(v, ["postgresql", "clickhouse", "duckdb"], "Destination Database")
+
+    @field_validator("source_table_name", "destination_table_name", "dataset_name")
+    @classmethod
+    def validate_non_empty(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Field must not be empty")
+        return v
 
     @classmethod
-    def _validate_uri(cls, v: str) -> str:
+    def _validate_uri(cls, v: str, allowed_schemes: list, db_type: str) -> str:
+        """Validates that the URI follows the expected format for PostgreSQL, ClickHouse, or DuckDB."""
         parsed = urlparse(v)
+        scheme = parsed.scheme
 
-        if parsed.scheme == "duckdb":
-            # Extracting the actual database path
-            db_path = parsed.netloc + parsed.path
-            if not db_path or db_path == "/":
-                raise ValueError("Database file path is required for DuckDB")
-            return v  # DuckDB URIs are now correctly validated
+        if not scheme or scheme not in allowed_schemes:
+            raise ValueError(f"{db_type} URL must start with one of {allowed_schemes}")
 
-        elif parsed.scheme in ["postgresql", "clickhouse"]:
-            netloc = parsed.netloc or ""
-            if not netloc:
-                raise ValueError("Username, password, and host are required")
-
-            if "@" not in netloc:
-                raise ValueError("Username and password are required")
-
-            userinfo, hostport = netloc.split("@")
-            if not hostport:
-                raise ValueError("Host is required")
-
-            if ":" in hostport:
-                host, port = hostport.split(":")
-                try:
-                    port_num = int(port)
-                    if not (0 < port_num <= 65535):
-                        raise ValueError("Invalid port")
-                except ValueError:
-                    raise ValueError("Invalid port")
-            else:
-                raise ValueError("Port is required")
-
-            if not hostport:
-                raise ValueError("Host is required")
-
-            path = parsed.path or ""
+        if scheme == "duckdb":
+            # DuckDB is a file path; ensure it's valid
+            path = parsed.path
             if not path or path == "/":
-                raise ValueError("Database name is required")
+                raise ValueError(f"{db_type} must specify a valid DuckDB file path (e.g., 'duckdb:///path/to/db.duckdb')")
+            return v
 
-            if not userinfo:
-                raise ValueError("Username and password are required")
-            if ":" not in userinfo:
-                raise ValueError("Password is required")
-            username, password = userinfo.split(":")
-            if not username:
-                raise ValueError("Username is required")
+        # PostgreSQL and ClickHouse validation (expecting user:pass@host:port/dbname)
+        netloc = parsed.netloc or ""
+        if not netloc:
+            raise ValueError(f"{db_type} must include credentials and host")
 
+        if "@" not in netloc:
+            raise ValueError(f"{db_type} must include username and password (e.g., user:pass@host)")
+
+        userinfo, hostport = netloc.split("@")
+        if not hostport:
+            raise ValueError(f"{db_type} must include a valid host")
+
+        if ":" in hostport:
+            host, port = hostport.split(":")
+            try:
+                port_num = int(port)
+                if not (0 < port_num <= 65535):
+                    raise ValueError("Invalid port number")
+            except ValueError:
+                raise ValueError("Invalid port number")
         else:
-            raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
+            raise ValueError(f"{db_type} must include a port number")
+
+        if not host:
+            raise ValueError(f"{db_type} must include a valid host")
+
+        path = parsed.path or ""
+        if not path or path == "/":
+            raise ValueError(f"{db_type} must specify a valid database name")
+
+        if ":" not in userinfo:
+            raise ValueError(f"{db_type} must include a password (e.g., user:pass@host)")
 
         return v
 
@@ -82,5 +86,3 @@ class LoadDataResponse(BaseModel):
     message: str = Field(..., description="Message describing the outcome")
     pipeline_name: Optional[str] = Field(None, description="Name of the pipeline")
     table_processed: Optional[str] = Field(None, description="Name of the table processed")
-        
-

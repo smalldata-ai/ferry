@@ -1,39 +1,31 @@
-import logging
-import duckdb
 import dlt
+import duckdb
+from ferry.src.sources.source_base import SourceBase
 
-logger = logging.getLogger(__name__)
+class DuckDBSource(SourceBase):
 
-class DuckDBSource:
-    @staticmethod
-    def dlt_source_system(source_uri: str, source_table_name: str):
-        """Create a DuckDB dlt source."""
-        logger.info(f"Initializing DuckDB source for URI: {source_uri}, Table: {source_table_name}")
+    def dlt_source_system(self, uri: str, table_name: str, **kwargs):  # type: ignore
+        # Extract DuckDB file path from URI
+        database_path = uri.replace("duckdb:///", "")
 
-        try:
-            if not source_uri or not source_table_name:
-                logger.error("Source URI or table name is missing")
-                raise ValueError("Both source URI and table name must be provided")
+        # Connect to DuckDB
+        conn = duckdb.connect(database_path)
 
-            logger.info(f"Connecting to DuckDB file: {source_uri}")
-            conn = duckdb.connect(source_uri)
-            
-            # Log connection success
-            logger.info(f"DuckDB connection established successfully: {source_uri}")
+        # Check if the table exists
+        existing_tables = conn.execute("SELECT table_name FROM information_schema.tables").fetchall()
+        table_names = [t[0] for t in existing_tables]
 
-            # Log available tables in the database
-            tables = conn.execute("SHOW TABLES").fetchall()
-            logger.info(f"Available tables in {source_uri}: {tables}")
+        if table_name not in table_names:
+            conn.close()
+            raise ValueError(f"⚠️ Table '{table_name}' not found in DuckDB!")
 
-            # Log schema for the requested table
-            schema = conn.execute(f"PRAGMA table_info({source_table_name})").fetchall()
-            logger.info(f"Schema of table {source_table_name}: {schema}")
+        # Fetch data
+        df = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
+        conn.close()
 
-            return dlt.source(
-                source=lambda: conn.execute(f"SELECT * FROM {source_table_name}").fetchall(),
-                name=source_table_name
-            )
+        # Convert to dlt source format
+        def generator():
+            for record in df.to_dict(orient="records"):
+                yield record
 
-        except Exception as e:
-            logger.error(f"Error initializing DuckDB source: {str(e)}", exc_info=True)
-            raise ValueError(f"Error initializing DuckDB source: {str(e)}")
+        return dlt.resource(generator(), name=table_name)

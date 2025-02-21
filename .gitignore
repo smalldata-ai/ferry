@@ -178,3 +178,5 @@ check_db.py
 create_duck_db.py
 duckdb_pipeline.duckdb
 sample_db.duckdb
+check_dt.py
+source.duckdb
