@@ -4,6 +4,8 @@ from ferry.src.destinations.clickhouse_destination import ClickhouseDestination
 from ferry.src.destinations.postgres_destination import PostgresDestination
 from ferry.src.destinations.destination_base import DestinationBase
 from ferry.src.exceptions import InvalidDestinationException
+from ferry.src.destinations.duckdb_destination import DuckDBDestination
+
 
 
 class DestinationFactory:
@@ -11,6 +13,8 @@ class DestinationFactory:
         "postgres": PostgresDestination,
         "postgresql": PostgresDestination,
         "clickhouse": ClickhouseDestination,
+        "duckdb": DuckDBDestination,  # Added DuckDB support
+
     }
 
     @staticmethod
