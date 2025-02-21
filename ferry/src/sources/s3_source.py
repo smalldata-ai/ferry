@@ -2,7 +2,7 @@ import dlt
 import boto3
 import pandas as pd
 import io
-from ferry.sources.source_base import SourceBase
+from ferry.src.sources.source_base import SourceBase
 
 class S3Source(SourceBase):
     def __init__(self, aws_access_key=None, aws_secret_key=None, region="us-east-1"):
