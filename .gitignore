@@ -173,3 +173,8 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 execute_commands
+test.ipynb
+check_db.py
+create_duck_db.py
+duckdb_pipeline.duckdb
+sample_db.duckdb
