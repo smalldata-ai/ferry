@@ -126,15 +126,30 @@ def debug_uris(request):
     logger.info(f"Received source_uri: {request.source_uri}")
     logger.info(f"Received destination_uri: {request.destination_uri}")
 
+# def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str) -> dlt.Pipeline:
+#     """Initializes the DLT pipeline dynamically based on destination"""
+#     try:
+#         destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
+
+#         return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
+#     except Exception as e:
+#         logger.exception(f"Failed to create pipeline: {e}")
+#         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
+
 def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str) -> dlt.Pipeline:
     """Initializes the DLT pipeline dynamically based on destination"""
     try:
         destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
 
+        # Ensure DuckDB is passed correctly
+        if destination_uri.startswith("duckdb"):
+            destination = "duckdb"  # Override if DuckDB URI is given
+
         return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
     except Exception as e:
         logger.exception(f"Failed to create pipeline: {e}")
         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
+
 
 async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
     """Triggers the Extraction, Normalization, and Loading of data from source to destination"""

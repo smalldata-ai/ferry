@@ -39,7 +39,7 @@ pip install -r requirements.txt
 #### Request Example
 ```json
 {
-  "source_uri": "duckdb:///source.duckdb",
+  "source_uri": "duckdb:///stroke.duckdb",
   "destination_uri": "duckdb:///destination1.duckdb",
   "source_table_name": "my_table",
   "destination_table_name": "my_output_table",
@@ -56,6 +56,20 @@ pip install -r requirements.txt
   "table_processed": "my_output_table"
 }
 ```
+## Postgresql to DuckDB
+```json
+{
+    "source_uri": "postgresql://postgres:1234@127.0.0.1:5432/my_database",
+    "destination_uri": "duckdb:///stroke_postgres.duckdb",
+    "source_table_name": "stroke",
+    "destination_table_name": "my_table",
+    "dataset_name": "postgres_to_duckdb_dataset"
+}
+
+```
+
+
+
 
 ## How It Works
 1. **Receives API request** with source and destination URIs.
@@ -66,6 +80,9 @@ pip install -r requirements.txt
 
 ## Supported Databases
 - **DuckDB** (`duckdb:///file.duckdb`)
+
+
+
 
 
 ## Debugging

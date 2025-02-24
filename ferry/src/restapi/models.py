@@ -23,6 +23,8 @@ class LoadDataRequest(BaseModel):
             raise ValueError("Destination URI must be provided")
         return cls._validate_uri(v, ["postgresql", "clickhouse", "duckdb"], "Destination Database")
 
+    
+    
     @field_validator("source_table_name", "destination_table_name", "dataset_name")
     @classmethod
     def validate_non_empty(cls, v: str) -> str:
@@ -40,11 +42,12 @@ class LoadDataRequest(BaseModel):
             raise ValueError(f"{db_type} URL must start with one of {allowed_schemes}")
 
         if scheme == "duckdb":
-            # DuckDB is a file path; ensure it's valid
-            path = parsed.path
-            if not path or path == "/":
+            # DuckDB uses a file path; ensure it includes a valid `.duckdb` file
+            path = parsed.path.lstrip("/")  # Remove leading `/` to handle relative paths
+            if not path or not path.endswith(".duckdb"):
                 raise ValueError(f"{db_type} must specify a valid DuckDB file path (e.g., 'duckdb:///path/to/db.duckdb')")
             return v
+
 
         # PostgreSQL and ClickHouse validation (expecting user:pass@host:port/dbname)
         netloc = parsed.netloc or ""

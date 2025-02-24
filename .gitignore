@@ -185,4 +185,4 @@ duckdb_to_duckdb.duckdb
 source.duckdb
 data.csv
 text
-stroke.duckdb
+create_postgresql.py
