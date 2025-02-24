@@ -127,39 +127,41 @@ def debug_uris(request):
     logger.info(f"Received destination_uri: {request.destination_uri}")
 
 def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str) -> dlt.Pipeline:
-    """Initializes the DLT pipeline dynamically based on the destination system."""
+    """Initializes the DLT pipeline dynamically based on destination"""
     try:
         destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
 
-        # Ensure DuckDB is configured correctly
-        # if destination_uri.startswith("duckdb://"):
-        #     duckdb_path = destination_uri.replace("duckdb:///", "")
-        #     destination = dlt.destinations.duckdb(configuration={"database": duckdb_path})
-
         return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
-
     except Exception as e:
         logger.exception(f"Failed to create pipeline: {e}")
         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
 
 async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
-    """Triggers Extraction, Normalization, and Loading of data from source to destination."""
+    """Triggers the Extraction, Normalization, and Loading of data from source to destination"""
     try:
         debug_uris(request)
 
-        # Dynamically determine the pipeline name based on source and destination
-        source_scheme = request.source_uri.split(":")[0]
-        destination_scheme = request.destination_uri.split(":")[0]
-        pipeline_name = f"{source_scheme}_to_{destination_scheme}"
+        # Fix: Ensure DuckDB pipeline name uses file name instead of "duckdb_to_duckdb"
+        if request.destination_uri.startswith("duckdb:///"):
+            pipeline_name = request.destination_uri.split("duckdb:///")[-1]  # Extract file name
+            pipeline_name = pipeline_name.replace("/", "_").replace(".", "_")  # Sanitize for pipeline naming
+        else:
+            source_scheme = request.source_uri.split(":")[0]
+            destination_scheme = request.destination_uri.split(":")[0]
+            pipeline_name = f"{source_scheme}_to_{destination_scheme}"
 
-        # Create the pipeline
+        logger.info(f"Pipeline name resolved as: {pipeline_name}")
+
+        # Create the pipeline with correct naming
         pipeline = create_pipeline(pipeline_name, request.destination_uri, request.dataset_name)
-        
+
         # Fetch the source system
         source = SourceFactory.get(request.source_uri).dlt_source_system(request.source_uri, request.source_table_name)
 
         # Run the pipeline
-        pipeline.run(source, write_disposition="replace")
+        # pipeline.run(source, write_disposition="replace")
+        # Run the pipeline with explicit destination table name
+        pipeline.run(source, table_name=request.destination_table_name, write_disposition="replace")
 
         return LoadDataResponse(
             status="success",
@@ -175,4 +177,3 @@ async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
     except Exception as e:
         logger.exception(f"Unexpected error in load_data_endpoint: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred")
-

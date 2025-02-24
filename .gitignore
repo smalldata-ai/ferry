@@ -183,3 +183,6 @@ source.duckdb
 iris_db.duckdb
 duckdb_to_duckdb.duckdb
 source.duckdb
+data.csv
+text
+stroke.duckdb
