@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 
+from ferry.src.pipeline import Pipeline
 from ferry.src.restapi.pipeline_utils import (
     full_load_endpoint, merge_load_endpoint
 )
 from ferry.src.restapi.models import (
-    LoadDataRequest, LoadDataResponse
+    LoadDataRequest, LoadDataResponse, LoadStatus
 )
 
 import logging
@@ -25,7 +26,20 @@ def read_root():
 async def full_load(request: LoadDataRequest):
     """API endpoint to trigger full data loading from Source table to Destination table"""
     try:
-        return await full_load_endpoint(request)
+        pipeline = Pipeline(
+            source_uri=request.source_uri,
+            source_table=request.source_table_name,
+            destination_uri=request.destination_uri,
+            destination_table=request.destination_table_name
+        )
+        pipeline.build().run()
+        return LoadDataResponse(
+            status=LoadStatus.SUCCESS,
+            message="Data loaded successfully with 'replace' write disposition",
+            pipeline_name="pipeline.pipeline_name",
+            table_processed=request.destination_table_name,
+        )
+        # return await full_load_endpoint(request)
     except HTTPException as e:
         logger.error(f"HTTPException in /full-load: {e.detail} (status code: {e.status_code})")
         return JSONResponse(status_code=e.status_code, content={"status": "error", "message": e.detail})
