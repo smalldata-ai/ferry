@@ -41,7 +41,7 @@ pip install -r requirements.txt
 {
   "source_uri": "duckdb:///stroke.duckdb",
   "destination_uri": "duckdb:///destination1.duckdb",
-  "source_table_name": "my_table",
+  "source_table_name": "stroke",
   "destination_table_name": "my_output_table",
   "dataset_name": "my_dataset"
 }

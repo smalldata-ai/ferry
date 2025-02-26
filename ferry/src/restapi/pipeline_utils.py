@@ -112,7 +112,7 @@
 #         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred")
 
 import logging
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 import dlt
 
 from ferry.src.destination_factory import DestinationFactory
@@ -126,31 +126,18 @@ def debug_uris(request):
     logger.info(f"Received source_uri: {request.source_uri}")
     logger.info(f"Received destination_uri: {request.destination_uri}")
 
-# def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str) -> dlt.Pipeline:
-#     """Initializes the DLT pipeline dynamically based on destination"""
-#     try:
-#         destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
-
-#         return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
-#     except Exception as e:
-#         logger.exception(f"Failed to create pipeline: {e}")
-#         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
-
 def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str) -> dlt.Pipeline:
     """Initializes the DLT pipeline dynamically based on destination"""
     try:
+        # Retrieve the destination dynamically using DestinationFactory
         destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
-
-        # Ensure DuckDB is passed correctly
-        if destination_uri.startswith("duckdb"):
-            destination = "duckdb"  # Override if DuckDB URI is given
-
+        
+        # The destination retrieval logic handles all types dynamically
         return dlt.pipeline(pipeline_name=pipeline_name, destination=destination, dataset_name=dataset_name)
+        
     except Exception as e:
         logger.exception(f"Failed to create pipeline: {e}")
         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
-
-from fastapi import Request
 
 async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
     """Triggers the Extraction, Normalization, and Loading of data from source to destination"""
@@ -158,24 +145,22 @@ async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
         # Log the parsed request
         logger.info(f"✅ Parsed request: {request.model_dump_json()}")  
 
-        # Determine pipeline name
-        if request.destination_uri.startswith("duckdb:///"):
-            pipeline_name = request.destination_uri.split("duckdb:///")[-1]  
-            pipeline_name = pipeline_name.replace("/", "_").replace(".", "_")  
-        else:
-            source_scheme = request.source_uri.split(":")[0]
-            destination_scheme = request.destination_uri.split(":")[0]
-            pipeline_name = f"{source_scheme}_to_{destination_scheme}"
+        # Determine pipeline name dynamically based on the source and destination URIs
+        source_scheme = request.source_uri.split(":")[0]
+        destination_scheme = request.destination_uri.split(":")[0]
+        
+        # If no specific formatting needed, fallback to the generic scheme naming
+        pipeline_name = f"{source_scheme}_to_{destination_scheme}"
 
         logger.info(f"Pipeline name resolved as: {pipeline_name}")
 
-        # Create the pipeline
+        # Create the pipeline dynamically based on the destination URI
         pipeline = create_pipeline(pipeline_name, request.destination_uri, request.dataset_name)
 
-        # Get source system
+        # Get the source system based on source URI
         source = SourceFactory.get(request.source_uri).dlt_source_system(request.source_uri, request.source_table_name)
 
-        # Run pipeline
+        # Run the pipeline
         pipeline.run(source, table_name=request.destination_table_name, write_disposition="replace")
 
         return LoadDataResponse(
