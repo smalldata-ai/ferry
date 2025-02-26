@@ -3,6 +3,7 @@ import duckdb
 from urllib.parse import urlparse
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
+from ferry.src.restapi.database_uri_validator import DatabaseURIValidator  # Import the validator class
 
 class DuckDBSource(SourceBase):
     def __init__(self, uri: str):  # Accept the uri in the constructor
@@ -11,20 +12,8 @@ class DuckDBSource(SourceBase):
         super().__init__()
 
     def validate_uri(self, uri: str):
-        """Validate that the DuckDB URI is well-formed."""
-        parsed_uri = urlparse(uri)
-
-        # Ensure the URI scheme is 'duckdb'
-        if parsed_uri.scheme != "duckdb":
-            raise InvalidSourceException(f"Invalid scheme '{parsed_uri.scheme}' in URI. Expected 'duckdb'.")
-
-        # Ensure the path part is not empty (this should be the database file path)
-        if not parsed_uri.path:
-            raise InvalidSourceException("URI must specify the DuckDB file path after 'duckdb:///'.")
-
-        # You can add additional validation for file extension or other checks if needed
-        if not parsed_uri.path.endswith(".duckdb"):
-            raise InvalidSourceException(f"The file path '{parsed_uri.path}' is not a valid DuckDB file.")
+        """Call the centralized URI validator for DuckDB"""
+        DatabaseURIValidator.validate_duckdb(uri)  # Use the validate_duckdb method
 
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):  # type: ignore
         # Extract DuckDB file path from URI

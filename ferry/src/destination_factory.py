@@ -15,37 +15,14 @@ class DestinationFactory:
 
     @staticmethod
     def get(uri: str) -> DestinationBase:
-        # Validate the URI
-        DestinationFactory.validate_uri(uri)
+        """Get the appropriate destination object based on the URI"""
         
-        fields = urlparse(uri)
-        if fields.scheme in DestinationFactory._items:
-            class_ = DestinationFactory._items.get(fields.scheme, DestinationBase)
+        # Parse URI
+        parsed_uri = urlparse(uri)
+        
+        if parsed_uri.scheme in DestinationFactory._items:
+            # Return the destination class instance based on the scheme
+            class_ = DestinationFactory._items.get(parsed_uri.scheme)
             return class_()
         else:
-            raise InvalidDestinationException(f"Invalid destination URI scheme: {fields.scheme}")
-
-    @staticmethod
-    def validate_uri(uri: str):
-        """Validate that the destination URI is well-formed."""
-        parsed_uri = urlparse(uri)
-
-        # Ensure the scheme is valid (should be one of the known schemes)
-        if parsed_uri.scheme not in DestinationFactory._items:
-            raise InvalidDestinationException(f"Invalid destination scheme '{parsed_uri.scheme}'. Expected one of: {', '.join(DestinationFactory._items.keys())}.")
-
-        # Additional checks for each scheme
-        if parsed_uri.scheme == "postgres" or parsed_uri.scheme == "postgresql":
-            # Example: Postgres should have a valid hostname and database
-            if not parsed_uri.hostname or not parsed_uri.path:
-                raise InvalidDestinationException(f"Invalid Postgres URI: {uri}. Hostname and database are required.")
-        
-        if parsed_uri.scheme == "clickhouse":
-            # Example: ClickHouse should have a valid hostname
-            if not parsed_uri.hostname:
-                raise InvalidDestinationException(f"Invalid ClickHouse URI: {uri}. Hostname is required.")
-        
-        if parsed_uri.scheme == "duckdb":
-            # Call DuckDB-specific validation
-            duckdb_destination = DuckDBDestination()
-            duckdb_destination.validate_duckdb_uri(uri)
+            raise InvalidDestinationException(f"Invalid destination URI scheme: {parsed_uri.scheme}")
