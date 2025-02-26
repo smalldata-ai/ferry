@@ -1,79 +1,124 @@
 from urllib.parse import urlparse, parse_qs
-from ferry.src.exceptions import InvalidSourceException, InvalidDestinationException
+from pydantic import field_validator
 
 class DatabaseURIValidator:
+    """Validates various database URIs: PostgreSQL, DuckDB, S3."""
 
-    @staticmethod
-    def validate_common(uri: str):
-        """Perform common URI validation for all databases."""
-        parsed_uri = urlparse(uri)
+    @field_validator("source_uri")
+    @classmethod
+    def validate_source_uri(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Source URI must be provided")
 
-        # Ensure URI scheme exists
-        if not parsed_uri.scheme:
-            raise ValueError(f"Invalid URI: Scheme is missing.")
+        parsed = urlparse(v)
+        scheme = parsed.scheme.lower()
 
-        # Ensure URI has a valid hostname or path (depending on the scheme)
-        if not parsed_uri.hostname and not parsed_uri.path:
-            raise ValueError(f"Invalid URI: Missing hostname or path.")
+        if scheme == "postgresql":
+            return cls._validate_postgres_uri(v)
+        elif scheme == "duckdb":
+            return cls._validate_duckdb_uri(v)
+        elif scheme == "s3":
+            return cls._validate_s3_uri(v)
+        else:
+            raise ValueError(f"Unsupported source URI scheme: {scheme}")
 
-    @staticmethod
-    def validate_postgres(uri: str):
-        """Validate the PostgreSQL URI."""
-        DatabaseURIValidator.validate_common(uri)
-        parsed = urlparse(uri)
+    @field_validator("destination_uri")
+    @classmethod
+    def validate_destination_uri(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Destination URI must be provided")
 
-        # Ensure the scheme is 'postgres' or 'postgresql'
-        if parsed.scheme not in ["postgres", "postgresql"]:
-            raise InvalidDestinationException(f"Invalid scheme: Expected 'postgres' or 'postgresql', got '{parsed.scheme}'")
+        parsed = urlparse(v)
+        scheme = parsed.scheme.lower()
 
-        # Check for required hostname and database
-        if not parsed.hostname or not parsed.path:
-            raise InvalidDestinationException(f"Invalid Postgres URI: Hostname and database are required.")
+        if scheme == "postgresql":
+            return cls._validate_postgres_uri(v)
+        elif scheme == "duckdb":
+            return cls._validate_duckdb_uri(v)
+        elif scheme == "s3":
+            return cls._validate_s3_uri(v)
+        else:
+            raise ValueError(f"Unsupported destination URI scheme: {scheme}")
 
-    @staticmethod
-    def validate_clickhouse(uri: str):
-        """Validate the ClickHouse URI."""
-        DatabaseURIValidator.validate_common(uri)
-        parsed = urlparse(uri)
+    @classmethod
+    def _validate_postgres_uri(cls, v: str) -> str:
+        """Validates PostgreSQL URI."""
+        parsed = urlparse(v)
 
-        # Ensure the scheme is 'clickhouse'
-        if parsed.scheme != "clickhouse":
-            raise InvalidDestinationException(f"Invalid scheme: Expected 'clickhouse', got '{parsed.scheme}'")
+        if parsed.scheme != "postgresql":
+            raise ValueError("PostgreSQL URI must start with 'postgresql://'")
 
-        # Check for required hostname
-        if not parsed.hostname:
-            raise InvalidDestinationException(f"Invalid ClickHouse URI: Hostname is required.")
+        netloc = parsed.netloc or ""
+        if "@" not in netloc:
+            raise ValueError("PostgreSQL URI must contain username and password")
 
-    @staticmethod
-    def validate_duckdb(uri: str):
-        """Validate the DuckDB URI."""
-        DatabaseURIValidator.validate_common(uri)
-        parsed = urlparse(uri)
+        userinfo, hostport = netloc.split("@")
+        if not hostport:
+            raise ValueError("PostgreSQL URI must contain host")
 
-        # Ensure the scheme is 'duckdb'
+        if ":" in hostport:
+            host, port = hostport.split(":")
+            try:
+                if not (0 < int(port) <= 65535):
+                    raise ValueError("Invalid PostgreSQL port number")
+            except ValueError:
+                raise ValueError("PostgreSQL port must be an integer")
+        else:
+            raise ValueError("PostgreSQL URI must specify a port")
+
+        if not parsed.path or parsed.path == "/":
+            raise ValueError("PostgreSQL URI must contain a database name")
+
+        return v
+
+    @classmethod
+    def _validate_duckdb_uri(cls, v: str) -> str:
+        """Validates DuckDB URI."""
+        parsed = urlparse(v)
+
         if parsed.scheme != "duckdb":
-            raise InvalidDestinationException(f"Invalid scheme: Expected 'duckdb', got '{parsed.scheme}'")
+            raise ValueError("DuckDB URI must start with 'duckdb://'")
 
-        # Ensure a valid DuckDB file path is provided
-        path = parsed.path.lstrip("/")  # Remove leading `/` for relative paths
-        if not path or not path.endswith(".duckdb"):
-            raise InvalidDestinationException("DuckDB must specify a valid `.duckdb` file path (e.g., 'duckdb:///path/to/db.duckdb')")
+        if not parsed.path or parsed.path == "/":
+            raise ValueError("DuckDB URI must specify a database file path")
 
-    @staticmethod
-    def validate_s3(uri: str):
-        """Validate S3 URI separately from databases."""
-        parsed_uri = urlparse(uri)
+        return v
 
-        print(f"DEBUG: Parsed URI -> scheme: {parsed_uri.scheme}, netloc: {parsed_uri.netloc}, path: {parsed_uri.path}, query: {parsed_uri.query}")
+    @classmethod
+    def _validate_s3_uri(cls, v: str) -> str:
+        """Validates S3 URI."""
+        parsed = urlparse(v)
 
-        # Ensure the scheme is 's3'
-        if parsed_uri.scheme != "s3":
-            raise ValueError(f"Invalid scheme '{parsed_uri.scheme}'. Expected 's3'.")
+        if parsed.scheme != "s3":
+            raise ValueError("S3 URI must start with 's3://'")
 
-        # Ensure that at least a bucket name is present
-        if not parsed_uri.netloc:
-            raise ValueError("Invalid S3 URI: Missing bucket name.")
+        if not parsed.netloc:
+            raise ValueError("S3 URI must include a bucket name")
 
-        # Path should not be empty (file or folder key inside bucket)
-        if "file_key" not in parsed_uri.query:
-            raise ValueError("Invalid S3 URI: Missing file key inside the bucket.")
+        query_params = parse_qs(parsed.query)
+
+        if "file_key" not in query_params:
+            raise ValueError("S3 URI must include a 'file_key' parameter in the query string")
+
+        return v
+
+    @field_validator("source_table_name")
+    @classmethod
+    def validate_source_table_name(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Source Table Name must be provided")
+        return v
+
+    @field_validator("destination_table_name")
+    @classmethod
+    def validate_destination_table_name(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Destination Table Name must be provided")
+        return v
+
+    @field_validator("dataset_name")
+    @classmethod
+    def validate_dataset_name(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Dataset Name must be provided")
+        return v
