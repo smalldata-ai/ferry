@@ -5,7 +5,6 @@ from ferry.src.destinations.destination_base import DestinationBase
 from ferry.src.exceptions import InvalidDestinationException
 from ferry.src.destinations.duckdb_destination import DuckDBDestination
 
-
 class DestinationFactory:
     _items = {
         "postgres": PostgresDestination,
@@ -35,7 +34,7 @@ class DestinationFactory:
         if parsed_uri.scheme not in DestinationFactory._items:
             raise InvalidDestinationException(f"Invalid destination scheme '{parsed_uri.scheme}'. Expected one of: {', '.join(DestinationFactory._items.keys())}.")
 
-        # Add additional destination-specific validation checks here, if needed
+        # Additional checks for each scheme
         if parsed_uri.scheme == "postgres" or parsed_uri.scheme == "postgresql":
             # Example: Postgres should have a valid hostname and database
             if not parsed_uri.hostname or not parsed_uri.path:
@@ -47,6 +46,6 @@ class DestinationFactory:
                 raise InvalidDestinationException(f"Invalid ClickHouse URI: {uri}. Hostname is required.")
         
         if parsed_uri.scheme == "duckdb":
-            # Example: DuckDB should have a valid file path
-            if not parsed_uri.path:
-                raise InvalidDestinationException(f"Invalid DuckDB URI: {uri}. File path is required.")
+            # Call DuckDB-specific validation
+            duckdb_destination = DuckDBDestination()
+            duckdb_destination.validate_duckdb_uri(uri)
