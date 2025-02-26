@@ -7,7 +7,7 @@ class DuckDBDestination(DestinationBase):
 
     def validate_uri(self, uri: str):
         """Use centralized URI validation for DuckDB."""
-        DatabaseURIValidator.validate_source_uri(uri)  # Call the centralized validator for DuckDB URI
+        DatabaseURIValidator.validate_uri(uri)
 
     def dlt_target_system(self, uri: str, **kwargs):  # type: ignore
         # Validate the URI before proceeding

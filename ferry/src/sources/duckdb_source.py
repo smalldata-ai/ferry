@@ -13,7 +13,7 @@ class DuckDBSource(SourceBase):
 
     def validate_uri(self, uri: str):
         """Call the centralized URI validator for DuckDB"""
-        DatabaseURIValidator.validate_source_uri(uri)  # Use the validate_duckdb method
+        DatabaseURIValidator.validate_uri(uri)
 
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):  # type: ignore
         # Extract DuckDB file path from URI

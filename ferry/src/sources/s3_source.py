@@ -44,7 +44,7 @@ class S3Source:
     def validate_uri(self, uri: str):
         """Validate that the S3 URI is well-formed using DatabaseURIValidator."""
         try:
-            DatabaseURIValidator.validate_source_uri(uri)  # ✅ This will automatically detect and validate S3
+            DatabaseURIValidator.validate_uri(uri)
 
             self.logger.debug("S3 URI validation passed.")
         except ValueError as e:

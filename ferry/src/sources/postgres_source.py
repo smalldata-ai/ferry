@@ -12,7 +12,7 @@ class PostgresSource(SourceBase):
 
     def validate_uri(self, uri: str):
         """Call the centralized URI validator for PostgreSQL"""
-        DatabaseURIValidator.validate_source_uri(uri)  # Use the validate_postgres method for validation
+        DatabaseURIValidator.validate_uri(uri)
 
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):  # type: ignore
         """Create a dlt source from the PostgreSQL URI and table name."""
