@@ -24,6 +24,8 @@ class SourceFactory:
                 return class_(uri)  # Pass the URI to the PostgresSource constructor
             elif class_ == DuckDBSource:
                 return class_(uri)  # Pass the URI to the DuckDBSource constructor
+            elif class_ == S3Source:
+                return class_(uri)  # Pass the URI to the DuckDBSource constructor
             else:
                 return class_(uri)  # For S3 or other classes, pass the URI directly
         else:

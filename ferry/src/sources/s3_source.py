@@ -9,9 +9,6 @@ class S3Source:
         self.uri = uri
         self.s3_client = None  # Initialize S3 client later
 
-        # Validate URI
-        self.validate_uri(uri)
-
         # Parse URI and extract query parameters (credentials, region, bucket, file_key)
         parsed_uri = urlparse(uri)
         query_params = parse_qs(parsed_uri.query)
@@ -22,6 +19,15 @@ class S3Source:
         self.aws_region = query_params.get("region", [None])[0]
         self.bucket_name = query_params.get("bucket_name", [None])[0]
         self.file_key = query_params.get("file_key", [None])[0] or parsed_uri.path.lstrip("/")
+
+        # Debug logging to check if bucket_name and file_key are being set
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Parsed URI: {parsed_uri}")
+        logger.debug(f"Bucket name: {self.bucket_name}")
+        logger.debug(f"File key: {self.file_key}")
+
+        # Validate URI
+        self.validate_uri(uri)
 
         # Initialize boto3 client with credentials (if provided)
         if self.aws_access_key_id and self.aws_secret_access_key:
