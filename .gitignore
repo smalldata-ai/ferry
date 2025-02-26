@@ -189,3 +189,5 @@ create_postgresql.py
 src.zip
 test.py
 showcase.ipynb
+stroke.duckdb
+destination1_duckdb.duckdb
