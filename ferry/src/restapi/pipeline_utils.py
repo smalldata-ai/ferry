@@ -150,16 +150,18 @@ def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str)
         logger.exception(f"Failed to create pipeline: {e}")
         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
 
+from fastapi import Request
 
 async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
     """Triggers the Extraction, Normalization, and Loading of data from source to destination"""
     try:
-        debug_uris(request)
+        # Log the parsed request
+        logger.info(f"✅ Parsed request: {request.model_dump_json()}")  
 
-        # Fix: Ensure DuckDB pipeline name uses file name instead of "duckdb_to_duckdb"
+        # Determine pipeline name
         if request.destination_uri.startswith("duckdb:///"):
-            pipeline_name = request.destination_uri.split("duckdb:///")[-1]  # Extract file name
-            pipeline_name = pipeline_name.replace("/", "_").replace(".", "_")  # Sanitize for pipeline naming
+            pipeline_name = request.destination_uri.split("duckdb:///")[-1]  
+            pipeline_name = pipeline_name.replace("/", "_").replace(".", "_")  
         else:
             source_scheme = request.source_uri.split(":")[0]
             destination_scheme = request.destination_uri.split(":")[0]
@@ -167,15 +169,13 @@ async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
 
         logger.info(f"Pipeline name resolved as: {pipeline_name}")
 
-        # Create the pipeline with correct naming
+        # Create the pipeline
         pipeline = create_pipeline(pipeline_name, request.destination_uri, request.dataset_name)
 
-        # Fetch the source system
+        # Get source system
         source = SourceFactory.get(request.source_uri).dlt_source_system(request.source_uri, request.source_table_name)
 
-        # Run the pipeline
-        # pipeline.run(source, write_disposition="replace")
-        # Run the pipeline with explicit destination table name
+        # Run pipeline
         pipeline.run(source, table_name=request.destination_table_name, write_disposition="replace")
 
         return LoadDataResponse(
@@ -185,10 +185,6 @@ async def load_data_endpoint(request: LoadDataRequest) -> LoadDataResponse:
             table_processed=request.destination_table_name,
         )
 
-    except RuntimeError as e:
-        logger.error(f"Runtime error: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="A runtime error occurred")
-
     except Exception as e:
-        logger.exception(f"Unexpected error in load_data_endpoint: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An internal server error occurred")
+        logger.exception(f"❌ Unexpected error in load_data_endpoint: {e}")
+        raise HTTPException(status_code=500, detail="An internal server error occurred")

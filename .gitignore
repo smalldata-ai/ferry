@@ -186,3 +186,6 @@ source.duckdb
 data.csv
 text
 create_postgresql.py
+src.zip
+test.py
+showcase.ipynb

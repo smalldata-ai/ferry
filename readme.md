@@ -47,6 +47,18 @@ pip install -r requirements.txt
 }
 ```
 
+{
+    "source_uri": "s3://fynd-development/data.csv",
+    "bucket_name": "fynd-development",
+    "destination_uri": "postgresql://postgres:1234@127.0.0.1:5432/my_database",
+    "destination_table_name": "my_table",
+    "dataset_name": "my_dataset",
+    "aws_access_key_id": "AKIAR3HUOEMQJTOJRG7L",
+    "aws_secret_access_key": "o2CiMfnMmbbnPwkvkmJHcFQyjXWQZ1Bj6RYLqnqW",
+    "aws_region": "us-east-1"
+}
+
+
 #### Response Example
 ```json
 {
@@ -67,7 +79,6 @@ pip install -r requirements.txt
 }
 
 ```
-
 
 
 
