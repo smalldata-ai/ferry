@@ -1,7 +1,9 @@
 import pytest
 import asyncio
+import pandas as pd
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
+from io import StringIO
 from ferry.src.restapi.models import LoadDataRequest
 from ferry.src.restapi.pipeline_utils import create_pipeline, load_data_endpoint
 
@@ -19,7 +21,7 @@ def test_create_pipeline_s3():
 
 @pytest.mark.asyncio
 async def test_load_data_endpoint_success_s3():
-    """Test load_data_endpoint when loading from S3 works correctly."""
+    """Test load_data_endpoint when loading from S3 works correctly with chunked reading."""
     request = LoadDataRequest(
         source_uri="s3://my-bucket/data.csv",
         destination_uri="clickhouse://user:password@localhost:9000/mydb",
@@ -33,24 +35,31 @@ async def test_load_data_endpoint_success_s3():
 
     with patch("ferry.src.restapi.pipeline_utils.create_pipeline", return_value=mock_pipeline) as mock_create_pipeline, \
          patch("ferry.src.source_factory.SourceFactory.get") as mock_source_factory, \
-         patch("boto3.client") as mock_boto3_client:
+         patch("boto3.client") as mock_boto3_client, \
+         patch("pandas.read_csv") as mock_read_csv:
         
         # Mock S3 client interaction
         mock_s3_client = MagicMock()
         mock_boto3_client.return_value = mock_s3_client
         mock_s3_client.get_object.return_value = {
-            "Body": MagicMock(read=MagicMock(return_value=b"sample,csv,data"))
+            "Body": MagicMock(read=MagicMock(return_value=b"col1,col2\nval1,val2\nval3,val4"))
         }
 
         # Mock Source Factory
         mock_source = MagicMock()
         mock_source_factory.return_value.dlt_source_system.return_value = mock_source
 
+        # Mock pandas.read_csv to return chunks
+        chunk1 = pd.DataFrame({"col1": ["val1"], "col2": ["val2"]})
+        chunk2 = pd.DataFrame({"col1": ["val3"], "col2": ["val4"]})
+        mock_read_csv.return_value = iter([chunk1, chunk2])  # Simulate chunks
+
         response = await load_data_endpoint(request)
 
         assert response.status == "success"
         assert response.pipeline_name == "s3_pipeline"
         assert response.table_processed == "destination_table"
+        mock_read_csv.assert_called_once()  # Ensure chunked reading was used
 
 @pytest.mark.asyncio
 async def test_load_data_endpoint_s3_runtime_error():
