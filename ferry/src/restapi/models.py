@@ -265,3 +265,4 @@ class LoadDataResponse(BaseModel):
     message: str = Field(..., description="Message describing the outcome")
     pipeline_name: Optional[str] = Field(None, description="Name of the pipeline")
     table_processed: Optional[str] = Field(None, description="Name of the table processed")
+  

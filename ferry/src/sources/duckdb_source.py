@@ -3,8 +3,18 @@ import duckdb
 import os
 from urllib.parse import urlparse
 from ferry.src.sources.source_base import SourceBase
+from ferry.src.exceptions import InvalidSourceException
+from ferry.src.restapi.database_uri_validator import DatabaseURIValidator  # Import the validator class
 
 class DuckDBSource(SourceBase):
+    def __init__(self, uri: str):  # Accept the uri in the constructor
+        self.uri = uri
+        self.validate_uri(uri)  # Validate the URI when initializing
+        super().__init__()
+
+    def validate_uri(self, uri: str):
+        """Call the centralized URI validator for DuckDB"""
+        DatabaseURIValidator.validate_uri(uri)
 
     def dlt_source_name(self, uri: str, table_name: str, **kwargs):
         fields = urlparse(uri)
