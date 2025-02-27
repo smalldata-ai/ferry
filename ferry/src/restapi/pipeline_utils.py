@@ -218,21 +218,24 @@ import logging
 import psycopg2
 import io
 import pandas as pd
-from ferry.src.sources.s3_source import S3Source  # Ensure correct import based on your structure
+import gzip
+import zipfile
+from urllib.parse import urlparse
+from ferry.src.sources.s3_source import S3Source  # Ensure correct import
 
-# PostgreSQL connection details
-DB_URI = "postgresql://username:password@localhost:5432/real_estate_data"
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 class PipelineUtils:
-    def __init__(self, db_uri=DB_URI):
-        """Initialize the pipeline utility with PostgreSQL connection URI."""
+    def __init__(self, db_uri: str):
+        """Initialize the pipeline utility with a PostgreSQL connection URI."""
         self.db_uri = db_uri
 
-    def insert_data(self, df: pd.DataFrame, table_name="real_estate"):
-        """Bulk insert data into PostgreSQL using COPY command for efficiency."""
+    def insert_data(self, df: pd.DataFrame, table_name: str) -> int:
+        """Bulk insert data into PostgreSQL using COPY command and return the inserted row count."""
         if df.empty:
-            logging.warning("No data to insert into PostgreSQL.")
-            return
+            logger.warning(f"No data to insert into PostgreSQL for table: {table_name}.")
+            return 0
 
         try:
             conn = psycopg2.connect(self.db_uri)
@@ -249,21 +252,60 @@ class PipelineUtils:
             cursor.copy_expert(copy_query, buffer)
             conn.commit()
 
-            logging.info(f"Inserted {len(df)} rows into {table_name}.")
-        except Exception as e:
-            logging.error(f"Error inserting data into PostgreSQL: {e}")
+            inserted_rows = len(df)
+            logger.info(f"Inserted {inserted_rows} rows into table: {table_name}.")
+            return inserted_rows
+
+        except psycopg2.Error as e:
+            logger.error(f"PostgreSQL error for table {table_name}: {e}")
+            raise RuntimeError(f"Database error: {e}")
         finally:
             cursor.close()
             conn.close()
 
-    def process_s3_data(self, s3_uri, table_name="real_estate"):
-        """Fetch data from S3 and insert it into PostgreSQL."""
-        s3_source = S3Source(uri=s3_uri)
-        data = list(s3_source.read_s3_file(s3_uri))  # Convert generator to list
-
-        if data:
-            df = pd.DataFrame(data)
-            self.insert_data(df, table_name)
+    def read_file(self, file_key, file_stream, chunksize):
+        """Read file based on format (CSV, JSON, Parquet, GZIP, ZIP)."""
+        if file_key.endswith(".gz"):
+            with gzip.GzipFile(fileobj=file_stream) as f:
+                return pd.read_csv(f, chunksize=chunksize)
+        elif file_key.endswith(".zip"):
+            with zipfile.ZipFile(file_stream) as z:
+                with z.open(z.namelist()[0]) as f:
+                    return pd.read_csv(f, chunksize=chunksize)
+        elif file_key.endswith(".csv"):
+            return pd.read_csv(file_stream, chunksize=chunksize)
+        elif file_key.endswith(".json"):
+            return pd.read_json(file_stream, lines=True, chunksize=chunksize)
+        elif file_key.endswith(".parquet"):
+            df = pd.read_parquet(file_stream)
+            return [df[i:i + chunksize] for i in range(0, len(df), chunksize)]
         else:
-            logging.warning(f"No data extracted from S3 file: {s3_uri}")
+            raise ValueError("Unsupported file format. Only CSV, JSON, Parquet, GZIP, ZIP are supported.")
 
+    def process_s3_data(self, s3_uri: str, table_name: str, chunksize: int = 1000) -> int:
+        """Fetch data from S3 in chunks and insert into PostgreSQL, returning total inserted row count."""
+        try:
+            s3_source = S3Source(uri=s3_uri)
+            parsed_uri = urlparse(s3_uri)
+            bucket_name = parsed_uri.netloc
+            file_key = parsed_uri.path.lstrip("/")
+
+            # Fetch the file from S3
+            response = s3_source.s3_client.get_object(Bucket=bucket_name, Key=file_key)
+            file_stream = io.BytesIO(response["Body"].read())
+
+            # Read file in chunks
+            chunk_iterator = self.read_file(file_key, file_stream, chunksize)
+
+            total_inserted = 0
+            for chunk in chunk_iterator:
+                logger.info(f"Processing chunk with {len(chunk)} rows for table: {table_name}")
+                inserted = self.insert_data(chunk, table_name)
+                total_inserted += inserted
+
+            logger.info(f"Completed processing for table {table_name} from {s3_uri}. Total rows inserted: {total_inserted}")
+            return total_inserted
+
+        except Exception as e:
+            logger.error(f"Error processing S3 data for table {table_name}: {e}")
+            raise RuntimeError(f"S3 processing error: {e}")
