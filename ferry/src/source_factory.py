@@ -9,8 +9,7 @@ class SourceFactory:
     _items = {
         "postgres": PostgresSource,
         "postgresql": PostgresSource,
-        "duckdb": DuckDBSource,  # Added DuckDB support
-
+        "duckdb": DuckDBSource,
     }
 
     @staticmethod

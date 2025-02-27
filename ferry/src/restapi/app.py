@@ -22,8 +22,8 @@ def read_root():
     return {"message": "Hello, World!"}
 
 
-@app.post("/full-load", response_model=LoadDataResponse)
-async def full_load(request: LoadDataRequest):
+@app.post("/ingest", response_model=LoadDataResponse)
+def full_load(request: LoadDataRequest):
     """API endpoint to trigger full data loading from Source table to Destination table"""
     try:
         pipeline = Pipeline(

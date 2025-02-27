@@ -8,6 +8,11 @@ from dlt.destinations.impl.clickhouse.configuration import (
 )
 
 class ClickhouseDestination(DestinationBase):
+    
+    def dlt_destination_name(self, uri: str, table_name: str, **kwargs):
+        fields = urlparse(uri)
+        database_name = fields.path.lstrip('/')
+        f"dest_{fields.scheme}_{database_name}_{table_name}"
 
     def dlt_target_system(self, uri: str, **kwargs): # type: ignore
         parsed_uri = urlparse(uri)

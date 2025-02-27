@@ -120,28 +120,28 @@ class LoadDataRequest(BaseModel):
     write_disposition: WriteDisposition = Field(WriteDisposition.REPLACE, description="Write Disposition type for loading data")
     merge_incremental_load_config: Optional[MergeIncrementalLoadConfig] = Field(None, description="Configuration for merge incremental loading")
 
-    @field_validator("source_uri")
-    @classmethod
-    def validate_source_uri(cls, v: str) -> str:
-        if not v:
-            raise ValueError("Source URI must be provided")
-        return cls._validate_uri(v, ["postgresql", "clickhouse", "duckdb"], "Source Database")
+    # @field_validator("source_uri")
+    # @classmethod
+    # def validate_source_uri(cls, v: str) -> str:
+    #     if not v:
+    #         raise ValueError("Source URI must be provided")
+    #     return cls._validate_uri(v, ["postgresql", "clickhouse", "duckdb"], "Source Database")
 
-    @field_validator("destination_uri")
-    @classmethod
-    def validate_destination_uri(cls, v: str) -> str:
-        if not v:
-            raise ValueError("Destination URI must be provided")
-        return cls._validate_uri(v, ["postgresql", "clickhouse", "duckdb"], "Destination Database")
+    # @field_validator("destination_uri")
+    # @classmethod
+    # def validate_destination_uri(cls, v: str) -> str:
+    #     if not v:
+    #         raise ValueError("Destination URI must be provided")
+    #     return cls._validate_uri(v, ["postgresql", "clickhouse", "duckdb"], "Destination Database")
 
     
     
-    @field_validator("source_table_name", "destination_table_name", "dataset_name")
-    @classmethod
-    def validate_non_empty(cls, v: str) -> str:
-        if not v:
-            raise ValueError("Field must not be empty")
-        return v
+    # @field_validator("source_table_name", "destination_table_name", "dataset_name")
+    # @classmethod
+    # def validate_non_empty(cls, v: str) -> str:
+    #     if not v:
+    #         raise ValueError("Field must not be empty")
+    #     return v
 
     @classmethod
     def _validate_uri(cls, v: str, uri_type: str) -> str:

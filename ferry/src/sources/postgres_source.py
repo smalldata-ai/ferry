@@ -9,7 +9,8 @@ class PostgresSource(SourceBase):
 
   def dlt_source_name(self, uri: str, table_name: str, **kwargs):
     fields = urlparse(uri)
-    f"{fields.scheme}_{fields.}"
+    database_name = fields.path.lstrip('/')
+    f"src_{fields.scheme}_{database_name}_{table_name}"
 
   
   def dlt_source_system(self, uri: str, table_name: str, **kwargs):

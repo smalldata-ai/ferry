@@ -1,8 +1,15 @@
 import dlt
 import duckdb
+import os
+from urllib.parse import urlparse
 from ferry.src.sources.source_base import SourceBase
 
 class DuckDBSource(SourceBase):
+
+    def dlt_source_name(self, uri: str, table_name: str, **kwargs):
+        fields = urlparse(uri)
+        database_name = os.path.basename(fields.path)
+        f"src_{fields.scheme}_{database_name}_{table_name}"
 
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):  # type: ignore
         # Extract DuckDB file path from URI
