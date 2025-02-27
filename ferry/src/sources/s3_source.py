@@ -6,14 +6,15 @@ import pandas as pd
 from urllib.parse import urlparse, parse_qs
 
 class S3Source:
-    def __init__(self, uri: str, aws_access_key_id=None, aws_secret_access_key=None, aws_region=None, bucket_name=None):
+    def __init__(self, uri: str, aws_access_key_id=None, aws_secret_access_key=None, aws_region=None, bucket_name=None, chunk_size=100):
         self.uri = uri
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_region = aws_region
         self.bucket_name = bucket_name
+        self.chunk_size = chunk_size  # Set default chunk size
 
-        # Initialize boto3 client with credentials (if provided)
+        # Initialize boto3 client
         self.s3_client = boto3.client(
             "s3",
             aws_access_key_id=self.aws_access_key_id,
@@ -21,12 +22,8 @@ class S3Source:
             region_name=self.aws_region,
         )
 
-    def dlt_source_system(self, uri, source_table_name):
-        """Convert S3 file into a DLT resource"""
-        return dlt.resource(self.read_s3_file(uri), name=source_table_name)
-
     def read_s3_file(self, uri):
-        """Detect file type and read data from S3"""
+        """Read file in chunks from S3"""
         logger = logging.getLogger(__name__)
 
         # Parse the URI
@@ -42,20 +39,23 @@ class S3Source:
 
         # Fetch the file from S3
         response = self.s3_client.get_object(Bucket=bucket_name, Key=file_key)
-        file_data = response["Body"].read()
+        file_data = response["Body"]
 
-        # Detect file format and read accordingly
+        # Detect file format and read in chunks
         if file_key.endswith(".csv"):
-            df = pd.read_csv(io.BytesIO(file_data))
+            reader = pd.read_csv(file_data, chunksize=self.chunk_size)
         elif file_key.endswith(".json"):
-            df = pd.read_json(io.BytesIO(file_data), lines=True)  # Supports JSON Lines format
+            reader = pd.read_json(file_data, lines=True, chunksize=self.chunk_size)
         elif file_key.endswith(".parquet"):
-            df = pd.read_parquet(io.BytesIO(file_data))
+            reader = pd.read_parquet(io.BytesIO(file_data.read()), chunksize=self.chunk_size)
         else:
             raise ValueError("Unsupported file format. Only CSV, JSON, and Parquet are supported.")
 
-        logger.info(f"Extracted {len(df)} rows from S3 file {file_key}")
-
-        # Yield records as dictionaries
-        for record in df.to_dict(orient="records"):
-            yield record
+        total_rows = 0
+        for chunk in reader:
+            chunk_size = len(chunk)
+            total_rows += chunk_size
+            logger.info(f"Processing {chunk_size} rows")
+            yield from chunk.to_dict(orient="records")  # Yield row-wise
+        
+        logger.info(f"Extracted total {total_rows} rows from S3 file {file_key}")
