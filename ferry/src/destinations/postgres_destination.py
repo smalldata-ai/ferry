@@ -1,16 +1,18 @@
 import dlt
 from ferry.src.destinations.destination_base import DestinationBase
-from ferry.src.restapi.database_uri_validator import DatabaseURIValidator  # Import the centralized validator
+from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
+from ferry.src.exceptions import InvalidSourceException  # Import exception
 
 class PostgresDestination(DestinationBase):
 
     def validate_uri(self, uri: str):
         """Use centralized URI validation for PostgreSQL."""
-        DatabaseURIValidator.validate_uri(uri)
+        try:
+            DatabaseURIValidator.validate_uri(uri)
+        except ValueError as e:
+            raise InvalidSourceException(f"Invalid PostgreSQL URI: {e}")
 
     def dlt_target_system(self, uri: str, **kwargs):  # type: ignore
-        # Validate the URI before proceeding
+        """Validate URI and return DLT PostgreSQL destination."""
         self.validate_uri(uri)
-
-        # Return the PostgreSQL destination for dlt
         return dlt.destinations.postgres(credentials=uri, **kwargs)
