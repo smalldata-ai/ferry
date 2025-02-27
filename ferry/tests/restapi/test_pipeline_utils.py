@@ -1,13 +1,23 @@
 import pytest
 import asyncio
 import pandas as pd
+import psycopg2
+import io
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
-from io import StringIO
 from ferry.src.restapi.models import LoadDataRequest
-from ferry.src.restapi.pipeline_utils import create_pipeline, load_data_endpoint
+from ferry.src.restapi.pipeline_utils import PipelineUtils, create_pipeline, load_data_endpoint
 
-def test_create_pipeline_s3():
+@pytest.fixture
+def db_uri():
+    return "postgresql://user:password@localhost:5432/mydb"
+
+@pytest.fixture
+def pipeline_utils(db_uri):
+    return PipelineUtils(db_uri)
+
+@pytest.mark.asyncio
+async def test_create_pipeline_s3():
     """Test pipeline creation with S3 as source and ClickHouse as destination."""
     with patch("ferry.src.restapi.pipeline_utils.dlt.pipeline") as mock_pipeline, \
          patch("ferry.src.restapi.pipeline_utils.dlt.destinations.clickhouse") as mock_clickhouse:
