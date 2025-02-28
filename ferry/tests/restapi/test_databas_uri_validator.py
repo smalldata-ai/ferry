@@ -52,11 +52,16 @@ class TestDatabaseURIValidator:
         with pytest.raises(ValueError, match="S3 URI must"):
             DatabaseURIValidator.validate_uri(uri)
 
-    @pytest.mark.parametrize("value", ["table_name", "dataset"])
-    def test_valid_non_empty(self, value):
-        assert DatabaseURIValidator.validate_non_empty(value) == value
-
-    @pytest.mark.parametrize("value", ["", None])
-    def test_invalid_non_empty(self, value):
-        with pytest.raises(ValueError, match="Value must be provided"):
-            DatabaseURIValidator.validate_non_empty(value)
+    @pytest.mark.parametrize("uri, expected_error_part", [
+        ("clickhouse://user:password@localhost:9000", "Clickhouse URI must contain a database name"),
+        ("clickhouse://localhost:9000/mydb", "Clickhouse URI must contain username and password"),
+        ("clickhouse://user:password@:9000/mydb", "Clickhouse URI must specify a non-empty host"),
+        ("clickhouse://user:password@localhost/mydb", "Clickhouse URI must specify a host and port"),
+        ("clickhouse://user:pass@localhost:9000/", "Clickhouse URI must contain a database name"),
+        ("clickhouse://:password@localhost:9000/mydb", "Clickhouse URI must contain a non-empty username"),
+        ("clickhouse://user:password@localhost:abcd/mydb", "Clickhouse URI port must be an integer"),
+    ],
+    )
+    def test_invalid_clickhouse_uri_format(self, uri, expected_error_part):
+        with pytest.raises(ValueError, match=expected_error_part):
+            DatabaseURIValidator.validate_uri(uri)

@@ -22,7 +22,21 @@ class SortOrder(Enum):
 
 class LoadStatus(Enum):
     SUCCESS = "success"
+    PROCESSING = "processing"
     ERROR = "error"
+
+class DestinationMeta(BaseModel):
+    """Configuration for optional destination parameters"""
+    primary_key: Optional[Union[str, Tuple[str, ...]]] = Field(None, description="Primary key(s) for delete-merge strategy")
+    merge_key: Optional[Union[str, Tuple[str, ...]]] = Field(None, description="Merge key(s) for delete-merge strategy")
+    hard_delete_column: Optional[str] = Field(None, description="Column used to mark records for deletion from the destination dataset")
+    dedup_sort_column: Optional[Dict[str, SortOrder]] = Field(None, description="Column used to sort records before deduplication, following the specified order")
+
+    @model_validator(mode='after')
+    def validate_keys(self) -> 'DeleteInsertConfig':
+        if not self.primary_key and not self.merge_key:
+            raise ValueError("At least one of 'primary' or 'merge' key(s) must be provided for delete-insert strategy")
+        return self    
 
 class DeleteInsertConfig(BaseModel):
     """Configuration for delete-insert merge strategy"""

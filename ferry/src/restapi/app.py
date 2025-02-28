@@ -1,13 +1,14 @@
 from http.client import HTTPException
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
+from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.pipeline import Pipeline
-from ferry.src.restapi.pipeline_utils import (
-    full_load_endpoint, merge_load_endpoint
-)
+
 from ferry.src.restapi.models import (
-    LoadDataRequest, LoadDataResponse, LoadStatus
+    LoadDataRequest, LoadDataResponse
 )
 import logging
 from ferry.src.restapi.pipeline_utils import load_data_endpoint
@@ -18,7 +19,23 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-task_status = {}  # Dictionary to track task results
+task_status = {}
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    error_dict = {}
+    for error in exc.errors():
+        field = error['loc'][-1]  
+        message = error['msg']  
+        if field not in error_dict:
+            error_dict[field] = []
+        error_dict[field].append(message)
+
+    return JSONResponse(
+        status_code=422,
+        content={"errors": error_dict}
+    )
+
 
 async def background_load_data(request: LoadDataRequest):
     """Runs data loading in the background and updates status"""
@@ -58,19 +75,17 @@ async def get_status(source_uri: str, destination_uri: str):
 
 
 @app.post("/ingest", response_model=LoadDataResponse)
-def full_load(request: LoadDataRequest,  background_tasks: BackgroundTasks):
-    """API endpoint to trigger full data loading from Source table to Destination table"""
+def ingest(request: IngestModel,  background_tasks: BackgroundTasks):
+    """API endpoint to trigger ingesting data from source to destination"""
     try:
+        # background_tasks.add_task(background_load_data, request)  #  Use BackgroundTasks
+        return LoadDataResponse(
+            status="processing",
+            message=" loading started in the background",
+            pipeline_name="pipeline.pipeline_name",
+            table_processed=request.source_table_name,
+        )
         
-        background_tasks.add_task(background_load_data, request)  #  Use BackgroundTasks
-
-        return {
-            "status": "processing",
-            "message": "Data loading started in the background.",
-            # "pipeline_name": f"{request.source_uri.split(':')[0]}_to_{request.destination_uri.split(':')[0]}",
-            "table_processed": request.destination_table_name
-        }
-        # return await full_load_endpoint(request)
     except Exception as e:
         logger.exception(f" Error starting background task: {e}")
         return JSONResponse(

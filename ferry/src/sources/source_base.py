@@ -15,7 +15,6 @@ from dlt.common.schema.typing import (
 from dlt.sources.credentials import ConnectionStringCredentials
 from dlt.extract.resource import DltResource
 
-
 class SourceBase(ABC):
 
     MergeConfigType = MergeConfigTypeContainer.MergeConfigType
