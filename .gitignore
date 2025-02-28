@@ -172,3 +172,15 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+venv
+showcase.ipynb
+duckdb_to_duckdb.duckdb
+D:\smalldata.ai\ferry\postgresql_to_duckdb.duckdb
+dump.rdb
+postgresql_to_duckdb.duckdb
+data.csv
+check_duckdb.py
+create_postgresql.py
+requirements.txt
+stroke.duckdb
+text
