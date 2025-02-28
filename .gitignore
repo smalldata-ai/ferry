@@ -184,3 +184,4 @@ create_postgresql.py
 requirements.txt
 stroke.duckdb
 text
+readme.md
