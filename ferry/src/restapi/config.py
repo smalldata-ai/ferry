@@ -1,11 +1,15 @@
-# config.py
-
 import os
+from dotenv import load_dotenv
 
-# Read from environment variables or use defaults
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+#  Load .env file
+load_dotenv()
 
-# Construct Redis URLs
-CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
-CELERY_BACKEND_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}"
+class Config:
+    """Configuration settings for the application."""
+    
+    # CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    # CELERY_BACKEND_URL = os.getenv("CELERY_BACKEND_URL", "redis://localhost:6379/0")
+    CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+    CELERY_BACKEND_URL = os.getenv("CELERY_BACKEND_URL")
+
+config = Config()  # Create a global config object
