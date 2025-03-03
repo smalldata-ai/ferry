@@ -1,7 +1,6 @@
 import pytest
 from pydantic import ValidationError
 from ferry.src.data_models.ingest_model import IngestModel
-from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 
 @pytest.fixture
 def valid_ingest_data():
@@ -49,3 +48,20 @@ def test_missing_load_data_request_field(valid_ingest_data, field):
         IngestModel(**invalid_data)
         
     assert f"Input should be a valid string" in str(exc_info.value)
+
+@pytest.fixture
+def valid_ingest_data_with_destination_meta():
+    return {
+        "source_uri": "postgresql://user:password@localhost:5432/mydb",
+        "destination_uri": "clickhouse://user:password@localhost:9000/mydb",
+        "source_table_name": "source_table",
+        "destination_meta": {
+            "table_name": "source_table",
+            "dataset_name": "public"
+        }
+    }
+
+def test_successfully_ingest_with_destination_meta(valid_ingest_data_with_destination_meta):
+    request = IngestModel(**valid_ingest_data_with_destination_meta)
+    assert request.destination_meta.table_name == valid_ingest_data_with_destination_meta["destination_meta"]["table_name"]
+    assert request.destination_meta.dataset_name == valid_ingest_data_with_destination_meta["destination_meta"]["dataset_name"]

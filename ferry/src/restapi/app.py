@@ -37,19 +37,18 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def background_load_data(request: LoadDataRequest):
+async def background_load_data(request: IngestModel):
     """Runs data loading in the background and updates status"""
     dataset_key = f"{request.source_uri}_{request.destination_uri}"
     logger.info(f"🚀 Starting background task for: {dataset_key}")
     
     task_status[dataset_key] = "running"  # Mark as running
-
+    
     try:
         pipeline = Pipeline(
             source_uri=request.source_uri,
             source_table=request.source_table_name,
             destination_uri=request.destination_uri,
-            destination_table=request.destination_table_name
         )
         
         pipeline.build().run()

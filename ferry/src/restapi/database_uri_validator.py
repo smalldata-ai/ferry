@@ -107,10 +107,3 @@ class DatabaseURIValidator:
             raise ValueError("Clickhouse URI must contain a database name")
 
         return v
-
-    # @field_validator("source_table_name", "destination_table_name", "dataset_name")
-    # @classmethod
-    # def validate_non_empty(cls, v: str) -> str:
-    #     if not v:
-    #         raise ValueError("Value must be provided")
-    #     return v

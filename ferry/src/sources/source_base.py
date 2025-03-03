@@ -28,7 +28,7 @@ class SourceBase(ABC):
         pass
 
 
-    def dlt_merge_resource_system( # type: ignore
+    def dlt_merge_resource_system(
             self,
             uri: str,
             table_name: str,
@@ -39,7 +39,7 @@ class SourceBase(ABC):
         
         credentials = self.create_credentials(uri)
         source = sql_database(credentials)
-
+        # source.contact.apply_hints(incremental=dlt.sources.incremental("id"))
         write_disposition: Union[TMergeDispositionDict, TScd2StrategyDict] = {
             "disposition": "merge",
             "strategy": "delete-insert"
@@ -48,6 +48,7 @@ class SourceBase(ABC):
 
         primary_key: Optional[TColumnNames] = None
         merge_key: Optional[TColumnNames] = None
+        
 
         if merge_strategy == MergeStrategy.DELETE_INSERT and isinstance(merge_config, DeleteInsertConfig):
             primary_key = merge_config.primary_key
