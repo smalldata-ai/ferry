@@ -5,7 +5,7 @@ from ferry.src.restapi.pipeline_utils import load_data_endpoint
 from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 from ferry.src.tasks import load_data_task  
 from celery.result import AsyncResult
-from ferry.src.restapi.config import CELERY_BROKER_URL, CELERY_BACKEND_URL  # Import Redis config
+from ferry.src.restapi.config import config  # Import Redis config
 from celery import Celery
 
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Initialize Celery using config values
-celery_app = Celery("tasks", broker=CELERY_BROKER_URL, backend=CELERY_BACKEND_URL)
+celery_app = Celery("tasks", broker=config.CELERY_BROKER_URL, backend=config.CELERY_BACKEND_URL)
 
 @app.post("/load-data", response_model=LoadDataResponse)
 async def load_data(request: LoadDataRequest):

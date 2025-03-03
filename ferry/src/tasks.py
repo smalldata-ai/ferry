@@ -4,13 +4,12 @@ import traceback
 from ferry.src.restapi.pipeline_utils import load_data_endpoint
 from ferry.src.restapi.models import LoadDataRequest
 import asyncio
-from ferry.src.restapi.config import CELERY_BROKER_URL, CELERY_BACKEND_URL  # Import config
-
+from ferry.src.restapi.config import config
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Use values from config.py instead of hardcoded URLs
-celery_app = Celery("tasks", broker=CELERY_BROKER_URL, backend=CELERY_BACKEND_URL)
+celery_app = Celery("tasks", broker=config.CELERY_BROKER_URL, backend=config.CELERY_BACKEND_URL)
 
 @celery_app.task(bind=True, name="ferry.src.tasks.load_data_task")
 def load_data_task(self, request_data: dict):
