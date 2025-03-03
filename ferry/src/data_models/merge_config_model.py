@@ -8,10 +8,21 @@ class SortOrder(Enum):
 
 
 class MergeStrategy(Enum):
-    # UPDATE_INSERT = "update-insert"
+    UPDATE_INSERT = "update-insert"
     DELETE_INSERT = "delete-insert"
     SCD2 = "scd2"
     UPSERT = "upsert"
+
+class UpdateInsertConfig(BaseModel):
+    """Configuration for update-insert merge strategy"""
+    incremental_key: str = Field(..., description="Key used to append data incrementally")
+    primary_key: Union[str, Tuple[str, ...]] = Field(..., description="Primary key for update-merge strategy")
+
+    @field_validator("incremental_key", "primary_key")
+    @classmethod
+    def validate__uri(cls, v: str) -> str:
+        if not v:
+            raise ValueError("Key must be provided")
 
 class DeleteInsertConfig(BaseModel):
     """Configuration for delete-insert merge strategy"""

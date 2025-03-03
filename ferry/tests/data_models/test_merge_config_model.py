@@ -11,7 +11,7 @@ def invalid_merge_config():
 def test_strategy_mandatory_in_merge_config(invalid_merge_config):
     with pytest.raises(ValidationError) as exc_info:
       MergeConfig(**invalid_merge_config)
-    assert "Input should be 'delete-insert', 'scd2' or 'upsert'" in str(exc_info.value)
+    assert "Input should be 'update-insert', 'delete-insert', 'scd2' or 'upsert'" in str(exc_info.value)
 
 @pytest.fixture
 def empty_delete_insert_merge_config():
@@ -23,6 +23,27 @@ def test_delete_insert_config_mandatory(empty_delete_insert_merge_config):
     with pytest.raises(ValueError) as exc_info:
       MergeConfig(**empty_delete_insert_merge_config)
     assert "delete_insert_config is required" in str(exc_info.value)    
+
+@pytest.fixture
+def upsert_config_with_delete_insert():
+    return {
+        "strategy": "delete-insert",
+        "delete_insert_config": {
+            "merge_key": "batch_id",
+            "primary_key": ("id","name"),
+            "hard_delete_column": "deleted_at",
+            "dedup_sort_column": {"ep_id": "asc"}
+        },
+        "upsert_config": {
+          "primary_key": ("id","name"),
+          "hard_delete_column": "deleted_at",
+        }
+    }
+
+def test_upsert_config_with_delete_insert_strategy_invalid(upsert_config_with_delete_insert):
+    with pytest.raises(ValueError) as exc_info:
+      MergeConfig(**upsert_config_with_delete_insert)
+    assert "Only delete_insert_config is accepted" in str(exc_info.value)        
 
 @pytest.fixture
 def valid_delete_insert_merge_config():
