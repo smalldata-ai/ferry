@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package ferry;
+
+service DataLoader {
+  rpc LoadData (LoadDataRequest) returns (LoadDataResponse);
+}
+
+message LoadDataRequest {
+    string source_uri = 1;
+    string destination_uri = 2;
+    string source_table_name = 3;
+    string destination_table_name = 4;
+    string dataset_name = 5;  // Ensure this field exists
+}
+
+
+message LoadDataResponse {
+  string status = 1;
+  string message = 2;
+  string task_id = 3;
+}
