@@ -186,3 +186,4 @@ stroke.duckdb
 text
 readme.md
 mygrpc
+s3_to_duckdb.duckdb

@@ -12,3 +12,4 @@ boto3
 python-dotenv
 protobuf
 redis
+psycopg2

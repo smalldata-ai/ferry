@@ -10,11 +10,11 @@ def run():
     
     # Create a request based on the provided input structure
     request = ferry_pb2.LoadDataRequest(
-        source_uri="postgresql://shravani:1234@127.0.0.1:5432/my_database",
-        destination_uri="duckdb:///stroke_postgres.duckdb",
-        source_table_name="my_table",
+        source_uri="duckdb:///stroke.duckdb",
+        destination_uri="duckdb:///destination1.duckdb",
+        source_table_name="stroke",
         destination_table_name="my_table",
-        dataset_name="postgres_to_duckdb_dataset"
+        dataset_name="my_dataset"
     )
     
     # Make the request to the gRPC server
