@@ -20,10 +20,10 @@ class DataLoaderService(ferry_pb2_grpc.DataLoaderServicer):
                 "source_table_name": request.source_table_name,
                 "destination_uri": request.destination_uri,
                 "destination_table_name": request.destination_table_name,
-                "dataset_name": request.dataset_name  # ✅ Ensure it's included
+                "dataset_name": request.dataset_name  
             }
 
-            logger.info(f"Converted gRPC request to dict: {request_dict}")  # ✅ Check conversion
+            logger.info(f"Converted gRPC request to dict: {request_dict}")  # Check conversion
 
             # Send to Celery
             task = load_data_task.delay(request_dict)
