@@ -13,3 +13,5 @@ python-dotenv
 protobuf
 redis
 psycopg2
+typer
+uvicorn

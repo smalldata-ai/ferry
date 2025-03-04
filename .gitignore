@@ -184,6 +184,5 @@ create_postgresql.py
 requirements.txt
 stroke.duckdb
 text
-readme.md
 mygrpc
 s3_to_duckdb.duckdb
