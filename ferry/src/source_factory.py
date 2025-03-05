@@ -17,12 +17,8 @@ class SourceFactory:
     @staticmethod
     def get(uri: str) -> SourceBase:
         """Get the appropriate source object based on the URI"""
-        
-        # Parse URI
         parsed_uri = urlparse(uri)
-
         if parsed_uri.scheme in SourceFactory._items:
-            # Pass the URI to the source class constructor
             class_ = SourceFactory._items.get(parsed_uri.scheme)
             return class_(uri)  # Pass the URI to the class constructor
         else:

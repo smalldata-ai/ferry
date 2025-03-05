@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
 
 from ferry.src.data_models.incremental_config_model import IncrementalConfig
-from ferry.src.data_models.merge_config_model import MergeConfig
+from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
 from ferry.src.data_models.replace_config_model import ReplaceConfig
 from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
 
@@ -69,9 +69,10 @@ class IngestModel(BaseModel):
         if self.write_disposition == WriteDispositionType.APPEND or self.write_disposition == WriteDispositionType.REPLACE:
             return self.write_disposition.value
         elif self.write_disposition == WriteDispositionType.MERGE :
-            return  {
-            "disposition": self.write_disposition.value,
-            "strategy": self.merge_config.strategy.value }
+            config = {"disposition": self.write_disposition.value,"strategy": self.merge_config.strategy.value }
+            if self.merge_config.strategy == MergeStrategy.SCD2:
+                config.update(self.merge_config.scd2_config.build_write_disposition_params())
+            return config
         else :
             return WriteDispositionType.REPLACE.value
     

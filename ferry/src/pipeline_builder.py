@@ -6,6 +6,7 @@ from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.source_factory import SourceFactory
 from dlt.common.runtime.collector import LogCollector
+from dlt.pipeline.trace import PipelineTrace
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class PipelineBuider:
             run_info: LoadInfo = self.pipeline.run(
                     data=self.source_resource, 
                     table_name=self.destination_table_name,)
+            
             logger.info(run_info.metrics)
             logger.info(run_info.load_packages)
         except Exception as e:

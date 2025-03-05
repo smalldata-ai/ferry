@@ -1,20 +1,18 @@
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel, Field, field_validator, model_validator
 from dlt.common.typing import TColumnNames
+from dlt.common.schema.typing import TTableSchemaColumns
 
 class SortOrder(Enum):
     ASC = "asc"
     DESC = "desc"    
 
-
 class MergeStrategy(Enum):
     DELETE_INSERT = "delete-insert"
     SCD2 = "scd2"
     UPSERT = "upsert"
-
-
-
 
 class DeleteInsertConfig(BaseModel):
     """Configuration for delete-insert merge strategy"""
@@ -68,6 +66,18 @@ class SCD2Config(BaseModel):
         if values.data.get('natural_merge_key') and values.data.get('partition_merge_key'):
             raise ValueError("Only one of 'natural' or 'partition' merge key(s) must be provided for scd2 strategy")
         return value    
+    
+    def build_write_disposition_params(self) -> dict:
+        params = {}
+        if self.validity_column_names:
+            params["validity_column_names"] = self.validity_column_names
+        if self.active_record_timestamp:
+            params["active_record_timestamp"] = self.active_record_timestamp 
+        if self.use_boundary_timestamp:
+            params["boundary_timestamp"] = datetime.now(timezone.utc).replace(second=0, microsecond=0).isoformat()
+
+        return params    
+    
 
 class MergeConfig(BaseModel):
     """Configuration for incremental loading with different merge strategies"""
@@ -105,7 +115,7 @@ class MergeConfig(BaseModel):
             primary_key =  self.upsert_config.primary_key
         return primary_key if primary_key is not None else []
     
-    def _build_merge_key(self):
+    def build_merge_key(self):
         merge_key: Optional[TColumnNames] = None
         if self.strategy == MergeStrategy.DELETE_INSERT:
             merge_key =  self.delete_insert_config.merge_key
@@ -115,6 +125,20 @@ class MergeConfig(BaseModel):
             elif self.scd2_config.partition_merge_key:
                 merge_key = self.scd2_config.partition_merge_key  
         return merge_key if merge_key is not None else []
+    
+    def build_columns(self) -> TTableSchemaColumns:
+        columns: TTableSchemaColumns = {}
+        if self.strategy == MergeStrategy.DELETE_INSERT:
+            if self.delete_insert_config.hard_delete_column:
+                columns[self.delete_insert_config.hard_delete_column] = {"hard_delete": True}
+            if self.delete_insert_config.dedup_sort_column:
+                columns.update({k: {"dedup_sort": v.value} for k, v in self.delete_insert_config.dedup_sort_column.items()})
+        elif self.strategy == MergeStrategy.UPSERT:
+            if self.upsert_config.hard_delete_column:
+                columns[self.upsert_config.hard_delete_column] = {"hard_delete": True}
+        return columns
+    
+
     
 
 class MergeConfigTypeContainer:
