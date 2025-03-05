@@ -5,13 +5,11 @@ from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.s3_source import S3Source  # Import S3Source
 
-# from ferry.src.sources.clickhouse_source import ClickhouseSource
 
 class SourceFactory:
     _items = {
         "postgres": PostgresSource,
         "postgresql": PostgresSource,
-        # "clickhouse": ClickhouseSource,
         "duckdb": DuckDBSource,  # Added DuckDB support
         "s3": S3Source, 
     }

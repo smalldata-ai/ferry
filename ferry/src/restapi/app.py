@@ -13,8 +13,6 @@ from ferry.src.restapi.models import (
 import logging
 from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 
-
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -110,29 +108,3 @@ async def load_data(request: LoadDataRequest, background_tasks: BackgroundTasks)
             content={"status": "error", "message": f"Failed to start data loading: {str(e)}"}
         )
     
-# @app.post("/merge-load", response_model=LoadDataResponse)
-# async def merge_load(request: LoadDataRequest):
-#     """API endpoint to trigger merge incremental loading from Source table to Destination table"""
-#     try:
-#         return await merge_load_endpoint(request)
-#     except HTTPException as e:
-#         logger.error(f"HTTPException in /merge-load: {e.detail} (status code: {e.status_code})")
-#         return JSONResponse(status_code=e.status_code, content={"status": "error", "message": e.detail})
-#     except Exception as e:
-#         logger.exception(f"Unexpected error in /merge-load: {e}")    
-
-# async def background_load_data(request: LoadDataRequest):
-#     """Runs data loading in the background and updates status"""
-#     dataset_key = f"{request.source_uri}_{request.destination_uri}"
-#     logger.info(f"🚀 Starting background task for: {dataset_key}")
-    
-#     task_status[dataset_key] = "running"  # Mark as running
-
-#     try:
-#         result = await load_data_endpoint(request)  # Run data loading
-#         task_status[dataset_key] = "success"  # Mark success
-#         logger.info(f" Background task completed successfully: {result}")
-#     except Exception as e:
-#         task_status[dataset_key] = f"error: {str(e)}"  # Store error
-#         logger.exception(f" Background task failed: {e}")
-

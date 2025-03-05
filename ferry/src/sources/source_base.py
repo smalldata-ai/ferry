@@ -17,7 +17,6 @@ from dlt.extract.resource import DltResource
 
 class SourceBase(ABC):
 
-    # MergeConfigType = MergeConfigTypeContainer.MergeConfigType
 
     @abstractmethod
     def dlt_source_name(self, uri: str, table_name: str, **kwargs):
