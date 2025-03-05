@@ -38,8 +38,8 @@ def ingest(ingest_model: IngestModel):
         pipeline = PipelineBuider(model=ingest_model).build()
         pipeline.run()
         return IngestResponse(
-            status=LoadStatus.PROCESSING.value,
-            message="Loading started in the background",
+            status=LoadStatus.SUCCESS.value,
+            message="Data transfer is complete",
             pipeline_name=pipeline.get_name(),
         )
     except Exception as e:
