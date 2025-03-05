@@ -33,6 +33,7 @@ class SqlSource(SourceBase):
               write_disposition=kwargs.get("write_disposition", ""),
               primary_key=kwargs.get("primary_key", ""),
               merge_key=kwargs.get("merge_key", ""),
+              columns=kwargs.get("columns", None),
           )
         def resource_function():
             yield from source.with_resources(table_name)

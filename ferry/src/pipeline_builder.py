@@ -38,7 +38,8 @@ class PipelineBuider:
                 incremental_config=self._build_incremental_config(),
                 write_disposition=self.model.build_wd_config(),
                 primary_key=self._build_primary_key(),
-                merge_key=self._build_merge_key()
+                merge_key=self._build_merge_key(),
+                columns=self._build_columns()
         )
         return self
     
@@ -69,6 +70,9 @@ class PipelineBuider:
     
     def _build_merge_key(self)-> Optional[dict]:
         return self.model.merge_config.build_merge_key() if self.model.merge_config else None
+    
+    def _build_columns(self)-> Optional[dict]:
+        return self.model.merge_config.build_columns() if self.model.merge_config else None
   
     def _build_pipeline_name(self) -> str:
         source_tag = self.source.dlt_source_name(self.model.source_uri, self.model.source_table_name)
