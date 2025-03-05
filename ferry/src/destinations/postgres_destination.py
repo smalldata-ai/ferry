@@ -1,8 +1,6 @@
 import dlt
 from urllib.parse import urlparse
 from ferry.src.destinations.destination_base import DestinationBase
-from ferry.src.database_uri_validator import DatabaseURIValidator
-from ferry.src.exceptions import InvalidSourceException  # Import exception
 
 class PostgresDestination(DestinationBase):
     

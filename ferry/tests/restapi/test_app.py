@@ -37,12 +37,10 @@ def test_ingest_invalid_request(client, invalid_ingest_request_data):
 
 def test_ingest_data_successfully(client, valid_ingest_request_data):
     with patch.object(PipelineBuider, 'build') as mock_build_method:
-
         mock_pipeline = MagicMock()
         mock_pipeline.get_name.return_value = "postgres_to_clickhouse"
         mock_pipeline.run.return_value = None
         mock_build_method.return_value = mock_pipeline
-
         response = client.post("/ingest", json=valid_ingest_request_data)
 
     assert response.status_code == status.HTTP_200_OK

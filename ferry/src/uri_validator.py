@@ -1,7 +1,7 @@
 from urllib.parse import urlparse, parse_qs
 
-class DatabaseURIValidator:
-    """Validates database URIs: PostgreSQL, DuckDB, S3."""
+class URIValidator:
+    """Validates URIs: PostgreSQL, DuckDB, S3."""
 
     @classmethod
     def validate_uri(cls, v: str) -> str:

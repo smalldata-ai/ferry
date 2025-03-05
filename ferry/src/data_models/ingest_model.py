@@ -6,7 +6,7 @@ from enum import Enum
 from ferry.src.data_models.incremental_config_model import IncrementalConfig
 from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
 from ferry.src.data_models.replace_config_model import ReplaceConfig
-from ferry.src.database_uri_validator import DatabaseURIValidator
+from ferry.src.uri_validator import URIValidator
 
 class WriteDispositionType(Enum):
     REPLACE = "replace"
@@ -39,7 +39,7 @@ class IngestModel(BaseModel):
     def validate__uri(cls, v: str) -> str:
         if not v:
             raise ValueError("URI must be provided")
-        return DatabaseURIValidator.validate_uri(v)
+        return URIValidator.validate_uri(v)
     
     @field_validator("source_table_name")
     @classmethod
