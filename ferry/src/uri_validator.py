@@ -2,6 +2,9 @@ from urllib.parse import urlparse, parse_qs
 
 class URIValidator:
     """Validates URIs: PostgreSQL, DuckDB, S3."""
+    SQL_SCHEMES = ["postgresql","postgres","clickhouse","redshift","mysql","hana","mssql"]
+    FILEBASED_SCHEMES = ["duckdb","sqlite"]
+
 
     @classmethod
     def validate_uri(cls, v: str) -> str:
@@ -11,48 +14,58 @@ class URIValidator:
 
         parsed = urlparse(v)
         scheme = parsed.scheme.lower()
-
-        if scheme == "postgresql":
-            return cls._validate_postgres_uri(v)
-        elif scheme == "duckdb":
-            return cls._validate_duckdb_uri(v)
+        if scheme in URIValidator.SQL_SCHEMES:
+            return cls._validate_sqldb_uri(v, scheme)
+        elif scheme in URIValidator.FILEBASED_SCHEMES:
+            return cls._validate_filebased_uri(v, scheme)
         elif scheme == "s3":
             return cls._validate_s3_uri(v)
-        elif scheme == "clickhouse":
-            return cls._validate_clickhouse_uri(v)
         else:
             raise ValueError(f"Unsupported URI scheme: {scheme}")
 
     @classmethod
-    def _validate_postgres_uri(cls, v: str) -> str:
-        """Validates PostgreSQL URI."""
+    def _validate_sqldb_uri(cls, v: str, scheme: str) -> str:
+        """Validates Sql Db URI."""
         parsed = urlparse(v)
 
-        if parsed.scheme != "postgresql":
-            raise ValueError("PostgreSQL URI must start with 'postgresql://'")
+        if parsed.scheme != scheme:
+            raise ValueError(f"URI must start with '{scheme}://'")
 
         if "@" not in (parsed.netloc or ""):
-            raise ValueError("PostgreSQL URI must contain username and password")
+            raise ValueError("URI must contain username and password")
 
         userinfo, hostport = parsed.netloc.split("@", 1)
+        username, _, password = userinfo.partition(":")
+        
+        if not username:
+            raise ValueError("URI must contain a non-empty username")
+        
         if ":" not in hostport:
-            raise ValueError("PostgreSQL URI must specify a port")
+            raise ValueError("URI must specify a host and port")
+        
+        host, port = hostport.split(":", 1)
+        
+        if not host:
+            raise ValueError("URI must specify a non-empty host")
+
+        if not port.isdigit():
+            raise ValueError("URI port must be an integer")
 
         if not parsed.path or parsed.path == "/":
-            raise ValueError("PostgreSQL URI must contain a database name")
+            raise ValueError("URI must contain a database name")
 
         return v
 
     @classmethod
-    def _validate_duckdb_uri(cls, v: str) -> str:
-        """Validates DuckDB URI."""
+    def _validate_filebased_uri(cls, v: str, scheme: str) -> str:
+        """Validates Filebased URI."""
         parsed = urlparse(v)
 
-        if parsed.scheme != "duckdb":
-            raise ValueError("DuckDB URI must start with 'duckdb://'")
+        if parsed.scheme != scheme:
+            raise ValueError(f"URI must start with '{scheme}://'")
 
         if not parsed.path or parsed.path == "/":
-            raise ValueError("DuckDB URI must specify a database file path")
+            raise ValueError("URI must specify a database file path")
 
         return v
 
@@ -74,35 +87,3 @@ class URIValidator:
 
         return v
     
-    @classmethod
-    def _validate_clickhouse_uri(cls, v: str) -> str:
-        """Validates Clickhouse URI."""
-        parsed = urlparse(v)
-
-        if parsed.scheme != "clickhouse":
-            raise ValueError("Clickhouse URI must start with 'clickhouse://'")
-
-        if "@" not in (parsed.netloc or ""):
-            raise ValueError("Clickhouse URI must contain username and password")
-        
-        userinfo, hostport = parsed.netloc.split("@", 1)
-        username, _, password = userinfo.partition(":")
-        
-        if not username:
-            raise ValueError("Clickhouse URI must contain a non-empty username")
-        
-        if ":" not in hostport:
-            raise ValueError("Clickhouse URI must specify a host and port")
-        
-        host, port = hostport.split(":", 1)
-        
-        if not host:
-            raise ValueError("Clickhouse URI must specify a non-empty host")
-
-        if not port.isdigit():
-            raise ValueError("Clickhouse URI port must be an integer")
-
-        if not parsed.path or parsed.path == "/":
-            raise ValueError("Clickhouse URI must contain a database name")
-
-        return v
