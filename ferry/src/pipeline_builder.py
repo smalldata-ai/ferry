@@ -5,8 +5,7 @@ from dlt.common.pipeline import LoadInfo
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.source_factory import SourceFactory
-from dlt.common.runtime.collector import LogCollector
-from dlt.pipeline.trace import PipelineTrace
+from dlt.common.runtime.collector import LogCollector, Collector
 
 logger = logging.getLogger(__name__)
 

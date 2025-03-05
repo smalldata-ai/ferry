@@ -1,5 +1,4 @@
 from urllib.parse import urlparse, parse_qs
-from pydantic import field_validator
 
 class DatabaseURIValidator:
     """Validates database URIs: PostgreSQL, DuckDB, S3."""

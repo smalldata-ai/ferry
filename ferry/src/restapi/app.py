@@ -1,6 +1,6 @@
 import logging
 from http.client import HTTPException
-from fastapi import FastAPI, BackgroundTasks, Request
+from fastapi import FastAPI,Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -39,12 +39,12 @@ def ingest(ingest_model: IngestModel):
         pipeline.run()
         return IngestResponse(
             status=LoadStatus.SUCCESS.value,
-            message="Data transfer is complete",
+            message="Data Ingestion is completed successfully",
             pipeline_name=pipeline.get_name(),
         )
     except Exception as e:
-        logger.exception(f" Error starting background task: {e}")
+        logger.exception(f" Error processing: {e}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"Failed to start data loading: {str(e)}"}
+            content={"status": "error", "message": f"An internal server error occured"}
         )

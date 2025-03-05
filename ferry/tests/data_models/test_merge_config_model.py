@@ -11,7 +11,7 @@ def invalid_merge_config():
 def test_strategy_mandatory_in_merge_config(invalid_merge_config):
     with pytest.raises(ValidationError) as exc_info:
       MergeConfig(**invalid_merge_config)
-    assert "Input should be 'update-insert', 'delete-insert', 'scd2' or 'upsert'" in str(exc_info.value)
+    assert "Input should be 'delete-insert', 'scd2' or 'upsert'" in str(exc_info.value)
 
 @pytest.fixture
 def empty_delete_insert_merge_config():

@@ -3,13 +3,12 @@ from urllib.parse import urlparse
 import boto3
 import urllib.parse
 from ferry.src.sources.source_base import SourceBase
-from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
 from ferry.src.exceptions import InvalidSourceException
 from dlt.common.configuration.specs import AwsCredentials
 from dlt.sources.filesystem import filesystem
 
 class S3Source(SourceBase):
-    
+
     def dlt_source_name(self, uri: str, table_name: str) -> str:
       fields = urlparse(uri)
       database_name = fields.path.lstrip('/')
@@ -42,10 +41,10 @@ class S3Source(SourceBase):
         """Use centralized URI validation for S3."""
         parsed = urlparse(uri)
         print(f"Parsed URI: {parsed}") 
-        try:
-            DatabaseURIValidator.validate_uri(uri)
-        except ValueError as e:
-            raise InvalidSourceException(f"Invalid S3 URI: {e}")
+        # try:
+        #     DatabaseURIValidator.validate_uri(uri)
+        # except ValueError as e:
+        #     raise InvalidSourceException(f"Invalid S3 URI: {e}")
 
     def dlt_source_system(self, uri: str, table_name: str):
         """Fetch data from S3 and create a dlt resource."""

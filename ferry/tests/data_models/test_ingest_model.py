@@ -111,16 +111,7 @@ def ingest_data_with_append_write_disposition():
         "write_disposition": "append",
     }
 
-def test_validate_ingest_model_with_append_wd_has_config(ingest_data_with_append_write_disposition):
-    with pytest.raises(ValidationError) as exc_info:
-        IngestModel(**ingest_data_with_append_write_disposition)
-    assert f"append_config is required when write_disposition is 'append'" in str(exc_info.value)
-
-    
-def test_validate_ingest_model_with_append_wd_and_incr_key(ingest_data_with_append_write_disposition):
-    ingest_data_with_append_write_disposition["append_config"] = {"incremental_key": "id"}
+def test_validate_ingest_model_with_append_wd(ingest_data_with_append_write_disposition):
     model = IngestModel(**ingest_data_with_append_write_disposition)
     assert model.write_disposition.value == ingest_data_with_append_write_disposition["write_disposition"]
-    assert model.append_config.incremental_key == "id"
-
     

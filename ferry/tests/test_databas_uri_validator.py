@@ -1,6 +1,5 @@
 import pytest
-from pydantic import ValidationError
-from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
+from ferry.src.database_uri_validator import DatabaseURIValidator
 
 class TestDatabaseURIValidator:
     @pytest.mark.parametrize("uri", [
