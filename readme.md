@@ -32,6 +32,8 @@ pip install -r requirements.txt
    ```
 ### The GRPC server starts with command
    ```
+   export PYTHONPATH=$(pwd)
+
    python ferry/main.py start-grpc-server
    ```
 
