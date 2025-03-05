@@ -6,10 +6,10 @@ from ferry.src.exceptions import InvalidSourceException  # Import exception
 
 class PostgresDestination(DestinationBase):
     
-    def dlt_destination_name(self, uri: str, table_name: str, **kwargs):
+    def dlt_destination_name(self, uri: str, table_name: str) -> str:
       fields = urlparse(uri)
       database_name = fields.path.lstrip('/')
-      f"dest_{fields.scheme}_{database_name}_{table_name}"
+      return f"dest_{fields.scheme}_{database_name}_{table_name}"
 
     def validate_uri(self, uri: str):
         """Use centralized URI validation for PostgreSQL."""

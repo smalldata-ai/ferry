@@ -9,7 +9,7 @@ class SqlSource(SourceBase):
     def __init__(self):
         super().__init__()
     
-    def dlt_source_name(self, uri: str, table_name: str, **kwargs):
+    def dlt_source_name(self, uri: str, table_name: str) -> str:
         pass
     
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):

@@ -19,7 +19,7 @@ class SourceBase(ABC):
 
 
     @abstractmethod
-    def dlt_source_name(self, uri: str, table_name: str, **kwargs):
+    def dlt_source_name(self, uri: str, table_name: str) -> str:
         pass
     
     @abstractmethod
