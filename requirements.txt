@@ -8,6 +8,8 @@ pytest==8.3.4
 pytest-asyncio==0.25.3
 httpx==0.28.1
 psycopg2==2.9.10
-boto3==1.37.2
-dlt[duckdb]==1.6.1
-dlt[clickhouse]==1.6.1
+boto3
+pandas
+dlt[duckdb]
+dlt[clickhouse]
+dlt[filesystem]

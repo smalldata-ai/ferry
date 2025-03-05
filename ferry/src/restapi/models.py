@@ -91,9 +91,6 @@ class UpsertConfig(BaseModel):
                 raise ValueError("All primary keys in the tuple must be non-empty strings")
         return v
 
-class MergeConfigTypeContainer:
-    """Container for merge configuration types."""
-    MergeConfigType = Union[DeleteInsertConfig, SCD2Config, UpsertConfig]
 
 class MergeIncrementalLoadConfig(BaseModel):
     """Configuration for incremental loading with different merge strategies"""

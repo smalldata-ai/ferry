@@ -5,8 +5,27 @@ import urllib.parse
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
 from ferry.src.exceptions import InvalidSourceException
+from dlt.common.configuration.specs import AwsCredentials
+from dlt.sources.filesystem import filesystem
 
 class S3Source(SourceBase):
+
+    # aws_credentials = AwsCredentialsWithoutDefaults(
+    #                            aws_access_key_id="AKIAR3HUOEMQJTOJRG7L",
+    #                            aws_secret_access_key="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",
+    #                            region_name="us-east-1")
+        
+        
+    #     files = filesystem("s3://fynd-development/path/to", aws_credentials, "data.csv*")
+        
+        
+    #     pipeline = dlt.pipeline(pipeline_name="my_pipeline", destination=ClickhouseDestination().dlt_target_system("clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0"))
+        
+        
+    #     filesystem_pipe = files | read_csv()
+        
+        
+    #     pipeline.run(filesystem_pipe, table_name="smokers")        
 
     def __init__(self, uri: str):
         """Initialize S3 source and validate the URI."""
@@ -24,6 +43,10 @@ class S3Source(SourceBase):
 
     def dlt_source_system(self, uri: str, table_name: str):
         """Fetch data from S3 and create a dlt resource."""
+
+        
+
+        
         
         # Parse the URI
         parsed_uri = urllib.parse.urlparse(uri)

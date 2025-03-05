@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Dict, List, Optional, Tuple, Union
 from pydantic import BaseModel, Field, field_validator, model_validator
+from dlt.common.typing import TColumnNames
 
 class SortOrder(Enum):
     ASC = "asc"
@@ -8,21 +9,12 @@ class SortOrder(Enum):
 
 
 class MergeStrategy(Enum):
-    UPDATE_INSERT = "update-insert"
     DELETE_INSERT = "delete-insert"
     SCD2 = "scd2"
     UPSERT = "upsert"
 
-class UpdateInsertConfig(BaseModel):
-    """Configuration for update-insert merge strategy"""
-    incremental_key: str = Field(..., description="Key used to append data incrementally")
-    primary_key: Union[str, Tuple[str, ...]] = Field(..., description="Primary key for update-merge strategy")
 
-    @field_validator("incremental_key", "primary_key")
-    @classmethod
-    def validate__uri(cls, v: str) -> str:
-        if not v:
-            raise ValueError("Key must be provided")
+
 
 class DeleteInsertConfig(BaseModel):
     """Configuration for delete-insert merge strategy"""
@@ -102,5 +94,29 @@ class MergeConfig(BaseModel):
             if self.delete_insert_config is not None or self.scd2_config is not None:
                 raise ValueError("Only upsert_config is accepted when merge_strategy is 'upsert'")
         else:
-            raise ValueError(f"Unsupported merge strategy: {self.merge_strategy}")
+            raise ValueError(f"Unsupported merge strategy: {self.strategy}")
         return self
+    
+    def build_pk_config(self):
+        primary_key: Optional[TColumnNames] = None
+        if self.strategy == MergeStrategy.DELETE_INSERT:
+            primary_key =  self.delete_insert_config.primary_key
+        elif self.strategy == MergeStrategy.UPSERT:
+            primary_key =  self.upsert_config.primary_key
+        return primary_key if primary_key is not None else []
+    
+    def _build_merge_key(self):
+        merge_key: Optional[TColumnNames] = None
+        if self.strategy == MergeStrategy.DELETE_INSERT:
+            merge_key =  self.delete_insert_config.merge_key
+        elif self.strategy == MergeStrategy.SCD2:  
+            if self.scd2_config.natural_merge_key:
+                merge_key = self.scd2_config.natural_merge_key
+            elif self.scd2_config.partition_merge_key:
+                merge_key = self.scd2_config.partition_merge_key  
+        return merge_key if merge_key is not None else []
+    
+
+class MergeConfigTypeContainer:
+    """Container for merge configuration types."""
+    MergeConfigType = Union[DeleteInsertConfig, SCD2Config, UpsertConfig]

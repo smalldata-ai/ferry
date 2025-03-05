@@ -11,8 +11,9 @@ from ferry.src.restapi.models import (
     LoadDataRequest, LoadDataResponse
 )
 import logging
-from ferry.src.restapi.pipeline_utils import load_data_endpoint
 from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
+
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,20 +38,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def background_load_data(request: IngestModel):
+async def background_load_data(ingest_model: IngestModel):
     """Runs data loading in the background and updates status"""
-    dataset_key = f"{request.source_uri}_{request.destination_uri}"
+    dataset_key = f"{ingest_model.source_uri}_{ingest_model.destination_uri}"
     logger.info(f"🚀 Starting background task for: {dataset_key}")
     
     task_status[dataset_key] = "running"  # Mark as running
     
     try:
-        pipeline = Pipeline(
-            source_uri=request.source_uri,
-            source_table=request.source_table_name,
-            destination_uri=request.destination_uri,
-        )
-        
+        pipeline = Pipeline(model=ingest_model)
         pipeline.build().run()
         task_status[dataset_key] = "success"  # Mark success
         # logger.info(f" Background task completed successfully: {result}")
@@ -74,15 +70,16 @@ async def get_status(source_uri: str, destination_uri: str):
 
 
 @app.post("/ingest", response_model=LoadDataResponse)
-def ingest(request: IngestModel,  background_tasks: BackgroundTasks):
+def ingest(ingest_model: IngestModel):
     """API endpoint to trigger ingesting data from source to destination"""
     try:
-        # background_tasks.add_task(background_load_data, request)  #  Use BackgroundTasks
+        pipeline = Pipeline(model=ingest_model).build()
+        pipeline.run()
         return LoadDataResponse(
             status="processing",
             message=" loading started in the background",
             pipeline_name="pipeline.pipeline_name",
-            table_processed=request.source_table_name,
+            table_processed=ingest_model.source_table_name,
         )
         
     except Exception as e:

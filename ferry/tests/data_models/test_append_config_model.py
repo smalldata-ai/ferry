@@ -1,5 +1,4 @@
 import pytest
-from pydantic import ValidationError
 from ferry.src.data_models.append_config_model import AppendConfig
 @pytest.fixture
 def valid_append_config():
