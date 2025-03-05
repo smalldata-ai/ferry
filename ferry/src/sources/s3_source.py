@@ -9,6 +9,12 @@ from dlt.common.configuration.specs import AwsCredentials
 from dlt.sources.filesystem import filesystem
 
 class S3Source(SourceBase):
+    
+    def dlt_source_name(self, uri: str, table_name: str) -> str:
+      fields = urlparse(uri)
+      database_name = fields.path.lstrip('/')
+      return f"src-{fields.scheme}_{database_name}_{table_name}"
+    
 
     # aws_credentials = AwsCredentialsWithoutDefaults(
     #                            aws_access_key_id="AKIAR3HUOEMQJTOJRG7L",
