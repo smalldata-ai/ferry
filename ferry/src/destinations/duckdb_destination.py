@@ -9,8 +9,10 @@ class DuckDBDestination(DestinationBase):
         fields = urlparse(uri)
         database_name = os.path.basename(fields.path)
         f"dest_{fields.scheme}_{database_name}_{table_name}"
+        
 
     def dlt_target_system(self, uri: str, **kwargs):  # type: ignore
+
         # Extract DuckDB file path from URI
         database_path = uri.replace("duckdb:///", "")
 

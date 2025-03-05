@@ -1,26 +1,36 @@
-import pytest
-from ferry.src.exceptions import InvalidDestinationException
-from ferry.src.destinations.duckdb_destination import DuckDBDestination
+import unittest
+from ferry.src.destination_factory import DestinationFactory
 from ferry.src.destinations.postgres_destination import PostgresDestination
 from ferry.src.destinations.clickhouse_destination import ClickhouseDestination
-from ferry.src.destination_factory import DestinationFactory
+from ferry.src.destinations.duckdb_destination import DuckDBDestination
+from ferry.src.exceptions import InvalidDestinationException
 
-def test_get_duckdb_destination():
-    uri = "duckdb:///path/to/database.duckdb"
-    destination = DestinationFactory.get(uri)
-    assert isinstance(destination, DuckDBDestination)
+class TestDestinationFactory(unittest.TestCase):
+    
+    def test_get_postgres_destination(self):
+        """Test that a PostgreSQL URI returns a PostgresDestination instance."""
+        uri = "postgresql://user:password@localhost:5432/dbname"
+        destination = DestinationFactory.get(uri)
+        self.assertIsInstance(destination, PostgresDestination)
+    
+    def test_get_clickhouse_destination(self):
+        """Test that a ClickHouse URI returns a ClickhouseDestination instance."""
+        uri = "clickhouse://user:password@localhost:9000/dbname"
+        destination = DestinationFactory.get(uri)
+        self.assertIsInstance(destination, ClickhouseDestination)
+    
+    def test_get_duckdb_destination(self):
+        """Test that a DuckDB URI returns a DuckDBDestination instance."""
+        uri = "duckdb:///path/to/database.db"
+        destination = DestinationFactory.get(uri)
+        self.assertIsInstance(destination, DuckDBDestination)
+    
+    def test_invalid_destination(self):
+        """Test that an invalid URI scheme raises an InvalidDestinationException."""
+        uri = "invalidscheme://user:password@localhost:1234/dbname"
+        with self.assertRaises(InvalidDestinationException) as context:
+            DestinationFactory.get(uri)
+        self.assertEqual(str(context.exception), "Invalid destination URI scheme: invalidscheme")
 
-def test_get_postgres_destination():
-    uri = "postgresql://user:password@localhost:5432/mydb"
-    destination = DestinationFactory.get(uri)
-    assert isinstance(destination, PostgresDestination)
-
-def test_get_clickhouse_destination():
-    uri = "clickhouse://user:password@localhost:8123/mydb"
-    destination = DestinationFactory.get(uri)
-    assert isinstance(destination, ClickhouseDestination)
-
-def test_get_invalid_destination():
-    uri = "invalid://some_path"
-    with pytest.raises(InvalidDestinationException):
-        DestinationFactory.get(uri)
+if __name__ == '__main__':
+    unittest.main()

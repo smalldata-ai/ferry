@@ -2,11 +2,14 @@ typer==0.15.1
 fastapi==0.115.8
 uvicorn==0.34.0
 dlt==1.6.1
-dlt[clickhouse]==1.6.1
 dlt-pendulum==3.0.2
 sqlalchemy==2.0.38
 pytest==8.3.4
 pytest-asyncio==0.25.3
 httpx==0.28.1
 psycopg2==2.9.10
-dlt[duckdb]==1.2.0
+boto3
+pandas
+dlt[duckdb]
+dlt[clickhouse]
+dlt[filesystem]
