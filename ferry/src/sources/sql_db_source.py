@@ -9,7 +9,6 @@ class SqlDbSource(SourceBase):
     def __init__(self):
         super().__init__()
     
-    
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):
         credentials = super().create_credentials(uri)
         source = sql_database(credentials)
