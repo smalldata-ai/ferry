@@ -1,15 +1,14 @@
 import dlt
+from urllib.parse import urlparse
 
 from dlt.sources.sql_database import sql_database
 from ferry.src.sources.source_base import SourceBase
 
-class SqlSource(SourceBase):
+class SqlDbSource(SourceBase):
     
     def __init__(self):
         super().__init__()
     
-    def dlt_source_name(self, uri: str, table_name: str) -> str:
-        pass
     
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):
         credentials = super().create_credentials(uri)

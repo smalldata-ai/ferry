@@ -9,10 +9,14 @@ from dlt.sources.filesystem import filesystem
 
 class S3Source(SourceBase):
 
-    def dlt_source_name(self, uri: str, table_name: str) -> str:
-      fields = urlparse(uri)
-      database_name = fields.path.lstrip('/')
-      return f"src-{fields.scheme}_{database_name}_{table_name}"
+    def __init__(self):
+        super().__init__()
+    
+
+    # def dlt_source_name(self, uri: str, table_name: str) -> str:
+    #   fields = urlparse(uri)
+    #   database_name = fields.path.lstrip('/')
+    #   return f"src-{fields.scheme}_{database_name}_{table_name}"
     
 
     # aws_credentials = AwsCredentialsWithoutDefaults(
@@ -32,11 +36,7 @@ class S3Source(SourceBase):
         
     #     pipeline.run(filesystem_pipe, table_name="smokers")        
 
-    def __init__(self, uri: str):
-        """Initialize S3 source and validate the URI."""
-        self.validate_uri(uri)
-        self.uri = uri
-
+    
     def validate_uri(self, uri: str):
         """Use centralized URI validation for S3."""
         parsed = urlparse(uri)

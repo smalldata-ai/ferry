@@ -12,7 +12,6 @@ class DuckDBDestination(DestinationBase):
         
 
     def dlt_target_system(self, uri: str, **kwargs):  # type: ignore
-
         # Extract DuckDB file path from URI
         database_path = uri.replace("duckdb:///", "")
 
