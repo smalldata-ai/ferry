@@ -4,9 +4,7 @@ import dlt
 # from ferry.src.restapi.collector import LogCollector
 from dlt.common.runtime.collector import Collector
 import time
-from dlt.common import logger as dlt_logger
-from collections import defaultdict
-import sys
+
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 from ferry.src.source_factory import SourceFactory
@@ -14,22 +12,11 @@ from ferry.src.source_factory import SourceFactory
 from typing import (
     
     Dict,
-    DefaultDict,
     NamedTuple,
     Optional,
     Union,
-    TextIO,
-    
 )
 logger = logging.getLogger(__name__)
-
-
-import logging
-import time
-from abc import ABC
-from collections import defaultdict
-from typing import Dict, Optional, Union, Type, Any, NamedTuple
-
 
 class FerryLogCollector(Collector):
     """A Collector that tracks extract/normalize/load progress and logs status."""
