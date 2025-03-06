@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from ferry.src.sources.s3_source import S3Source
-from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
+from ferry.src.uri_validator import DatabaseURIValidator
 from ferry.src.exceptions import InvalidSourceException
 
 class TestS3Source(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from ferry.src.sources.postgres_source import PostgresSource
-from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
+from ferry.src.uri_validator import DatabaseURIValidator
 from ferry.src.sources.source_base import SourceBase
 
 class TestPostgresSource(unittest.TestCase):
