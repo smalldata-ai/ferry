@@ -1,7 +1,5 @@
 import unittest
-from urllib.parse import urlparse
 from ferry.src.source_factory import SourceFactory
-from ferry.src.sources.duckdb_source import DuckDBSource
 from ferry.src.sources.s3_source import S3Source
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.sql_db_source import SqlDbSource
@@ -15,10 +13,10 @@ class TestSourceFactory(unittest.TestCase):
         self.assertIsInstance(source, SqlDbSource)
     
     def test_get_duckdb_source(self):
-        """Test that a DuckDB URI returns a DuckDBSource instance."""
+        """Test that a DuckDB URI returns a SqlDbSource instance."""
         uri = "duckdb:///path/to/database.db"
         source = SourceFactory.get(uri)
-        self.assertIsInstance(source, DuckDBSource)
+        self.assertIsInstance(source, SqlDbSource)
     
     def test_get_s3_source(self):
         """Test that an S3 URI returns an S3Source instance."""

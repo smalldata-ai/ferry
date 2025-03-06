@@ -1,5 +1,4 @@
 from urllib.parse import urlparse
-from ferry.src.sources.duckdb_source import DuckDBSource
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.s3_source import S3Source
@@ -10,7 +9,7 @@ class SourceFactory:
     _items = {
         "postgres": SqlDbSource,
         "postgresql": SqlDbSource,
-        "duckdb": DuckDBSource,  # Added DuckDB support
+        "duckdb": SqlDbSource,  # Added DuckDB support
         "s3": S3Source, 
     }
 

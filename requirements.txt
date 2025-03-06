@@ -11,5 +11,6 @@ psycopg2==2.9.10
 boto3
 pandas
 dlt[duckdb]
+duckdb-engine
 dlt[clickhouse]
 dlt[filesystem]
