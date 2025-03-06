@@ -3,7 +3,7 @@ import os
 from urllib.parse import urlparse
 
 class PipelineUtil:
-    SCHEMES = {
+    SCHEMES_CATEGORY = {
         "sql": {"postgresql", "postgres", "clickhouse", "redshift", "mysql", "hana", "mssql", "mariadb+pymysql", "mariadb"},
         "filebased": {"duckdb", "sqlite"},
         "mongodb": {"mongodb"},
@@ -16,7 +16,7 @@ class PipelineUtil:
         parsed = urlparse(uri)
         scheme = parsed.scheme.lower()
         
-        for category, schemes in cls.SCHEMES.items():
+        for category, schemes in cls.SCHEMES_CATEGORY.items():
             if scheme in schemes:
                 return cls._generate_identity(category, parsed, table_name)
         
@@ -25,6 +25,9 @@ class PipelineUtil:
     @classmethod
     def _generate_identity(cls, category: str, parsed_uri, table_name: str) -> str:
         database_name = cls._extract_database_name(category, parsed_uri)
+        database_name = database_name.replace(".", "_")
+        table_name = table_name.replace(".", "_")
+        table_name = table_name.replace("/", "_")
         return f"{parsed_uri.scheme}_{database_name}_{table_name}"
 
     @staticmethod

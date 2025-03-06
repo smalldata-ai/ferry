@@ -36,8 +36,7 @@ class TestURIValidator:
             URIValidator.validate_uri(uri)
 
     @pytest.mark.parametrize("uri", [
-        "s3://mybucket?file_key=data.parquet",
-        "s3://dataset-bucket?file_key=training_data.csv"
+        "s3://mybucket?access_key_id=aa&access_key_secret=aa&region=cc",        
     ])
     def test_valid_s3_uri(self, uri):
         assert URIValidator.validate_uri(uri) == uri
@@ -45,10 +44,12 @@ class TestURIValidator:
     @pytest.mark.parametrize("uri", [
         "s3://",  # No bucket name
         "s3://mybucket",  # Missing file_key
-        "s3://mybucket?other_param=value"  # Missing file_key parameter
+        "s3://mybucket?access_key_secret=aa&region=cc"
+        "s3://mybucket?access_key_id=aa&region=cc"
+        "s3://mybucket?access_key_id=aa&access_key_secret=cc"
     ])
     def test_invalid_s3_uri(self, uri):
-        with pytest.raises(ValueError, match="S3 URI must"):
+        with pytest.raises(ValueError, match="S3 URI must include"):
             URIValidator.validate_uri(uri)
 
     @pytest.mark.parametrize("uri, expected_error_part", [

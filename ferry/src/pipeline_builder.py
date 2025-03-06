@@ -77,6 +77,7 @@ class PipelineBuider:
     def _build_pipeline_name(self) -> str:
         source_tag = PipelineUtil.generate_identity(self.model.source_uri, self.model.source_table_name)
         destination_tag = PipelineUtil.generate_identity(self.model.destination_uri, self.destination_table_name)
+        print(f"{source_tag}-{destination_tag}")
         return f"{source_tag}-{destination_tag}"
      
     def __repr__(self):

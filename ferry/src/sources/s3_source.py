@@ -1,87 +1,47 @@
 import dlt
-from urllib.parse import urlparse
-import boto3
 import urllib.parse
-from ferry.src.sources.source_base import SourceBase
-from ferry.src.exceptions import InvalidSourceException
 from dlt.common.configuration.specs import AwsCredentials
-from dlt.sources.filesystem import filesystem
+from dlt.sources.filesystem import filesystem, read_csv, read_jsonl, read_parquet
+from ferry.src.sources.source_base import SourceBase
 
 class S3Source(SourceBase):
-
     def __init__(self):
         super().__init__()
-    
 
-    # def dlt_source_name(self, uri: str, table_name: str) -> str:
-    #   fields = urlparse(uri)
-    #   database_name = fields.path.lstrip('/')
-    #   return f"src-{fields.scheme}_{database_name}_{table_name}"
-    
-
-    # aws_credentials = AwsCredentialsWithoutDefaults(
-    #                            aws_access_key_id="AKIAR3HUOEMQJTOJRG7L",
-    #                            aws_secret_access_key="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",
-    #                            region_name="us-east-1")
-        
-        
-    #     files = filesystem("s3://fynd-development/path/to", aws_credentials, "data.csv*")
-        
-        
-    #     pipeline = dlt.pipeline(pipeline_name="my_pipeline", destination=ClickhouseDestination().dlt_target_system("clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0"))
-        
-        
-    #     filesystem_pipe = files | read_csv()
-        
-        
-    #     pipeline.run(filesystem_pipe, table_name="smokers")        
-
-    
-    def validate_uri(self, uri: str):
-        """Use centralized URI validation for S3."""
-        parsed = urlparse(uri)
-        print(f"Parsed URI: {parsed}") 
-        # try:
-        #     DatabaseURIValidator.validate_uri(uri)
-        # except ValueError as e:
-        #     raise InvalidSourceException(f"Invalid S3 URI: {e}")
-
-    def dlt_source_system(self, uri: str, table_name: str):
+    def dlt_source_system(self, uri: str, table_name: str, **kwargs):
         """Fetch data from S3 and create a dlt resource."""
-
+        bucket_name, aws_credentials = self._parse_s3_uri(uri)
         
-
-        
-        
-        # Parse the URI
+        file_resource = self._create_file_resource(bucket_name, aws_credentials, table_name)
+        return self._apply_reader(file_resource, table_name)
+    
+    def _parse_s3_uri(self, uri: str):
+        """Extracts bucket name and AWS credentials from the URI."""
         parsed_uri = urllib.parse.urlparse(uri)
-        bucket_name = parsed_uri.netloc  # Bucket is in netloc
+        bucket_name = parsed_uri.hostname
         query_params = urllib.parse.parse_qs(parsed_uri.query)
 
-        # Extract credentials and file key
-        access_key = query_params.get("access_key_id", [None])[0]
-        secret_key = query_params.get("access_key_secret", [None])[0]
-        region = query_params.get("region", [None])[0]
-        file_key = query_params.get("file_key", [None])[0]
-
-        if not all([bucket_name, file_key, access_key, secret_key, region]):
-            raise ValueError("Missing required S3 parameters")
-
-        # Initialize S3 client
-        s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=region
+        aws_credentials = AwsCredentials(
+            aws_access_key_id=query_params.get("access_key_id", [None])[0],
+            aws_secret_access_key=query_params.get("access_key_secret", [None])[0],
+            region_name=query_params.get("region", [None])[0]
         )
+        return bucket_name, aws_credentials
 
-        # Download the file
-        obj = s3_client.get_object(Bucket=bucket_name, Key=file_key)
-        file_content = obj["Body"].read().decode("utf-8")
+    def _create_file_resource(self, bucket_name: str, aws_credentials: AwsCredentials, table_name: str):
+        """Creates a dlt file resource with incremental loading."""
+        file_resource = filesystem(f"s3://{bucket_name}", aws_credentials, f"{table_name}*")
+        file_resource.apply_hints(incremental=dlt.sources.incremental("modification_date"))
+        return file_resource
 
-        # Convert to DLT resource
-        def data_generator():
-            for line in file_content.splitlines():
-                yield line.split(",")  # Adjust based on file format
-
-        return dlt.resource(data_generator(), name=table_name)
+    def _apply_reader(self, file_resource, table_name: str):
+        """Applies the appropriate reader based on file extension."""
+        lower_table_name = table_name.lower()
+        if lower_table_name.endswith(".csv"):
+            return file_resource | read_csv()
+        elif lower_table_name.endswith(".jsonl"):
+            return file_resource | read_jsonl()
+        elif lower_table_name.endswith(".parquet"):
+            return file_resource | read_parquet()
+        else:
+            raise ValueError(f"Unsupported file format for table: {table_name}")

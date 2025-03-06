@@ -136,13 +136,17 @@ class URIValidator:
         if parsed.scheme != "s3":
             raise ValueError("S3 URI must start with 's3://'")
 
-        if not parsed.netloc:
+        if not parsed.hostname:
             raise ValueError("S3 URI must include a bucket name")
 
         query_params = parse_qs(parsed.query)
 
-        if "file_key" not in query_params:
-            raise ValueError("S3 URI must include a 'file_key' parameter in the query string")
+        if "access_key_id" not in query_params:
+            raise ValueError("S3 URI must include a 'access_key_id' parameter in the query string")
+        if "access_key_secret" not in query_params:
+            raise ValueError("S3 URI must include a 'access_key_secret' parameter in the query string")
+        if "region" not in query_params:
+            raise ValueError("S3 URI must include a 'access_key_region' parameter in the query string")
 
         return v
     
