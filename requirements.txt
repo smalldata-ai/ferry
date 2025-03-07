@@ -10,7 +10,11 @@ httpx==0.28.1
 psycopg2==2.9.10
 boto3
 pandas
-dlt[duckdb]
 duckdb-engine
+duckdb==1.2.1
+dlt[duckdb]
 dlt[clickhouse]
 dlt[filesystem]
+clickhouse-sqlalchemy==0.3.2
+clickhouse-connect==0.8.15
+dlt[snowflake]

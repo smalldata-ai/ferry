@@ -11,7 +11,8 @@ class SourceFactory:
         "postgresql": SqlDbSource,
         "duckdb": SqlDbSource,  # Added DuckDB support
         "s3": S3Source, 
-        "sqlite": SqlDbSource
+        "sqlite": SqlDbSource,
+        "clickhouse": SqlDbSource
     }
 
     @staticmethod

@@ -23,8 +23,11 @@ class PipelineBuider:
         try:
             destination = self.destination.dlt_target_system(self.model.destination_uri)
             self.destination_table_name = getattr(self.model.destination_meta, 'table_name', self.model.source_table_name)
-            self.pipeline = dlt.pipeline(pipeline_name=self._build_pipeline_name(), destination=destination, progress=LogCollector())
-            self._build_destination_meta()
+            self.pipeline = dlt.pipeline(
+                pipeline_name=self._build_pipeline_name(), 
+                dataset_name= getattr(self.model.destination_meta, 'dataset_name', self.destination.default_schema_name()),
+                destination=destination, progress=LogCollector(),
+                dev_mode=False)
             self._build_source_resource()
             return self
         except Exception as e:
@@ -51,16 +54,14 @@ class PipelineBuider:
             
             logger.info(run_info.metrics)
             logger.info(run_info.load_packages)
+            logger.info(run_info.writer_metrics_asdict)
+            
         except Exception as e:
             logger.exception(f"Unexpected error in full load: {e}")
             raise e
         
     def get_name(self) -> str:
         return self.pipeline.pipeline_name
-
-    def _build_destination_meta(self):
-        if self.model.destination_meta:
-            self.pipeline.dataset_name = getattr(self.model.destination_meta, 'dataset_name', None)
 
     def _build_incremental_config(self) -> Optional[dict]:
         return self.model.incremental_config.build_config() if self.model.incremental_config else None

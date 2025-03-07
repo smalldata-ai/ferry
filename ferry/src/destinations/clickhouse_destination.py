@@ -8,12 +8,10 @@ from dlt.destinations.impl.clickhouse.configuration import (
 )
 
 class ClickhouseDestination(DestinationBase):
-    
-    def dlt_destination_name(self, uri: str, table_name: str) -> str:
-        fields = urlparse(uri)
-        database_name = fields.path.lstrip('/')
-        return f"dest-{fields.scheme}_{database_name}_{table_name}"
 
+    def default_schema_name(self):
+        return ""
+    
     def dlt_target_system(self, uri: str, **kwargs): # type: ignore
         parsed_uri = urlparse(uri)
         query_params = parse_qs(parsed_uri.query)
@@ -28,5 +26,4 @@ class ClickhouseDestination(DestinationBase):
                 "secure": int(query_params.get("secure", ["0"])[0]),
             }
         )
-
         return dlt.destinations.clickhouse(credentials=credentials)
