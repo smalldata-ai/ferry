@@ -24,6 +24,11 @@ class URIValidator:
             return cls._validate_snowflake_uri(v)
         elif scheme == "s3":
             return cls._validate_s3_uri(v)
+        elif scheme == "bigquery":
+            return cls._validate_bigquery_uri(v)
+        elif scheme == "databricks":
+            return cls._validate_databricks_uri(v)
+        
         else:
             raise ValueError(f"Unsupported URI scheme: {scheme}")
 
@@ -149,4 +154,27 @@ class URIValidator:
             raise ValueError("S3 URI must include a 'access_key_region' parameter in the query string")
 
         return v
+    
+    @classmethod
+    def _validate_bigquery_uri(cls, v: str) -> str:
+        """Validates Bigquery URI."""
+        parsed = urlparse(v)
+
+        if parsed.scheme != "bigquery":
+            raise ValueError("Bigquery URI must start with 'bigquery://'")
+        
+        if not parsed.hostname:
+            raise ValueError("bigquery URI must include a projectId")
+        
+    @classmethod
+    def _validate_databricks_uri(cls, v: str) -> str:
+        """Validates Data Bricks URI."""
+        parsed = urlparse(v)
+
+        if parsed.scheme != "databricks":
+            raise ValueError("Databricks URI must start with 'databricks://'")
+        
+        
+
+    
     

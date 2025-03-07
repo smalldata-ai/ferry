@@ -49,7 +49,6 @@ class URIValidator:
 
         groups = match.groupdict()
 
-        # Additional logic for required fields
         if category in {"sql", "mongodb"} and not groups.get("user"):
             raise ValueError(f"{category.capitalize()} URI must contain a username")
 

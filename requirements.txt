@@ -18,3 +18,10 @@ dlt[filesystem]
 clickhouse-sqlalchemy==0.3.2
 clickhouse-connect==0.8.15
 dlt[snowflake]
+dlt[bigquery]
+dlt[databricks]
+dlt[synapse]
+dlt[mssql]
+dlt[redshift]
+dlt[motherduck]
+dlt[sqlalchemy]

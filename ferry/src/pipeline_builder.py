@@ -14,6 +14,7 @@ class PipelineBuider:
 
     def __init__(self, model: IngestModel):
         self.model = model
+        print(f"++++{self.model}+++")
         self.destination = DestinationFactory.get(self.model.destination_uri)
         self.source = SourceFactory.get(self.model.source_uri)
         self.destination_table_name = None
