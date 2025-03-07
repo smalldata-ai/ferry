@@ -462,11 +462,11 @@ class MongoDbCollectionConfiguration(BaseConfiguration):
 
 @configspec
 class MongoDbCollectionResourceConfiguration(BaseConfiguration):
-    connection_url: str = dlt.secrets.value
-    database: Optional[str] = dlt.config.value
-    collection: str = dlt.config.value
+    connection_url: str = ""
+    database: Optional[str] = None
+    collection: str = ""
     incremental: Optional[dlt.sources.incremental] = None  # type: ignore[type-arg]
-    write_disposition: Optional[str] = dlt.config.value
+    write_disposition: Optional[str] = None
     parallel: Optional[bool] = False
 
 

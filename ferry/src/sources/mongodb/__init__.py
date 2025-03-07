@@ -15,12 +15,12 @@ from .helpers import (
 
 @dlt.source
 def mongodb(
-    connection_url: str = dlt.secrets.value,
-    database: Optional[str] = dlt.config.value,
-    collection_names: Optional[List[str]] = dlt.config.value,
+    connection_url: str,
+    database: Optional[str] = None,
+    collection_names: Optional[List[str]] = None,
     incremental: Optional[dlt.sources.incremental] = None,  # type: ignore[type-arg]
-    write_disposition: Optional[str] = dlt.config.value,
-    parallel: Optional[bool] = dlt.config.value,
+    write_disposition: Optional[str] = None,
+    parallel: Optional[bool] = None,
     limit: Optional[int] = None,
     filter_: Optional[Dict[str, Any]] = None,
 ) -> Iterable[DltResource]:
@@ -79,11 +79,11 @@ def mongodb(
     sections=("sources", "mongodb"), spec=MongoDbCollectionResourceConfiguration
 )
 def mongodb_collection(
-    connection_url: str = dlt.secrets.value,
-    database: Optional[str] = dlt.config.value,
-    collection: str = dlt.config.value,
+    connection_url: str,
+    database: Optional[str] = None,
+    collection: str = "",
     incremental: Optional[dlt.sources.incremental] = None,  # type: ignore[type-arg]
-    write_disposition: Optional[str] = dlt.config.value,
+    write_disposition: Optional[str] = None,
     parallel: Optional[bool] = False,
     limit: Optional[int] = None,
     chunk_size: Optional[int] = 10000,
