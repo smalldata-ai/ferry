@@ -186,3 +186,5 @@ stroke.duckdb
 text
 mygrpc
 s3_to_duckdb.duckdb
+checks3.py
+test_postgresql.py
