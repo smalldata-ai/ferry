@@ -16,6 +16,7 @@ class SourceFactory:
         "mysql": SqlDbSource,
         "mssql": SqlDbSource,
         "mariadb": SqlDbSource,
+        "snowflake": SqlDbSource,
     }
 
     @staticmethod

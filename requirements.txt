@@ -27,3 +27,4 @@ dlt[motherduck]
 dlt[sqlalchemy]
 dlt[qdrant]
 dlt[athena]
+snowflake-sqlalchemy

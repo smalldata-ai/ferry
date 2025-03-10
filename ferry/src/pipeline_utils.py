@@ -27,6 +27,7 @@ class PipelineUtil:
     def _generate_identity(cls, category: str, parsed_uri, table_name: str) -> str:
         database_name = cls._extract_database_name(category, parsed_uri)
         database_name = database_name.replace(".", "_")
+        database_name = database_name.replace("/", "_")
         table_name = table_name.replace(".", "_")
         table_name = table_name.replace("/", "_")
         return f"{parsed_uri.scheme}_{database_name}_{table_name}"
