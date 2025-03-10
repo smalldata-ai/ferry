@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+from ferry.src.sources.mongodb_source import MongoDbSource
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.s3_source import S3Source
@@ -17,6 +18,7 @@ class SourceFactory:
         "mssql": SqlDbSource,
         "mariadb": SqlDbSource,
         "snowflake": SqlDbSource,
+        "mongodb": MongoDbSource,
     }
 
     @staticmethod
