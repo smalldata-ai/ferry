@@ -9,6 +9,7 @@ class PipelineUtil:
         "mongodb": {"mongodb"},
         "snowflake": {"snowflake"},
         "filesystem": {"s3", "gcs"},
+        "motherduck": {"md"},
     }
 
     @classmethod
@@ -38,6 +39,6 @@ class PipelineUtil:
             return os.path.basename(parsed_uri.path)
         if category == "mongodb":
             return ""
-        if category == "filesystem":
+        if category == "filesystem" or category == "motherduck":
             return parsed_uri.hostname or "unknown"
         return "unknown"

@@ -24,10 +24,15 @@ class URIValidator:
             return cls._validate_snowflake_uri(v)
         elif scheme == "s3":
             return cls._validate_s3_uri(v)
+        elif scheme == "athena":
+            return cls._validate_athena_uri(v)
+        
         elif scheme == "bigquery":
             return cls._validate_bigquery_uri(v)
         elif scheme == "databricks":
             return cls._validate_databricks_uri(v)
+        elif scheme == "md":
+            return v
         
         else:
             raise ValueError(f"Unsupported URI scheme: {scheme}")
@@ -173,6 +178,29 @@ class URIValidator:
 
         if parsed.scheme != "databricks":
             raise ValueError("Databricks URI must start with 'databricks://'")
+        
+
+    @classmethod
+    def _validate_athena_uri(cls, v: str) -> str:
+        """Validates Athena URI."""
+        parsed = urlparse(v)
+
+        if parsed.scheme != "athena":
+            raise ValueError("Athena URI must start with 'athena://'")
+
+        if not parsed.hostname:
+            raise ValueError("Athena URI must include a bucket name")
+
+        query_params = parse_qs(parsed.query)
+
+        if "access_key_id" not in query_params:
+            raise ValueError("Athena URI must include a 'access_key_id' parameter in the query string")
+        if "access_key_secret" not in query_params:
+            raise ValueError("Athena URI must include a 'access_key_secret' parameter in the query string")
+        if "region" not in query_params:
+            raise ValueError("Athena URI must include a 'access_key_region' parameter in the query string")
+
+        return v        
         
         
 

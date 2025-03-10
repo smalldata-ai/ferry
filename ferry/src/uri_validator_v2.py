@@ -9,6 +9,8 @@ class URIValidator:
         "filebased": {"duckdb", "sqlite"},
         "mongodb": {"mongodb"},
         "snowflake": {"snowflake"},
+        "kafka": {"kafka"},
+        "kinesis": {"kinesis"},
         "s3": {"s3"},
     }
 

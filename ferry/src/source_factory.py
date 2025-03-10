@@ -9,10 +9,13 @@ class SourceFactory:
     _items = {
         "postgres": SqlDbSource,
         "postgresql": SqlDbSource,
-        "duckdb": SqlDbSource,  # Added DuckDB support
+        "duckdb": SqlDbSource,  
         "s3": S3Source, 
         "sqlite": SqlDbSource,
-        "clickhouse": SqlDbSource
+        "clickhouse": SqlDbSource,
+        "mysql": SqlDbSource,
+        "mssql": SqlDbSource,
+        "mariadb": SqlDbSource,
     }
 
     @staticmethod
