@@ -73,7 +73,7 @@ def parse_log_entry(entry):
         else:
             log_data["stage"] = "Unknown"
 
-    # ✅ Extract table records dynamically
+    #  Extract table records dynamically
     table_records_match = TABLE_RECORDS_PATTERN.search(entry)
     if table_records_match:
         log_data["table_records"] = {

@@ -125,7 +125,7 @@ class FerryLogCollector(Collector):
             items_per_second_str = f"{items_per_second:.2f}/s"
             message = f"[{self.messages[name]}]" if self.messages[name] is not None else ""
 
-            # ✅ Dynamically detect and rename the table name
+            #  Dynamically detect and rename the table name
             if ":" in name and not name.startswith(("Processed", "Files", "Items", "Jobs", "Resources")):
                 table_name, rest = name.split(":", 1)
                 log_lines.append(f"table_records: {rest.strip()}")
@@ -150,7 +150,7 @@ class FerryLogCollector(Collector):
 
         log_lines.append("")
         
-        # ✅ Replace any table name dynamically in the final log
+        #  Replace any table name dynamically in the final log
         log_message = "\n".join(log_lines)
         log_message = re.sub(r"^\w+_table:", "table_records:", log_message, flags=re.MULTILINE)
 

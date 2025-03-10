@@ -6,7 +6,7 @@ import dlt
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 from ferry.src.source_factory import SourceFactory
-from ferry.src.logging.ferry_log_collector import FerryLogCollector  # ✅ Fixed import
+from ferry.src.logging.ferry_log_collector import FerryLogCollector  # Fixed import
 
 logger = logging.getLogger(__name__)
 
