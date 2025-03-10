@@ -10,6 +10,7 @@ class PipelineUtil:
         "snowflake": {"snowflake"},
         "filesystem": {"s3", "gcs"},
         "motherduck": {"md"},
+        "bigquery": {"bigquery"},
     }
 
     @classmethod

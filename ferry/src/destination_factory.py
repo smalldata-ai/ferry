@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 from ferry.src.destinations.athena_destination import AthenaDestination
+from ferry.src.destinations.big_query_destination import BigQueryDestination
 from ferry.src.destinations.clickhouse_destination import ClickhouseDestination
 from ferry.src.destinations.databricks_destination import DatabricksDestination
 from ferry.src.destinations.motherduck_destination import MotherduckDestination
@@ -30,6 +31,7 @@ class DestinationFactory:
         "mysql": SqlAlchemyDestination,
         "mssql": MssqlDestination,
         "athena": AthenaDestination,
+        "bigquery": BigQueryDestination
     }
 
     @staticmethod

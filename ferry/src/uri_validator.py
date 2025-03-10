@@ -26,7 +26,6 @@ class URIValidator:
             return cls._validate_s3_uri(v)
         elif scheme == "athena":
             return cls._validate_athena_uri(v)
-        
         elif scheme == "bigquery":
             return cls._validate_bigquery_uri(v)
         elif scheme == "databricks":
@@ -170,6 +169,7 @@ class URIValidator:
         
         if not parsed.hostname:
             raise ValueError("bigquery URI must include a projectId")
+        return v
         
     @classmethod
     def _validate_databricks_uri(cls, v: str) -> str:
