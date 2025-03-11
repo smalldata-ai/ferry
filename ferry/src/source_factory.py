@@ -1,4 +1,7 @@
 from urllib.parse import urlparse
+from ferry.src.sources.azure_storage_source import AzureStorageSource
+from ferry.src.sources.gcs_source import GCSSource
+from ferry.src.sources.local_file_source import LocalFileSource
 from ferry.src.sources.mongodb_source import MongoDbSource
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
@@ -19,6 +22,9 @@ class SourceFactory:
         "mariadb": SqlDbSource,
         "snowflake": SqlDbSource,
         "mongodb": MongoDbSource,
+        "az": AzureStorageSource,
+        "gs": GCSSource,
+        "file": LocalFileSource,
     }
 
     @staticmethod

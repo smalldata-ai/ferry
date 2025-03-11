@@ -1,36 +1,34 @@
 import dlt
 import urllib.parse
-from dlt.common.configuration.specs import GcpServiceAccountCredentials
+from dlt.common.configuration.specs import AzureCredentials
 from dlt.sources.filesystem import filesystem, read_csv, read_jsonl, read_parquet
 from ferry.src.sources.source_base import SourceBase
 
-class GCSSource(SourceBase):
+class AzureStorageSource(SourceBase):
     def __init__(self):
         super().__init__()
 
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):
-        """Fetch data from GCS and create a dlt resource."""
-        bucket_name, gcp_credentials = self._parse_gcs_uri(uri)
+        """Fetch data from Azure Blob Storage and create a dlt resource."""
+        container_name, azure_credentials = self._parse_azure_uri(uri)
         
-        file_resource = self._create_file_resource(bucket_name, gcp_credentials, table_name)
+        file_resource = self._create_file_resource(container_name, azure_credentials, table_name)
         return self._apply_reader(file_resource, table_name)
     
-    def _parse_gcs_uri(self, uri: str):
-        """Extracts bucket name and GCP credentials from the URI."""
+    def _parse_azure_uri(self, uri: str):
         parsed_uri = urllib.parse.urlparse(uri)
-        bucket_name = parsed_uri.hostname
+        container_name = parsed_uri.path.lstrip("/").split("/")[0]
         query_params = urllib.parse.parse_qs(parsed_uri.query)
-
-        gcp_credentials = GcpServiceAccountCredentials(
-            project_id=query_params.get("project_id", [None])[0],
-            private_key=query_params.get("private_key", [None])[0],
-            client_email=query_params.get("client_email", [None])[0],
+        
+        azure_credentials = AzureCredentials(
+            azure_storage_account_name=query_params.get("account_name", [None])[0],
+            azure_storage_account_key=query_params.get("account_key", [None])[0]
         )
-        return bucket_name, gcp_credentials
+        return container_name, azure_credentials
 
-    def _create_file_resource(self, bucket_name: str, gcp_credentials: GcpServiceAccountCredentials, table_name: str):
+    def _create_file_resource(self, container_name: str, azure_credentials: AzureCredentials, table_name: str):
         """Creates a dlt file resource with incremental loading."""
-        file_resource = filesystem(f"gs://{bucket_name}", gcp_credentials, f"{table_name}*")
+        file_resource = filesystem(f"az://{container_name}", azure_credentials, f"{table_name}*")
         file_resource.apply_hints(incremental=dlt.sources.incremental("modification_date"))
         return file_resource
 

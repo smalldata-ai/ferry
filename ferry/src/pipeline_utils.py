@@ -8,7 +8,7 @@ class PipelineUtil:
         "filebased": {"duckdb", "sqlite"},
         "mongodb": {"mongodb"},
         "snowflake": {"snowflake"},
-        "filesystem": {"s3", "gcs"},
+        "filesystem": {"s3", "gs", "az", "file"},
         "motherduck": {"md"},
     }
 

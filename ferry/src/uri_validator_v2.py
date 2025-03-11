@@ -12,6 +12,9 @@ class URIValidator:
         "kafka": {"kafka"},
         "kinesis": {"kinesis"},
         "s3": {"s3"},
+        "gcs": {"gs"},
+        "azure": {"az"},
+        "local": {"file"},
     }
 
     # Regex patterns for URI validation
@@ -21,6 +24,9 @@ class URIValidator:
         "snowflake": r"^snowflake://(?P<user>\w+)(:(?P<password>[^@]+))?@(?P<account>[\w.-]+)(/(?P<db>\w+))?",
         "filebased": r"^(?P<scheme>\w+)://(?P<path>.+)",
         "s3": r"^s3://(?P<bucket>[\w.-]+)(/(?P<key>.+))?",
+        "gcs": r"^gs://(?P<bucket>[\w.-]+)(/(?P<key>.+))?",
+        "azure": r"^az://(?P<container>[\w.-]+)(/(?P<blob>.+))?",
+        "file": r"^file://(?P<path>/[\w./-]+)",
     }
 
     @classmethod
@@ -59,5 +65,14 @@ class URIValidator:
 
         if category == "s3" and not groups.get("bucket"):
             raise ValueError("S3 URI must contain a bucket name")
+        
+        if category == "gcs" and not groups.get("bucket"):
+            raise ValueError("GCS URI must contain a bucket name")
+
+        if category == "azure" and not groups.get("container"):
+            raise ValueError("Azure URI must contain a container name")
+        
+        if category == "file" and not groups.get("path"):
+            raise ValueError("File URI must contain a non-empty absolute path")
 
         return uri

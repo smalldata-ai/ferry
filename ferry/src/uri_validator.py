@@ -26,11 +26,16 @@ class URIValidator:
             return cls._validate_s3_uri(v)
         elif scheme == "athena":
             return cls._validate_athena_uri(v)
-        
         elif scheme == "bigquery":
             return cls._validate_bigquery_uri(v)
         elif scheme == "databricks":
             return cls._validate_databricks_uri(v)
+        elif scheme == "gs":
+            return cls._validate_gcs_uri(v)
+        elif scheme == "az":
+            return cls._validate_azure_uri(v)
+        elif scheme == "file":
+            return cls._validate_file_uri(v)
         elif scheme == "md":
             return v
         
@@ -200,9 +205,65 @@ class URIValidator:
         if "region" not in query_params:
             raise ValueError("Athena URI must include a 'access_key_region' parameter in the query string")
 
-        return v        
-        
-        
+        return v
+    
+    @classmethod
+    def _validate_gcs_uri(cls, v: str) -> str:
+        """Validates GCS URI."""
+        parsed = urlparse(v)
 
+        if parsed.scheme != "gs":
+            raise ValueError("GCS URI must start with 'gs://'")
+
+        if not parsed.hostname:
+            raise ValueError("GCS URI must include a bucket name")
+
+        query_params = parse_qs(parsed.query)
+
+        if "project_id" not in query_params:
+            raise ValueError("GCS URI must include a 'project_id' parameter in the query string")
+        if "private_key" not in query_params:
+            raise ValueError("GCS URI must include a 'private_key' parameter in the query string")
+        if "client_email" not in query_params:
+            raise ValueError("GCS URI must include a 'client_email' parameter in the query string")
+
+        return v
+
+    @classmethod
+    def _validate_azure_uri(cls, v: str) -> str:
+        """Validates Azure Storage URI."""
+        parsed = urlparse(v)
+
+        if parsed.scheme != "az":
+            raise ValueError("Azure URI must start with 'az://'")
+
+        if not parsed.path or parsed.path == "/":
+            raise ValueError("Azure URI must include a container name in the path")
+
+        query_params = parse_qs(parsed.query)
+
+        if "account_name" not in query_params:
+            raise ValueError("Azure URI must include an 'account_name' parameter in the query string")
+        if "account_key" not in query_params:
+            raise ValueError("Azure URI must include 'account_key' parameter in the query string")
+
+        return v
     
-    
+    @classmethod
+    def _validate_file_uri(cls, v: str) -> str:
+        """Validates File URI (local filesystem)."""
+        parsed = urlparse(v)
+
+        if parsed.scheme != "file":
+            raise ValueError("File URI must start with 'file://'")
+
+        if not parsed.path or parsed.path == "/":
+            raise ValueError("File URI must specify a non-empty path")
+
+        if parsed.netloc:
+            raise ValueError("File URI must not include a network location (netloc)")
+
+        if parsed.query:
+            raise ValueError("File URI must not include query parameters")
+
+        return v
