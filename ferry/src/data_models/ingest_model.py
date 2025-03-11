@@ -13,7 +13,6 @@ class WriteDispositionType(Enum):
     APPEND = "append"
     MERGE = "merge"
 
-
 class SortOrder(Enum):
     ASC = "asc"
     DESC = "desc"    
@@ -25,6 +24,7 @@ class DestinationMeta(BaseModel):
 
 class IngestModel(BaseModel):
     """Model for loading data between databases"""
+    identity: str = Field(..., description="Identity for the pipeline")
     source_uri: str = Field(..., description="URI of the source database")
     destination_uri: str = Field(..., description="URI of the destination database")
     source_table_name: str = Field(..., description="Name of the source table")
@@ -41,7 +41,7 @@ class IngestModel(BaseModel):
             raise ValueError("URI must be provided")
         return URIValidator.validate_uri(v)
     
-    @field_validator("source_table_name")
+    @field_validator("identity","source_table_name")
     @classmethod
     def validate_non_empty(cls, v: str) -> str:
         if not v:
