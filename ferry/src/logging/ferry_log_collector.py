@@ -1,17 +1,14 @@
 # Final
 from collections import defaultdict
 import logging
-import os
 import sys
 # from ferry.src.restapi.collector import LogCollector
 from dlt.common.runtime.collector import Collector
 import time
 
-import re
 from typing import (
     
-    DefaultDict,
-    Dict,
+   
     NamedTuple,
     Optional,
     TextIO,
@@ -30,29 +27,23 @@ class FerryLogCollector(Collector):
         start_time: float
         total: Optional[int]
 
-    def __init__(
-        self,
-        log_period: float = 1.0,
-        log_file: str = "ferry_logs.log",  # <-- Add log file
-        logger: Union[logging.Logger, TextIO] = sys.stdout,
-        log_level: int = logging.INFO,
-        dump_system_stats: bool = True,
-    ) -> None:
+    def __init__(self, task_id: str, log_period: float = 1.0, log_file: str = "ferry_logs.log",
+                 logger: Union[logging.Logger, TextIO] = sys.stdout, log_level: int = logging.INFO,
+                 dump_system_stats: bool = True) -> None:
+        self.task_id = task_id  # Store task_id
         self.log_period = log_period
         self.logger = logger
         self.log_level = log_level
-        self.log_file = log_file  # <-- Store log file path
+        self.log_file = log_file
 
         # Initialize logging to file
         self.file_logger = logging.getLogger("FerryLog")
         self.file_logger.setLevel(log_level)
 
-        # Add file handler
         file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
         file_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
         self.file_logger.addHandler(file_handler)
 
-        # Also log to console
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(logging.Formatter("%(message)s"))
         self.file_logger.addHandler(console_handler)
@@ -70,7 +61,6 @@ class FerryLogCollector(Collector):
                 dump_system_stats = False
 
         self.dump_system_stats = dump_system_stats
-
 
     def update(
     self,
@@ -109,10 +99,7 @@ class FerryLogCollector(Collector):
 
     def dump_counters(self) -> None:
         current_time = time.time()
-        log_lines = []
-
-        step_header = f" {self.step} ".center(80, "-")
-        log_lines.append(step_header)
+        log_lines = [f"[Task {self.task_id}] {self.step}".center(80, "-")]
 
         for name, count in self.counters.items():
             info = self.counter_info[name]
@@ -125,44 +112,33 @@ class FerryLogCollector(Collector):
             items_per_second_str = f"{items_per_second:.2f}/s"
             message = f"[{self.messages[name]}]" if self.messages[name] is not None else ""
 
-            #  Dynamically detect and rename the table name
-            if ":" in name and not name.startswith(("Processed", "Files", "Items", "Jobs", "Resources")):
-                table_name, rest = name.split(":", 1)
-                log_lines.append(f"table_records: {rest.strip()}")
-            else:
+            if "table" in info.description.lower():  # Generic check for table-related counters
                 counter_line = (
-                    f"{info.description}: {progress} {percentage} | Time: {elapsed_time_str} | Rate:"
+                    f"[Task {self.task_id}] table_records: {progress} {percentage} | Time: {elapsed_time_str} | Rate:"
                     f" {items_per_second_str} {message}"
                 )
-                log_lines.append(counter_line.strip())
+            else:
+                counter_line = (
+                    f"[Task {self.task_id}] {info.description}: {progress} {percentage} | Time: {elapsed_time_str} | Rate:"
+                    f" {items_per_second_str} {message}"
+                )
+            log_lines.append(counter_line.strip())
 
-        if self.dump_system_stats:
-            import psutil
-            process = psutil.Process(os.getpid())
-            mem_info = process.memory_info()
-            current_mem = mem_info.rss / (1024**2)  # Convert to MB
-            mem_percent = psutil.virtual_memory().percent
-            cpu_percent = process.cpu_percent()
-            log_lines.append(
-                f"Memory usage: {current_mem:.2f} MB ({mem_percent:.2f}%) | CPU usage:"
-                f" {cpu_percent:.2f}%"
-            )
-
-        log_lines.append("")
-        
-        #  Replace any table name dynamically in the final log
+        log_lines.append("")    
         log_message = "\n".join(log_lines)
-        log_message = re.sub(r"^\w+_table:", "table_records:", log_message, flags=re.MULTILINE)
 
         self._log(self.log_level, log_message)
 
 
     def _log(self, log_level: int, log_message: str) -> None:
+        """Modify logging function to include task_id"""
+        log_message = f"[Task {self.task_id}] {log_message}"  # Prefix logs with task_id
+
         if isinstance(self.logger, (logging.Logger, logging.LoggerAdapter)):
             self.logger.log(log_level, log_message)
         
-        # Write to log file
         self.file_logger.log(log_level, log_message)
+
 
 
     def _start(self, step: str) -> None:
