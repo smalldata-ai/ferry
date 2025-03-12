@@ -1,5 +1,6 @@
 import pytest
 from ferry.src.uri_validator import URIValidator
+from ferry.src.uri_validator_v2 import URIValidatorV2
 
 class TestURIValidator:
     @pytest.mark.parametrize("uri", [
@@ -7,7 +8,7 @@ class TestURIValidator:
         "postgresql://admin:admin@127.0.0.1:5432/testdb"
     ])
     def test_valid_postgres_uri(self, uri):
-        assert URIValidator.validate_uri(uri) == uri
+        assert URIValidatorV2.validate_uri(uri) == uri
 
     @pytest.mark.parametrize("uri", [
         "postgresql://localhost:5432/dbname",  # Missing user & password
@@ -16,15 +17,15 @@ class TestURIValidator:
         "postgresql://localhost:5432/",  # Missing user, password, and database
     ])
     def test_invalid_postgres_uri(self, uri):
-        with pytest.raises(ValueError, match="URI must"):
-            URIValidator.validate_uri(uri)
+        with pytest.raises(ValueError, match="Invalid SQL URI"):
+            URIValidatorV2.validate_uri(uri)
 
     @pytest.mark.parametrize("uri", [
-        "duckdb:///path/to/db.duckdb",
-        "duckdb:///home/user/database.duckdb"
+        "duckdb:////path/to/db.duckdb",
+        "duckdb:////home/user/database.duckdb"
     ])
     def test_valid_duckdb_uri(self, uri):
-        assert URIValidator.validate_uri(uri) == uri
+        assert URIValidatorV2.validate_uri(uri) == uri
 
     @pytest.mark.parametrize("uri", [
         "duckdb://",  # No file path
@@ -32,14 +33,14 @@ class TestURIValidator:
         "duckdb://invalid-path"  # Invalid file path format
     ])
     def test_invalid_duckdb_uri(self, uri):
-        with pytest.raises(ValueError, match="URI must"):
-            URIValidator.validate_uri(uri)
+        with pytest.raises(ValueError, match="Invalid file-based URI"):
+            URIValidatorV2.validate_uri(uri)
 
     @pytest.mark.parametrize("uri", [
         "s3://mybucket?access_key_id=aa&access_key_secret=aa&region=cc",        
     ])
     def test_valid_s3_uri(self, uri):
-        assert URIValidator.validate_uri(uri) == uri
+        assert URIValidatorV2.validate_uri(uri) == uri
 
     @pytest.mark.parametrize("uri", [
         "s3://",  # No bucket name
@@ -49,8 +50,8 @@ class TestURIValidator:
         "s3://mybucket?access_key_id=aa&access_key_secret=cc"
     ])
     def test_invalid_s3_uri(self, uri):
-        with pytest.raises(ValueError, match="S3 URI must include"):
-            URIValidator.validate_uri(uri)
+        with pytest.raises(ValueError, match="Invalid S3 URI format"):
+            URIValidatorV2.validate_uri(uri)
 
     @pytest.mark.parametrize("uri, expected_error_part", [
         ("clickhouse://user:password@localhost:9000", "URI must contain a database name"),
