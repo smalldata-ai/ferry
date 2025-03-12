@@ -4,9 +4,8 @@ import logging
 from dlt.common.pipeline import LoadInfo
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
-from ferry.src.pipeline_utils import PipelineUtil
 from ferry.src.source_factory import SourceFactory
-from dlt.common.runtime.collector import LogCollector, Collector
+from dlt.common.runtime.collector import LogCollector
 
 logger = logging.getLogger(__name__)
 
@@ -76,11 +75,6 @@ class PipelineBuider:
     def _build_columns(self)-> Optional[dict]:
         return self.model.merge_config.build_columns() if self.model.merge_config else None
   
-    def _build_pipeline_name(self) -> str:
-        source_tag = PipelineUtil.generate_identity(self.model.source_uri, self.model.source_table_name)
-        destination_tag = PipelineUtil.generate_identity(self.model.destination_uri, self.destination_table_name)
-        print(f"{source_tag}-{destination_tag}")
-        return f"{source_tag}-{destination_tag}"
      
     def __repr__(self):
         return (f"DataPipeline(source_uri={self.model.source_uri}, "
