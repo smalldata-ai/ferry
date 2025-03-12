@@ -25,7 +25,6 @@ class PipelineBuider:
             destination = self.destination.dlt_target_system(self.model.destination_uri)
             self.destination_table_name = getattr(self.model.destination_meta, 'table_name', self.model.source_table_name)
             self.pipeline = dlt.pipeline(
-                # pipeline_name=self._build_pipeline_name(), 
                 pipeline_name=self.model.identity, 
                 dataset_name= getattr(self.model.destination_meta, 'dataset_name', self.destination.default_schema_name()),
                 destination=destination, progress=LogCollector(),

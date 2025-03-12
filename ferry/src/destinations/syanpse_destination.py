@@ -1,9 +1,5 @@
-from urllib.parse import parse_qs, urlparse
-
 import dlt
-
 from ferry.src.destinations.destination_base import DestinationBase
-
 
 class SynapseDestination(DestinationBase):
 
