@@ -196,21 +196,25 @@ class FerryLogCollector(Collector):
         self.last_log_time = time.time()
 
     def _stop(self) -> None:
-        """Print final ETL state ensuring completed steps retain their last recorded details."""
-        self.dump_counters()  # Ensure latest metrics are logged
+        """Print last stored in-process states with status marked as completed before shutting down."""
+        self.dump_counters()  # Ensure the latest metrics are logged
 
+        # Ensure all last "in-process" states are marked as "completed"
         final_log = {}
 
-        for stage, log_entry in self.last_in_process.items():
-            if log_entry:  # Only modify existing logs, prevent overwrites
-                log_entry["status"] = "completed"
-                final_log[stage] = log_entry  # Store last in-process data instead of just "status": "completed"
+        for stage in ["extract", "normalize", "load"]:  # Ensure all ETL stages are covered
+            if stage in self.last_in_process:
+                final_log[stage] = self.last_in_process[stage].copy()  # Copy to avoid mutation
+                final_log[stage]["status"] = "completed"
+            else:
+                # If a stage was skipped or never logged, initialize it as completed with empty stats
+                final_log[stage] = {"status": "completed", "records": 0, "elapsed_time": 0, "rate": 0}
 
-        # Log the final completed state
+        # Log the final ETL state
         json_log = json.dumps(final_log, indent=4)
         self._log(self.log_level, "Final ETL State:\n" + json_log)
 
-        # Reset counters
+        # Reset counters and state
         self.counters = None
         self.counter_info = None
         self.messages = None
