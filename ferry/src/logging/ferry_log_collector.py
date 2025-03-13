@@ -52,6 +52,9 @@ class FerryLogCollector(Collector):
         self.counter_info = {}
         self.messages = {}
         self.last_log_time = None
+        self.last_in_process = {}  # Store last "in-process" states
+        self.completed_logs = {}  # Stores last "completed" logs
+
 
         # Track ETL progress
         self.etl_status = {
@@ -141,6 +144,8 @@ class FerryLogCollector(Collector):
                     "resource_type": "Resources",
                     "resource_count": 0
                 })
+                self.last_in_process["extract"] = log_entry  # Store last in-process log
+
                 log_data["extract"] = log_entry
 
             elif "normalize" in self.step.lower():
@@ -153,6 +158,8 @@ class FerryLogCollector(Collector):
                     "time": f"{elapsed_time:.2f}s",
                     "rate": f"{items_per_second:.2f}/s",
                 })
+                self.last_in_process["normalize"] = log_entry
+
                 log_data["normalize"] = log_entry
 
             elif "load" in self.step.lower():
@@ -167,6 +174,8 @@ class FerryLogCollector(Collector):
                     "time": f"{elapsed_time:.2f}s",
                     "rate": f"{items_per_second:.2f}/s",
                 })
+                self.last_in_process["load"] = log_entry
+
                 log_data["load"] = log_entry
 
         json_log = json.dumps(log_data, indent=4)
@@ -199,10 +208,18 @@ class FerryLogCollector(Collector):
         self.last_log_time = time.time()
 
     def _stop(self) -> None:
-        self.dump_counters()
+        """Print last stored in-process states with status marked as completed before shutting down."""
+        self.dump_counters()  # Ensure latest metrics are logged
+
+        # Convert last "in-process" states to "completed"
+        final_log = {stage: {**data, "status": "completed"} for stage, data in self.last_in_process.items()}
+
+        # Log the final completed state
+        json_log = json.dumps(final_log, indent=4)
+        self._log(self.log_level, "Final ETL State:\n" + json_log)
+
+        # Reset counters
         self.counters = None
         self.counter_info = None
         self.messages = None
         self.last_log_time = None
-
-
