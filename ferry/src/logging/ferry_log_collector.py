@@ -53,6 +53,13 @@ class FerryLogCollector(Collector):
         self.messages = {}
         self.last_log_time = None
 
+        # Track ETL progress
+        self.etl_status = {
+            "extract": {"status": "pending"},
+            "normalize": {"status": "pending"},
+            "load": {"status": "pending"},
+        }
+
         if dump_system_stats:
             try:
                 import psutil
@@ -62,6 +69,7 @@ class FerryLogCollector(Collector):
 
         self.dump_system_stats = dump_system_stats
 
+    
     def update(
     self,
     name: str,
@@ -97,32 +105,49 @@ class FerryLogCollector(Collector):
         """Force logging on every update to get real-time row-level details."""
         self.dump_counters()
 
+
     def dump_counters(self) -> None:
         current_time = time.time()
-        log_data = {}
+        
+        # Default structure for logs
+        log_data = {
+            "extract": {
+                "status": "pending"
+            },
+            "normalize": {
+                "status": "pending"
+            },
+            "load": {
+                "status": "pending"
+            }
+        }
 
         for name, count in self.counters.items():
             info = self.counter_info[name]
-            elapsed_time = current_time - info.start_time
-            items_per_second = (count / elapsed_time) if elapsed_time > 0 else 0
+            elapsed_time = round(current_time - info.start_time, 2)
+            items_per_second = round(count / elapsed_time, 2) if elapsed_time > 0 else 0
 
             log_entry = {
-                "elapsed_time": round(elapsed_time, 2),
-                "rate": round(items_per_second, 2),
+                "elapsed_time": elapsed_time,
+                "rate": items_per_second,
                 "status": "in-process",
             }
 
-            # Different JSON structure based on the processing step
+            # Updating based on processing step
             if "extract" in self.step.lower():
                 log_entry.update({
                     "records_extracted": count,
                     "percentage": round((count / info.total) * 100, 2) if info.total else None,
                     "resource_type": "Resources",
-                    "resource_count": 0,  # You may adjust this based on actual logic
+                    "resource_count": 0
                 })
                 log_data["extract"] = log_entry
 
             elif "normalize" in self.step.lower():
+                # Mark Extract as completed before starting Normalize
+                if "extract" in log_data:
+                    log_data["extract"]["status"] = "completed"
+
                 log_entry.update({
                     "files": f"{count}/{info.total}" if info.total else f"{count}/?",
                     "time": f"{elapsed_time:.2f}s",
@@ -131,6 +156,12 @@ class FerryLogCollector(Collector):
                 log_data["normalize"] = log_entry
 
             elif "load" in self.step.lower():
+                # Mark Extract and Normalize as completed before starting Load
+                if "extract" in log_data:
+                    log_data["extract"]["status"] = "completed"
+                if "normalize" in log_data:
+                    log_data["normalize"]["status"] = "completed"
+
                 log_entry.update({
                     "jobs": f"{count}/{info.total}" if info.total else f"{count}/?",
                     "time": f"{elapsed_time:.2f}s",
@@ -140,8 +171,6 @@ class FerryLogCollector(Collector):
 
         json_log = json.dumps(log_data, indent=4)
         self._log(self.log_level, json_log)
-
-
 
     def _log(self, log_level: int, log_message: Union[str, dict]) -> None:
         """Ensures JSON logs are written cleanly without duplication"""
@@ -168,8 +197,6 @@ class FerryLogCollector(Collector):
             self.counter_info = {}
             self.messages = {}
         self.last_log_time = time.time()
-
-
 
     def _stop(self) -> None:
         self.dump_counters()
