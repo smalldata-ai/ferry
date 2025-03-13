@@ -114,15 +114,9 @@ class FerryLogCollector(Collector):
         
         # Default structure for logs
         log_data = {
-            "extract": {
-                "status": "pending"
-            },
-            "normalize": {
-                "status": "pending"
-            },
-            "load": {
-                "status": "pending"
-            }
+            "extract": self.last_in_process.get("extract", {"status": "pending"}).copy(),
+            "normalize": self.last_in_process.get("normalize", {"status": "pending"}).copy(),
+            "load": self.last_in_process.get("load", {"status": "pending"}).copy(),
         }
 
         for name, count in self.counters.items():
@@ -136,7 +130,6 @@ class FerryLogCollector(Collector):
                 "status": "in-process",
             }
 
-            # Updating based on processing step
             if "extract" in self.step.lower():
                 log_entry.update({
                     "records_extracted": count,
@@ -144,14 +137,12 @@ class FerryLogCollector(Collector):
                     "resource_type": "Resources",
                     "resource_count": 0
                 })
-                self.last_in_process["extract"] = log_entry  # Store last in-process log
-
-                log_data["extract"] = log_entry
+                self.last_in_process["extract"] = log_entry
+                log_data["extract"] = log_entry.copy()
 
             elif "normalize" in self.step.lower():
-                # Mark Extract as completed before starting Normalize
-                if "extract" in log_data:
-                    log_data["extract"]["status"] = "completed"
+                # Ensure Extract retains its last completed state
+                log_data["extract"]["status"] = "completed"
 
                 log_entry.update({
                     "files": f"{count}/{info.total}" if info.total else f"{count}/?",
@@ -159,15 +150,12 @@ class FerryLogCollector(Collector):
                     "rate": f"{items_per_second:.2f}/s",
                 })
                 self.last_in_process["normalize"] = log_entry
-
                 log_data["normalize"] = log_entry.copy()
 
             elif "load" in self.step.lower():
-                # Mark Extract and Normalize as completed before starting Load
-                if "extract" in log_data:
-                    log_data["extract"]["status"] = "completed"
-                if "normalize" in log_data:
-                    log_data["normalize"]["status"] = "completed"
+                # Ensure Extract & Normalize retain their last completed state
+                log_data["extract"]["status"] = "completed"
+                log_data["normalize"]["status"] = "completed"
 
                 log_entry.update({
                     "jobs": f"{count}/{info.total}" if info.total else f"{count}/?",
@@ -175,11 +163,11 @@ class FerryLogCollector(Collector):
                     "rate": f"{items_per_second:.2f}/s",
                 })
                 self.last_in_process["load"] = log_entry
-
-                log_data["load"] = log_entry
+                log_data["load"] = log_entry.copy()
 
         json_log = json.dumps(log_data, indent=4)
         self._log(self.log_level, json_log)
+
 
     def _log(self, log_level: int, log_message: Union[str, dict]) -> None:
         """Ensures JSON logs are written cleanly without duplication"""
@@ -208,17 +196,15 @@ class FerryLogCollector(Collector):
         self.last_log_time = time.time()
 
     def _stop(self) -> None:
-        """Print last stored in-process states with status marked as completed before shutting down."""
+        """Print final ETL state ensuring completed steps retain their last recorded details."""
         self.dump_counters()  # Ensure latest metrics are logged
 
-        # Convert last "in-process" states to "completed"
         final_log = {}
-        # Ensure last_in_process is correctly updated before stopping
+
         for stage, log_entry in self.last_in_process.items():
             if log_entry:  # Only modify existing logs, prevent overwrites
                 log_entry["status"] = "completed"
-
-        final_log = self.last_in_process.copy()
+                final_log[stage] = log_entry  # Store last in-process data instead of just "status": "completed"
 
         # Log the final completed state
         json_log = json.dumps(final_log, indent=4)
