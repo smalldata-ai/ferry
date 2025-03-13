@@ -5,7 +5,7 @@ import sys
 # from ferry.src.restapi.collector import LogCollector
 from dlt.common.runtime.collector import Collector
 import time
-
+import json
 from typing import (
     
    
@@ -99,45 +99,66 @@ class FerryLogCollector(Collector):
 
     def dump_counters(self) -> None:
         current_time = time.time()
-        log_lines = [f"[Task {self.task_id}] {self.step}".center(80, "-")]
+        log_data = {}
 
         for name, count in self.counters.items():
             info = self.counter_info[name]
             elapsed_time = current_time - info.start_time
             items_per_second = (count / elapsed_time) if elapsed_time > 0 else 0
 
-            progress = f"{count}/{info.total}" if info.total else f"{count}"
-            percentage = f"({count / info.total * 100:.1f}%)" if info.total else ""
-            elapsed_time_str = f"{elapsed_time:.2f}s"
-            items_per_second_str = f"{items_per_second:.2f}/s"
-            message = f"[{self.messages[name]}]" if self.messages[name] is not None else ""
+            log_entry = {
+                "elapsed_time": round(elapsed_time, 2),
+                "rate": round(items_per_second, 2),
+                "status": "in-process",
+            }
 
-            if "table" in info.description.lower():  # Generic check for table-related counters
-                counter_line = (
-                    f"[Task {self.task_id}] table_records: {progress} {percentage} | Time: {elapsed_time_str} | Rate:"
-                    f" {items_per_second_str} {message}"
-                )
-            else:
-                counter_line = (
-                    f"[Task {self.task_id}] {info.description}: {progress} {percentage} | Time: {elapsed_time_str} | Rate:"
-                    f" {items_per_second_str} {message}"
-                )
-            log_lines.append(counter_line.strip())
+            # Different JSON structure based on the processing step
+            if "extract" in self.step.lower():
+                log_entry.update({
+                    "records_extracted": count,
+                    "percentage": round((count / info.total) * 100, 2) if info.total else None,
+                    "resource_type": "Resources",
+                    "resource_count": 0,  # You may adjust this based on actual logic
+                })
+                log_data["extract"] = log_entry
 
-        log_lines.append("")    
-        log_message = "\n".join(log_lines)
+            elif "normalize" in self.step.lower():
+                log_entry.update({
+                    "files": f"{count}/{info.total}" if info.total else f"{count}/?",
+                    "time": f"{elapsed_time:.2f}s",
+                    "rate": f"{items_per_second:.2f}/s",
+                })
+                log_data["normalize"] = log_entry
 
-        self._log(self.log_level, log_message)
+            elif "load" in self.step.lower():
+                log_entry.update({
+                    "jobs": f"{count}/{info.total}" if info.total else f"{count}/?",
+                    "time": f"{elapsed_time:.2f}s",
+                    "rate": f"{items_per_second:.2f}/s",
+                })
+                log_data["load"] = log_entry
+
+        json_log = json.dumps(log_data, indent=4)
+        self._log(self.log_level, json_log)
 
 
-    def _log(self, log_level: int, log_message: str) -> None:
-        """Modify logging function to include task_id"""
-        log_message = f"[Task {self.task_id}] {log_message}"  # Prefix logs with task_id
+
+    def _log(self, log_level: int, log_message: Union[str, dict]) -> None:
+        """Ensures JSON logs are written cleanly without duplication"""
+        if isinstance(log_message, dict):  # If it's a dict, convert to JSON
+            log_message = json.dumps(log_message, indent=4)
 
         if isinstance(self.logger, (logging.Logger, logging.LoggerAdapter)):
-            self.logger.log(log_level, log_message)
-        
-        self.file_logger.log(log_level, log_message)
+            self.logger.log(log_level, log_message)  # Logs directly without prefix
+
+        self.file_logger.handlers.clear()  # Remove existing handlers to avoid duplicate logs
+
+        file_handler = logging.FileHandler(self.log_file, mode="a", encoding="utf-8")
+        file_handler.setFormatter(logging.Formatter("%(message)s"))  # Raw JSON, no prefix
+        self.file_logger.addHandler(file_handler)
+
+        self.file_logger.log(log_level, log_message)  # Log raw JSON
+
 
 
 

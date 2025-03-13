@@ -188,3 +188,5 @@ mygrpc
 s3_to_duckdb.duckdb
 checks3.py
 test_postgresql.py
+prompt.txt
+test.duckdb

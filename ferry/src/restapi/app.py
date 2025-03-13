@@ -1,9 +1,10 @@
 # Final
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 import logging
-import re
 import os
+import json
+import time
 from celery.result import AsyncResult
 from celery import Celery
 from ferry.src.restapi.pipeline_utils import load_data_endpoint
@@ -11,117 +12,43 @@ from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 from ferry.src.tasks import load_data_task  
 from ferry.src.restapi.config import config  # Import Redis config
 
-LOG_FILE = "ferry_logs.log"  # 🔹 Log file path
-
-from fastapi.responses import JSONResponse
+LOG_FILE_PATH = "ferry_logs.log"
 
 app = FastAPI()
-logging.basicConfig(level=logging.INFO, filename=LOG_FILE, filemode="a", format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    filename=LOG_FILE_PATH,
+    filemode="a",
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Initialize Celery using config values
 celery_app = Celery("tasks", broker=config.CELERY_BROKER_URL, backend=config.CELERY_BACKEND_URL)
 
-
-LOG_FILE_PATH = "ferry_logs.log"  # Update with your actual log file path
-# Regex patterns for extracting key details
-STAGE_PATTERN = re.compile(
-    r"[-]+[\s]*(Extract|Normalize|Load).*?duckdb_to_duckdb[\s]*[-]+", re.IGNORECASE
-)
-TASK_ID_PATTERN = re.compile(r"\[Task ([a-f0-9\-]+)\]")
-
-MEMORY_PATTERN = re.compile(r"Memory usage: ([\d.]+) MB \(([\d.]+)%\)")
-CPU_PATTERN = re.compile(r"CPU usage: ([\d.]+)%")
-FILES_PATTERN = re.compile(r"Files: (\d+)/(\d+) .* Time: ([\d.]+)s \| Rate: ([\d.]+)/s")
-ITEMS_PATTERN = re.compile(r"Items: (\d+)  \| Time: ([\d.]+)s \| Rate: ([\d.]+)/s")
-PROCESSED_ITEMS_PATTERN = re.compile(r"Processed items: (\d+) \| Rate: ([\d.]+)/s")
-PROCESSED_FILES_PATTERN = re.compile(r"Processed files: (\d+)/(\d+)")
-RESOURCES_PATTERN = re.compile(r"Resources: (\d+)/(\d+) \(([\d.]+)%\) \| Time: ([\d.]+)s \| Rate: ([\d.]+)/s")
-MY_TABLE_PATTERN = re.compile(r"(\w+): (\d+)  \| Time: ([\d.]+)s \| Rate: ([\d.]+)/s")
-JOBS_PATTERN = re.compile(r"Jobs: (\d+)/(\d+) \(([\d.]+)%\) \| Time: ([\d.]+)s \| Rate: ([\d.]+)/s")
-TABLE_RECORDS_PATTERN = re.compile(r"table_records: (\d+)  \| Time: ([\d.]+)s \| Rate: ([\d.]+)/s")
-TIMESTAMP_PATTERN = re.compile(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)")
-
 def get_last_log_entry(task_id: str):
-    """Reads the last log entry for a specific task_id from the log file."""
-    with open(LOG_FILE_PATH, "r") as file:
-        log_entries = file.read().strip().split("\n\n")  # Splitting log entries by double newlines
+    """Reads the last log entry for a specific task_id from the log file efficiently."""
+    try:
+        with open(LOG_FILE_PATH, "r") as file:
+            log_entries = file.read().split("\n}\n")  # Split entries based on closing brackets
 
-    if not log_entries:
-        return {}
+        log_entries = [entry.strip() + "}" for entry in log_entries if entry.strip()]  # Ensure valid JSON format
+        
+        # Reverse iterate through logs to find the latest entry for task_id
+        for entry in reversed(log_entries):
+            try:
+                log_data = json.loads(entry)  # Parse full JSON object
+                if log_data.get("task_id") == task_id:
+                    return {"latest_log": log_data}  # Return the full log entry
+            except json.JSONDecodeError:
+                continue  # Skip invalid JSON entries
 
-    # Reverse search for the most recent entry matching the task_id
-    for entry in reversed(log_entries):  # Iterate from latest to oldest
-        parsed_entry = parse_log_entry(entry)
-        if parsed_entry.get("task_id") == task_id:
-            return parsed_entry  # Return first matching entry
+        return {"message": "No logs found for this task_id"}  # Return if no match found
 
-    return {}  # Return empty dict if no matching log is found
+    except Exception as e:
+        logger.exception(f"Error reading logs: {e}")
+        return {"message": "Error reading logs"}
 
-
-def parse_log_entry(entry):
-    """Parses a single log entry and extracts structured data including task_id."""
-    log_data = {}
-
-    # Extract Task ID
-    task_id_match = TASK_ID_PATTERN.search(entry)
-    if task_id_match:
-        log_data["task_id"] = task_id_match.group(1)
-
-    # Extract Timestamp
-    timestamp_match = TIMESTAMP_PATTERN.search(entry)
-    if timestamp_match:
-        log_data["timestamp"] = timestamp_match.group(1)
-
-    # Extract Stage
-    stage_match = STAGE_PATTERN.search(entry)
-    if stage_match:
-        log_data["stage"] = stage_match.group(1).strip()
-    else:
-        if "Extract" in entry:
-            log_data["stage"] = "Extract"
-        elif "Normalize" in entry:
-            log_data["stage"] = "Normalize"
-        elif "Load" in entry:
-            log_data["stage"] = "Load"
-        else:
-            log_data["stage"] = "Unknown"
-
-    # Extract Table Records
-    table_records_match = TABLE_RECORDS_PATTERN.search(entry)
-    if table_records_match:
-        log_data["table_records"] = {
-            "count": int(table_records_match.group(1)),
-            "time_sec": float(table_records_match.group(2)),
-            "rate_per_sec": float(table_records_match.group(3)),
-        }
-
-    # Extract Job Details
-    jobs_match = JOBS_PATTERN.search(entry)
-    if jobs_match:
-        log_data["jobs"] = {
-            "completed": int(jobs_match.group(1)),
-            "total": int(jobs_match.group(2)),
-            "progress_percent": float(jobs_match.group(3)),
-            "time_sec": float(jobs_match.group(4)),
-            "rate_per_sec": float(jobs_match.group(5))
-        }
-
-    # Extract Memory Usage
-    memory_match = MEMORY_PATTERN.search(entry)
-    if memory_match:
-        log_data["memory_usage"] = {
-            "mb": float(memory_match.group(1)),
-            "percentage": float(memory_match.group(2))
-        }
-
-    # Extract CPU Usage
-    cpu_match = CPU_PATTERN.search(entry)
-    if cpu_match:
-        log_data["cpu_usage_percent"] = float(cpu_match.group(1))
-
-    return log_data
-    
 @app.post("/load-data", response_model=LoadDataResponse)
 async def load_data(request: LoadDataRequest):
     """API endpoint to start data loading asynchronously using Celery"""
@@ -163,7 +90,29 @@ def get_latest_log(task_id: str):
     """Retrieve the latest log entry for a given task_id in structured JSON format"""
     last_log = get_last_log_entry(task_id)
     
-    if not last_log:
+    if not last_log or "latest_log" not in last_log:
         return JSONResponse(content={"message": "No logs found for this task_id"}, status_code=404)
     
-    return JSONResponse(content={"latest_log": last_log})
+    return JSONResponse(content=last_log)
+
+# 🔥 Real-Time Log Streaming Endpoint
+def log_stream(task_id: str):
+    """Generator function to stream logs in real time."""
+    with open(LOG_FILE_PATH, "r") as file:
+        file.seek(0, os.SEEK_END)  # Move to the end of file to get only new logs
+        while True:
+            line = file.readline()  # Read new line
+            if line:
+                try:
+                    log_data = json.loads(line.strip())  # Parse JSON
+                    if log_data.get("task_id") == task_id:
+                        yield f"data: {json.dumps(log_data)}\n\n"  # SSE format
+                except json.JSONDecodeError:
+                    continue  # Skip invalid logs
+            
+            time.sleep(1)  # Avoid busy waiting
+
+@app.get("/logs/stream")
+def stream_logs(task_id: str):
+    """API endpoint to stream logs in real-time for a given task_id."""
+    return StreamingResponse(log_stream(task_id), media_type="text/event-stream")
