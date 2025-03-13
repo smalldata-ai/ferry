@@ -160,7 +160,7 @@ class FerryLogCollector(Collector):
                 })
                 self.last_in_process["normalize"] = log_entry
 
-                log_data["normalize"] = log_entry
+                log_data["normalize"] = log_entry.copy()
 
             elif "load" in self.step.lower():
                 # Mark Extract and Normalize as completed before starting Load
@@ -212,7 +212,13 @@ class FerryLogCollector(Collector):
         self.dump_counters()  # Ensure latest metrics are logged
 
         # Convert last "in-process" states to "completed"
-        final_log = {stage: {**data, "status": "completed"} for stage, data in self.last_in_process.items()}
+        final_log = {}
+        # Ensure last_in_process is correctly updated before stopping
+        for stage, log_entry in self.last_in_process.items():
+            if log_entry:  # Only modify existing logs, prevent overwrites
+                log_entry["status"] = "completed"
+
+        final_log = self.last_in_process.copy()
 
         # Log the final completed state
         json_log = json.dumps(final_log, indent=4)
