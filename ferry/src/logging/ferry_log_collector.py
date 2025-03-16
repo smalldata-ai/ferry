@@ -130,43 +130,44 @@ class FerryLogCollector(Collector):
                 "status": "in-process",
             }
 
-            if "extract" in self.step.lower():
-                log_entry.update({
-                    "records_extracted": count,
-                    "percentage": round((count / info.total) * 100, 2) if info.total else None,
-                    "resource_type": "Resources",
-                    "resource_count": 0
-                })
-                self.last_in_process["extract"] = log_entry
-                log_data["extract"] = log_entry.copy()
+            if hasattr(self, "step") and isinstance(self.step, str):
+                if "extract" in self.step.lower():
+                    log_entry.update({
+                        "records_extracted": count,
+                        "percentage": round((count / info.total) * 100, 2) if info.total else None,
+                    })
+                    self.last_in_process["extract"] = log_entry
+                    log_data["extract"] = log_entry.copy()
 
-            elif "normalize" in self.step.lower():
-                # Ensure Extract retains its last completed state
-                log_data["extract"]["status"] = "completed"
+                elif "normalize" in self.step.lower():
+                    log_data["extract"]["status"] = "completed"
+                    log_entry.update({
+                        "files": f"{count}/{info.total}" if info.total else f"{count}/?",
+                        "time": f"{elapsed_time:.2f}s",
+                        "rate": f"{items_per_second:.2f}/s",
+                    })
+                    self.last_in_process["normalize"] = log_entry
+                    log_data["normalize"] = log_entry.copy()
 
-                log_entry.update({
-                    "files": f"{count}/{info.total}" if info.total else f"{count}/?",
-                    "time": f"{elapsed_time:.2f}s",
-                    "rate": f"{items_per_second:.2f}/s",
-                })
-                self.last_in_process["normalize"] = log_entry
-                log_data["normalize"] = log_entry.copy()
-
-            elif "load" in self.step.lower():
-                # Ensure Extract & Normalize retain their last completed state
-                log_data["extract"]["status"] = "completed"
-                log_data["normalize"]["status"] = "completed"
-
-                log_entry.update({
-                    "jobs": f"{count}/{info.total}" if info.total else f"{count}/?",
-                    "time": f"{elapsed_time:.2f}s",
-                    "rate": f"{items_per_second:.2f}/s",
-                })
-                self.last_in_process["load"] = log_entry
-                log_data["load"] = log_entry.copy()
+                elif "load" in self.step.lower():
+                    log_data["extract"]["status"] = "completed"
+                    log_data["normalize"]["status"] = "completed"
+                    log_entry.update({
+                        "jobs": f"{count}/{info.total}" if info.total else f"{count}/?",
+                        "time": f"{elapsed_time:.2f}s",
+                        "rate": f"{items_per_second:.2f}/s",
+                    })
+                    
+                    # ✅ Check if all jobs are completed
+                    if info.total and count >= info.total:
+                        log_entry["status"] = "completed"
+                    
+                    self.last_in_process["load"] = log_entry
+                    log_data["load"] = log_entry.copy()
 
         json_log = json.dumps(log_data, indent=4)
         self._log(self.log_level, json_log)
+
 
 
     def _log(self, log_level: int, log_message: Union[str, dict]) -> None:
@@ -196,25 +197,10 @@ class FerryLogCollector(Collector):
         self.last_log_time = time.time()
 
     def _stop(self) -> None:
-        """Print last stored in-process states with status marked as completed before shutting down."""
-        self.dump_counters()  # Ensure the latest metrics are logged
+        """Ensures the latest in-process metrics are logged before shutting down."""
+        self.dump_counters()  # Log the last recorded metrics
 
-        # Ensure all last "in-process" states are marked as "completed"
-        final_log = {}
-
-        for stage in ["extract", "normalize", "load"]:  # Ensure all ETL stages are covered
-            if stage in self.last_in_process:
-                final_log[stage] = self.last_in_process[stage].copy()  # Copy to avoid mutation
-                final_log[stage]["status"] = "completed"
-            else:
-                # If a stage was skipped or never logged, initialize it as completed with empty stats
-                final_log[stage] = {"status": "completed", "records": 0, "elapsed_time": 0, "rate": 0}
-
-        # Log the final ETL state
-        json_log = json.dumps(final_log, indent=4)
-        self._log(self.log_level, "Final ETL State:\n" + json_log)
-
-        # Reset counters and state
+        # Reset internal states
         self.counters = None
         self.counter_info = None
         self.messages = None
