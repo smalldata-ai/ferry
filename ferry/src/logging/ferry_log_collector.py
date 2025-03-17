@@ -6,6 +6,7 @@ import sys
 from dlt.common.runtime.collector import Collector
 import time
 import json
+import os
 from typing import (
     
    
@@ -27,36 +28,26 @@ class FerryLogCollector(Collector):
         start_time: float
         total: Optional[int]
 
-    def __init__(self, task_id: str, log_period: float = 1.0, log_file: str = "ferry_logs.log",
+    def __init__(self, task_id: str, log_period: float = 1.0,
                  logger: Union[logging.Logger, TextIO] = sys.stdout, log_level: int = logging.INFO,
                  dump_system_stats: bool = True) -> None:
-        self.task_id = task_id  # Store task_id
+        self.task_id = task_id
         self.log_period = log_period
         self.logger = logger
         self.log_level = log_level
-        self.log_file = log_file
 
-        # Initialize logging to file
-        self.file_logger = logging.getLogger("FerryLog")
-        self.file_logger.setLevel(log_level)
-
-        file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
-        file_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
-        self.file_logger.addHandler(file_handler)
-
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(logging.Formatter("%(message)s"))
-        self.file_logger.addHandler(console_handler)
+        # Ensure logs directory exists
+        log_dir = "logs"
+        os.makedirs(log_dir, exist_ok=True)
+        self.log_file = os.path.join(log_dir, f"{task_id}.jsonl")
 
         self.counters = defaultdict(int)
         self.counter_info = {}
         self.messages = {}
         self.last_log_time = None
-        self.last_in_process = {}  # Store last "in-process" states
-        self.completed_logs = {}  # Stores last "completed" logs
+        self.last_in_process = {}
+        self.completed_logs = {}
 
-
-        # Track ETL progress
         self.etl_status = {
             "extract": {"status": "pending"},
             "normalize": {"status": "pending"},
@@ -67,7 +58,7 @@ class FerryLogCollector(Collector):
             try:
                 import psutil
             except ImportError:
-                self._log(logging.WARNING, "psutil is missing, system stats won't be logged.")
+                self._log({"warning": "psutil is missing, system stats won't be logged."})
                 dump_system_stats = False
 
         self.dump_system_stats = dump_system_stats
@@ -111,8 +102,6 @@ class FerryLogCollector(Collector):
 
     def dump_counters(self) -> None:
         current_time = time.time()
-        
-        # Default structure for logs
         log_data = {
             "extract": self.last_in_process.get("extract", {"status": "pending"}).copy(),
             "normalize": self.last_in_process.get("normalize", {"status": "pending"}).copy(),
@@ -132,60 +121,28 @@ class FerryLogCollector(Collector):
 
             if hasattr(self, "step") and isinstance(self.step, str):
                 if "extract" in self.step.lower():
-                    log_entry.update({
-                        "records_extracted": count,
-                        "percentage": round((count / info.total) * 100, 2) if info.total else None,
-                    })
+                    log_entry.update({"records_extracted": count})
                     self.last_in_process["extract"] = log_entry
                     log_data["extract"] = log_entry.copy()
-
                 elif "normalize" in self.step.lower():
                     log_data["extract"]["status"] = "completed"
-                    log_entry.update({
-                        "files": f"{count}/{info.total}" if info.total else f"{count}/?",
-                        "time": f"{elapsed_time:.2f}s",
-                        "rate": f"{items_per_second:.2f}/s",
-                    })
+                    log_entry.update({"files_processed": count})
                     self.last_in_process["normalize"] = log_entry
                     log_data["normalize"] = log_entry.copy()
-
                 elif "load" in self.step.lower():
                     log_data["extract"]["status"] = "completed"
                     log_data["normalize"]["status"] = "completed"
-                    log_entry.update({
-                        "jobs": f"{count}/{info.total}" if info.total else f"{count}/?",
-                        "time": f"{elapsed_time:.2f}s",
-                        "rate": f"{items_per_second:.2f}/s",
-                    })
-                    
-                    # ✅ Check if all jobs are completed
-                    if info.total and count >= info.total:
-                        log_entry["status"] = "completed"
-                    
+                    log_entry.update({"jobs_loaded": count})
                     self.last_in_process["load"] = log_entry
                     log_data["load"] = log_entry.copy()
 
-        json_log = json.dumps(log_data, indent=4)
-        self._log(self.log_level, json_log)
+        self._log(log_data)
 
 
-
-    def _log(self, log_level: int, log_message: Union[str, dict]) -> None:
-        """Ensures JSON logs are written cleanly without duplication"""
-        if isinstance(log_message, dict):  # If it's a dict, convert to JSON
-            log_message = json.dumps(log_message, indent=4)
-
-        if isinstance(self.logger, (logging.Logger, logging.LoggerAdapter)):
-            self.logger.log(log_level, log_message)  # Logs directly without prefix
-
-        self.file_logger.handlers.clear()  # Remove existing handlers to avoid duplicate logs
-
-        file_handler = logging.FileHandler(self.log_file, mode="a", encoding="utf-8")
-        file_handler.setFormatter(logging.Formatter("%(message)s"))  # Raw JSON, no prefix
-        self.file_logger.addHandler(file_handler)
-
-        self.file_logger.log(log_level, log_message)  # Log raw JSON
-
+    def _log(self, log_message: dict) -> None:
+        """Write logs in JSONL format."""
+        with open(self.log_file, "a", encoding="utf-8") as log_file:
+            log_file.write(json.dumps(log_message) + "\n")
 
 
 

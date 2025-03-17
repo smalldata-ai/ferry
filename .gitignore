@@ -190,3 +190,5 @@ checks3.py
 test_postgresql.py
 prompt.txt
 test.duckdb
+logs
+check.py

@@ -1,10 +1,8 @@
-# Final
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import JSONResponse
 import logging
 import os
 import json
-import time
 from celery.result import AsyncResult
 from celery import Celery
 from ferry.src.restapi.pipeline_utils import load_data_endpoint
@@ -12,42 +10,15 @@ from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 from ferry.src.tasks import load_data_task  
 from ferry.src.restapi.config import config  # Import Redis config
 
-LOG_FILE_PATH = "ferry_logs.log"
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)  # Ensure logs directory exists
 
 app = FastAPI()
-logging.basicConfig(
-    level=logging.INFO,
-    filename=LOG_FILE_PATH,
-    filemode="a",
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Initialize Celery using config values
 celery_app = Celery("tasks", broker=config.CELERY_BROKER_URL, backend=config.CELERY_BACKEND_URL)
-
-def get_last_log_entry(task_id: str):
-    """Reads the last log entry for a specific task_id from the log file efficiently."""
-    try:
-        with open(LOG_FILE_PATH, "r") as file:
-            log_entries = file.read().split("\n}\n")  # Split entries based on closing brackets
-
-        log_entries = [entry.strip() + "}" for entry in log_entries if entry.strip()]  # Ensure valid JSON format
-        
-        # Reverse iterate through logs to find the latest entry for task_id
-        for entry in reversed(log_entries):
-            try:
-                log_data = json.loads(entry)  # Parse full JSON object
-                if log_data.get("task_id") == task_id:
-                    return {"latest_log": log_data}  # Return the full log entry
-            except json.JSONDecodeError:
-                continue  # Skip invalid JSON entries
-
-        return {"message": "No logs found for this task_id"}  # Return if no match found
-
-    except Exception as e:
-        logger.exception(f"Error reading logs: {e}")
-        return {"message": "Error reading logs"}
 
 @app.post("/load-data", response_model=LoadDataResponse)
 async def load_data(request: LoadDataRequest):
@@ -85,34 +56,46 @@ def get_task_status(task_id: str):
         logger.exception(f"Error fetching task status: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching task status: {str(e)}")
 
-@app.get("/logs/latest")
-def get_latest_log(task_id: str):
-    """Retrieve the latest log entry for a given task_id in structured JSON format"""
-    last_log = get_last_log_entry(task_id)
-    
-    if not last_log or "latest_log" not in last_log:
-        return JSONResponse(content={"message": "No logs found for this task_id"}, status_code=404)
-    
-    return JSONResponse(content=last_log)
+def get_latest_log_entry(task_id: str):
+    """Fetches the last valid JSON log entry from the task-specific JSONL log file."""
+    log_file_path = os.path.join(LOG_DIR, f"{task_id}.jsonl")
 
-# 🔥 Real-Time Log Streaming Endpoint
-def log_stream(task_id: str):
-    """Generator function to stream logs in real time."""
-    with open(LOG_FILE_PATH, "r") as file:
-        file.seek(0, os.SEEK_END)  # Move to the end of file to get only new logs
-        while True:
-            line = file.readline()  # Read new line
+    if not os.path.exists(log_file_path):
+        logger.warning(f"🚨 Log file not found: {log_file_path}")
+        return {"message": f"No logs found for task_id {task_id}"}
+
+    try:
+        with open(log_file_path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+
+        if not lines:
+            logger.warning(f"⚠️ Log file is empty: {task_id}.jsonl")
+            return {"message": "Log file exists but is empty."}
+
+        for line in reversed(lines):  # Read latest log first
+            line = line.strip()
             if line:
                 try:
-                    log_data = json.loads(line.strip())  # Parse JSON
-                    if log_data.get("task_id") == task_id:
-                        yield f"data: {json.dumps(log_data)}\n\n"  # SSE format
+                    parsed_log = json.loads(line)
+                    logger.info(f"✅ Returning latest log entry: {parsed_log}")
+                    return parsed_log  # Return last valid log entry
                 except json.JSONDecodeError:
-                    continue  # Skip invalid logs
-            
-            time.sleep(1)  # Avoid busy waiting
+                    logger.error(f"❌ Invalid JSON in logs: {line}")
+                    continue
 
-@app.get("/logs/stream")
-def stream_logs(task_id: str):
-    """API endpoint to stream logs in real-time for a given task_id."""
-    return StreamingResponse(log_stream(task_id), media_type="text/event-stream")
+        logger.warning(f"⚠️ No valid logs found for {task_id}")
+        return {"message": "No valid logs found"}
+    except Exception as e:
+        logger.exception(f"❌ Error reading logs for {task_id}: {e}")
+        return {"message": "Error reading logs"}
+
+
+@app.get("/logs/latest")
+def get_latest_log(task_id: str = Query(..., description="Task ID to fetch logs")):
+    """API endpoint to retrieve the latest log entry for a given task_id."""
+    last_log = get_latest_log_entry(task_id)
+    
+    if "message" in last_log:
+        return JSONResponse(content=last_log, status_code=404)
+    
+    return JSONResponse(content=last_log)
