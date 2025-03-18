@@ -2,7 +2,6 @@
 from collections import defaultdict
 import logging
 import sys
-# from ferry.src.restapi.collector import LogCollector
 from dlt.common.runtime.collector import Collector
 import time
 import json
@@ -69,11 +68,15 @@ class FerryLogCollector(Collector):
     name: str,
     inc: int = 1,
     total: int = None,
-    inc_total: int = None,  # <-- Add this
+    inc_total: int = None,
     message: str = None,
     label: str = None,
     batch_size: int = None,
 ) -> None:
+    # Ignore unwanted tables
+        if name in ["_dlt_pipeline_state", "Resources"]:
+            return
+
         counter_key = f"{name}_{label}" if label else name
 
         if counter_key not in self.counters:
@@ -85,13 +88,13 @@ class FerryLogCollector(Collector):
             )
             self.messages[counter_key] = None
 
+        print(f"Logging update for {name}: {inc}, total count: {self.counters.get(name, 0)}")
+
         self.counters[counter_key] += inc
 
-        # Handle inc_total if provided
         if message:
             self.messages[counter_key] = message
 
-    # 🚀 Log immediately
         self.dump_counters()
 
 

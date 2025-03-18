@@ -31,7 +31,7 @@ def write_log(task_id, log_data):
             f.flush()  # Ensure real-time updates
             os.fsync(f.fileno())  # Force OS-level write to disk
     except Exception as e:
-        logger.error(f"🚨 Failed to write log: {e}")
+        logger.error(f"Failed to write log: {e}")
 
 @celery_app.task(bind=True, name="ferry.src.tasks.load_data_task")
 def load_data_task(self, request_data: dict):
@@ -42,7 +42,7 @@ def load_data_task(self, request_data: dict):
     try:
         write_log(task_id, {"status": "started", "message": "Task started"})
 
-        result = asyncio.run(load_data_endpoint(request, task_id))  # ✅ Pass task_id
+        result = asyncio.run(load_data_endpoint(request, task_id))  # Pass task_id
         
         write_log(task_id, {"status": "success", "result": result})
         return {"status": "success", "result": result}

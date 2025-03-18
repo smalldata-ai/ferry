@@ -21,18 +21,20 @@ def create_pipeline(pipeline_name: str, destination_uri: str, dataset_name: str,
         # Retrieve the destination dynamically using DestinationFactory
         destination = DestinationFactory.get(destination_uri).dlt_target_system(destination_uri)
 
-        # Pass task_id to FerryLogCollector
+        # Pass task_id to FerryLogCollector and disable state sync
         return dlt.pipeline(
             pipeline_name=pipeline_name,
             destination=destination,
             dataset_name=dataset_name,
-            dev_mode=True, 
-            progress=FerryLogCollector(task_id=task_id)  # ✅ Fix applied here
+            dev_mode=True,
+            progress=FerryLogCollector(task_id=task_id),
+            restore_from_destination=False  # ✅ Prevents _dlt_pipeline_state from syncing
         )
 
     except Exception as e:
         logger.exception(f"Failed to create pipeline: {e}")
         raise RuntimeError(f"Pipeline creation failed: {str(e)}")
+
 
 
 async def load_data_endpoint(request: LoadDataRequest, task_id: str) -> LoadDataResponse:

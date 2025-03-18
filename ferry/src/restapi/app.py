@@ -69,7 +69,7 @@ def get_latest_log_entry(task_id: str):
             lines = file.readlines()
 
         if not lines:
-            logger.warning(f"⚠️ Log file is empty: {task_id}.jsonl")
+            logger.warning(f" Log file is empty: {task_id}.jsonl")
             return {"message": "Log file exists but is empty."}
 
         for line in reversed(lines):  # Read latest log first
@@ -77,16 +77,16 @@ def get_latest_log_entry(task_id: str):
             if line:
                 try:
                     parsed_log = json.loads(line)
-                    logger.info(f"✅ Returning latest log entry: {parsed_log}")
+                    logger.info(f" Returning latest log entry: {parsed_log}")
                     return parsed_log  # Return last valid log entry
                 except json.JSONDecodeError:
-                    logger.error(f"❌ Invalid JSON in logs: {line}")
+                    logger.error(f" Invalid JSON in logs: {line}")
                     continue
 
-        logger.warning(f"⚠️ No valid logs found for {task_id}")
+        logger.warning(f" No valid logs found for {task_id}")
         return {"message": "No valid logs found"}
     except Exception as e:
-        logger.exception(f"❌ Error reading logs for {task_id}: {e}")
+        logger.exception(f" Error reading logs for {task_id}: {e}")
         return {"message": "Error reading logs"}
 
 

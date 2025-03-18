@@ -1,9 +1,12 @@
 import dlt
-from urllib.parse import urlparse, parse_qs
+import csv
 import boto3
+from io import StringIO
+from urllib.parse import urlparse, parse_qs
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.restapi.database_uri_validator import DatabaseURIValidator
 from ferry.src.exceptions import InvalidSourceException
+
 
 class S3Source(SourceBase):
 
@@ -16,15 +19,10 @@ class S3Source(SourceBase):
         """Use centralized URI validation for S3."""
         parsed = urlparse(uri)
         query_params = parse_qs(parsed.query)
-        
+
         # Extract required parameters
         bucket_name = parsed.netloc  # Bucket should be here
         file_key = parsed.path.lstrip("/")  # Remove leading "/"
-
-        print(f"DEBUG - Parsed URI: {parsed}")
-        print(f"DEBUG - Query Params: {query_params}")
-        print(f"DEBUG - Bucket Name: {bucket_name}")
-        print(f"DEBUG - File Key: {file_key}")
 
         # Ensure required parameters exist
         missing_keys = []
@@ -38,31 +36,23 @@ class S3Source(SourceBase):
 
         # Validate URI format using external class
         try:
-            DatabaseURIValidator.validate_uri(uri)  # ✅ Pass `uri`
+            DatabaseURIValidator.validate_uri(uri)
         except ValueError as e:
             raise InvalidSourceException(f"Invalid S3 URI: {e}")
-
 
     def dlt_source_system(self, uri: str, table_name: str):
         """Fetch data from S3 and create a dlt resource."""
 
         # Parse the URI
         parsed_uri = urlparse(uri)
-        bucket_name = parsed_uri.netloc  # ✅ Bucket should be in netloc
-        file_key = parsed_uri.path.lstrip("/")  # ✅ File key should be in path
+        bucket_name = parsed_uri.netloc
+        file_key = parsed_uri.path.lstrip("/")
         query_params = parse_qs(parsed_uri.query)
 
         # Extract credentials
         access_key = query_params.get("access_key_id", [None])[0]
         secret_key = query_params.get("access_key_secret", [None])[0]
         region = query_params.get("region", [None])[0]
-
-        # Debugging prints
-        print(f"DEBUG - Bucket Name: {bucket_name}")
-        print(f"DEBUG - File Key: {file_key}")
-        print(f"DEBUG - Access Key: {access_key}")
-        print(f"DEBUG - Secret Key: {secret_key}")
-        print(f"DEBUG - Region: {region}")
 
         # Ensure all required parameters exist
         missing_keys = []
@@ -94,7 +84,13 @@ class S3Source(SourceBase):
 
         # Convert to DLT resource
         def data_generator():
-            for line in file_content.splitlines():
-                yield line.split(",")  # Adjust based on file format
+            reader = csv.DictReader(StringIO(file_content))
+            for row in reader:
+                if row:  # Ensure empty rows are skipped
+                    yield row
+
+        # Debugging: Check row count
+        count = sum(1 for _ in data_generator())
+        print(f"DEBUG: Extracted {count} rows from S3")
 
         return dlt.resource(data_generator(), name=table_name)
