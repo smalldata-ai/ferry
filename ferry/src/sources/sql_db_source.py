@@ -1,6 +1,4 @@
 import dlt
-from urllib.parse import urlparse
-
 from dlt.sources.sql_database import sql_database
 from ferry.src.sources.source_base import SourceBase
 
@@ -13,6 +11,9 @@ class SqlDbSource(SourceBase):
         credentials = super().create_credentials(uri)
         source = sql_database(credentials)
         incremental = None
+
+        dbt = dlt.dbt.package()
+
         if kwargs.get("incremental_config"):
             incremental_config = kwargs.get("incremental_config")
             incremental = dlt.sources.incremental(
@@ -36,5 +37,3 @@ class SqlDbSource(SourceBase):
             yield from source.with_resources(table_name)
 
         return resource_function
-    
-    
