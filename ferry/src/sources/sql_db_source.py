@@ -12,8 +12,6 @@ class SqlDbSource(SourceBase):
         source = sql_database(credentials)
         incremental = None
 
-        dbt = dlt.dbt.package()
-
         if kwargs.get("incremental_config"):
             incremental_config = kwargs.get("incremental_config")
             incremental = dlt.sources.incremental(

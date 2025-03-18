@@ -75,4 +75,11 @@ class IngestModel(BaseModel):
             return config
         else :
             return WriteDispositionType.REPLACE.value
+        
+    def get_destination_table_name(self):
+        return getattr(self.destination_meta, 'table_name', self.source_table_name)
+
+    def get_dataset_name(self, default_schema_name: str):
+        return getattr(self.destination_meta, 'dataset_name', default_schema_name),
+
     
