@@ -5,6 +5,7 @@ from ferry.src.data_models.ingest_model import IngestModel
 @pytest.fixture
 def valid_ingest_data():
     return {
+        "identity": "test_pipeline",
         "source_uri": "postgresql://user:password@localhost:5432/mydb",
         "destination_uri": "clickhouse://user:password@localhost:9000/mydb",
         "source_table_name": "source_table",
@@ -52,6 +53,7 @@ def test_missing_load_data_request_field(valid_ingest_data, field):
 @pytest.fixture
 def valid_ingest_data_with_destination_meta():
     return {
+        "identity": "test_pipeline",
         "source_uri": "postgresql://user:password@localhost:5432/mydb",
         "destination_uri": "clickhouse://user:password@localhost:9000/mydb",
         "source_table_name": "source_table",
@@ -69,6 +71,7 @@ def test_successfully_ingest_with_destination_meta(valid_ingest_data_with_destin
 @pytest.fixture
 def ingest_data_with_invalid_write_disposition():
     return {
+        "identity": "test_pipeline",
         "source_uri": "postgresql://user:password@localhost:5432/mydb",
         "destination_uri": "clickhouse://user:password@localhost:9000/mydb",
         "source_table_name": "source_table",
@@ -84,6 +87,7 @@ def test_validate_ingest_model_with_invalid_write_disposition(ingest_data_with_i
 @pytest.fixture
 def ingest_data_with_replace_write_disposition():
     return {
+        "identity": "test_pipeline",
         "source_uri": "postgresql://user:password@localhost:5432/mydb",
         "destination_uri": "clickhouse://user:password@localhost:9000/mydb",
         "source_table_name": "source_table",
@@ -105,6 +109,7 @@ def test_validate_ingest_model_with_replace_wd_and_strategy(ingest_data_with_rep
 @pytest.fixture
 def ingest_data_with_append_write_disposition():
     return {
+        "identity": "test_pipeline",
         "source_uri": "postgresql://user:password@localhost:5432/mydb",
         "destination_uri": "clickhouse://user:password@localhost:9000/mydb",
         "source_table_name": "source_table",
