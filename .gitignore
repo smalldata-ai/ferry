@@ -172,3 +172,22 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+execute_commands
+test.ipynb
+check_db.py
+create_duck_db.py
+duckdb_pipeline.duckdb
+sample_db.duckdb
+check_dt.py
+source.duckdb
+iris_db.duckdb
+duckdb_to_duckdb.duckdb
+source.duckdb
+data.csv
+text
+create_postgresql.py
+src.zip
+test.py
+showcase.ipynb
+stroke.duckdb
+destination1_duckdb.duckdb
