@@ -7,6 +7,7 @@ on:
   workflow_dispatch:  # Allows manual execution
 
 permissions:
+  contents: read
   pages: write  # Allow deployment to GitHub Pages
   id-token: write  # Required for OIDC authentication
 
@@ -17,12 +18,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install dependencies
         run: npm install
@@ -31,9 +32,9 @@ jobs:
         run: npm run docs:build
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/.vitepress/dist  # Adjust based on your output directory
+          path: docs/.vitepress/dist  
 
   deploy:
     environment:
