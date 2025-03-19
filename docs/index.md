@@ -9,9 +9,7 @@ hero:
     - text: "Get Started →"
       link: /guide/getting-started
       theme: brand
-    - text: "GitHub"
-      link: https://github.com/smalldata-ai/ferry
-      theme: alt
+    
 features:
   - title: 🚀 API First, CLI flexibility
     details: "Seamlessly integrate with gRPC & REST APIs or use the CLI for quick ingestion."
