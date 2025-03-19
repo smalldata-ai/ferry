@@ -24,7 +24,7 @@ class PipelineBuilder:
             destination = self.destination.dlt_target_system(self.model.destination_uri)
             self.pipeline = dlt.pipeline(
                 pipeline_name=self.model.identity,
-                dataset_name=self.model.resources[0].get_dataset_name(self.destination.default_schema_name()),
+                dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
                 progress=LogCollector(),
             )

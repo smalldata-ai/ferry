@@ -1,5 +1,4 @@
-from typing import List, Optional, Union
-from urllib.parse import urlparse
+from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
 
@@ -17,15 +16,10 @@ class SortOrder(Enum):
     ASC = "asc"
     DESC = "desc"
 
-class DestinationMeta(BaseModel):
-    """Configuration for optional destination parameters"""
-    table_name: Optional[str] = Field(None, description="Name of the destination table")
-    dataset_name: Optional[str] = Field(None, description="Name of the dataset")
-
 class ResourceConfig(BaseModel):
     """Configuration for a single resource"""
     source_table_name: str = Field(..., description="Name of the source table")
-    destination_meta: Optional[DestinationMeta] = Field(None, description="Optional configuration for destination database")
+    destination_table_name: Optional[str] = Field(None, description="Name of the destination table")
     incremental_config: Optional[IncrementalConfig] = Field(None, description="Incremental config params for loading data")
     write_disposition: Optional[WriteDispositionType] = Field(WriteDispositionType.REPLACE, description="Write disposition type for loading data")
     replace_config: Optional[ReplaceConfig] = Field(None, description="Configuration for full replace loading")
@@ -64,16 +58,14 @@ class ResourceConfig(BaseModel):
         return WriteDispositionType.REPLACE.value
 
     def get_destination_table_name(self) -> str:
-        return getattr(self.destination_meta, 'table_name', self.source_table_name) if self.destination_meta else self.source_table_name
-
-    def get_dataset_name(self, default_schema_name: str) -> str:
-        return getattr(self.destination_meta, 'dataset_name', default_schema_name) if self.destination_meta else default_schema_name
+        return getattr(self.destination_table_name, 'table_name', self.source_table_name) if self.destination_table_name else self.source_table_name
 
 class IngestModel(BaseModel):
     """Model for loading data between databases with multiple resources"""
     identity: str = Field(..., description="Identity for the pipeline")
     source_uri: str = Field(..., description="URI of the source database")
     destination_uri: str = Field(..., description="URI of the destination database")
+    dataset_name: Optional[str] = Field(None, description="Name of the dataset")
     resources: List[ResourceConfig] = Field(..., description="List of resources to ingest")
 
     @field_validator("source_uri", "destination_uri")
@@ -96,3 +88,6 @@ class IngestModel(BaseModel):
         if not v:
             raise ValueError("At least one resource must be provided")
         return v
+    
+    def get_dataset_name(self, default_schema_name: str) -> str:
+        return getattr(self.dataset_name, 'dataset_name', default_schema_name) if self.dataset_name else default_schema_name
