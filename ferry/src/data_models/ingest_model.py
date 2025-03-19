@@ -21,9 +21,11 @@ class DestinationMeta(BaseModel):
     """Configuration for optional destination parameters"""
     table_name: Optional[str] = Field(None, description="Name of the destination table")
     dataset_name: Optional[str] = Field(None, description="Name of the dataset")
+    exclude_columns: Optional[list[str]] = Field(None, description="List of columns to be excluded from ingestion")
 
 class IngestModel(BaseModel):
     """Model for loading data between databases"""
+    
     identity: str = Field(..., description="Identity for the pipeline")
     source_uri: str = Field(..., description="URI of the source database")
     destination_uri: str = Field(..., description="URI of the destination database")
@@ -75,4 +77,16 @@ class IngestModel(BaseModel):
             return config
         else :
             return WriteDispositionType.REPLACE.value
+        
+    def get_destination_table_name(self):
+        return getattr(self.destination_meta, 'table_name', self.source_table_name)
+
+    def get_dataset_name(self, default_schema_name: str):
+        return getattr(self.destination_meta, 'dataset_name', default_schema_name),
+
+
+    def get_exclude_columns(self) -> list[str]:
+        return self.destination_meta.exclude_columns if self.destination_meta and self.destination_meta.exclude_columns else []
+
+
     

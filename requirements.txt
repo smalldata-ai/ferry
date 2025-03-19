@@ -26,6 +26,6 @@ dlt[redshift]
 dlt[motherduck]
 dlt[sqlalchemy]
 dlt[qdrant]
-dlt[athena]
 snowflake-sqlalchemy
 pymongo==4.11.2
+pandas
