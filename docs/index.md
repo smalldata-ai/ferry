@@ -4,17 +4,17 @@ layout: home
 hero:
   name: "Ferry ⛴️"
   text: "Seamless, API-first Data Ingestion for Modern Workflows"
-  tagline: "Command-line simplicity, API flexibility, and built-in observability."
+  tagline: "Fast. Flexible. Observable. The modern way to move data."
   actions:
     - text: "Get Started →"
       link: /guide/getting-started
       theme: brand
     - text: "GitHub"
-      link: https://github.com/yourrepo/ferry
+      link: https://github.com/smalldata-ai/ferry
       theme: alt
 features:
   - title: 🚀 API First, CLI flexibility
-    details: "Use the CLI for quick ingestion or integrate seamlessly with gRPC & REST APIs."
+    details: "Seamlessly integrate with gRPC & REST APIs or use the CLI for quick ingestion"
   - title: 🔄 Multi-Source, Multi-Destination
     details: "Ingest from databases, APIs, streams, or files, and deliver data where you need it."
   - title: 📊 Built-in Observability
@@ -24,6 +24,7 @@ features:
   - title: 🤖 AI & Automation Friendly
     details: "Designed for AI-driven workflows, ML pipelines, and automated decisioning."
 ---
+<br><br>
 
 # Ferry ⛴️ – Ingest, Monitor, Automate.
 
