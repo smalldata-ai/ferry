@@ -17,7 +17,7 @@ hero:
 features:
   - icon:  🔗 
     title: Multi-Protocol Support
-    details: Supports REST API, gRPC, & CLI for flexible integration.
+    details: Supports REST API, gRPC, & CLI for flexible integrations.
   - icon: 🚀 
     title: Scalability
     details: Handles large-scale data transfers efficiently.
