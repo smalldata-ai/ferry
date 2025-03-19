@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.data_models.response_models import IngestResponse, LoadStatus
-from ferry.src.pipeline_builder import PipelineBuider
+from ferry.src.pipeline_builder import PipelineBuilder
 
 
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +35,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 def ingest(ingest_model: IngestModel):
     """API endpoint to trigger ingesting data from source to destination"""
     try:
-        pipeline = PipelineBuider(model=ingest_model).build()
+        pipeline = PipelineBuilder(model=ingest_model).build()
         pipeline.run()
         return IngestResponse(
             status=LoadStatus.SUCCESS.value,
