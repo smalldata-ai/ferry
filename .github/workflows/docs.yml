@@ -4,39 +4,49 @@ on:
   push:
     branches:
       - main  # Change this if your default branch is different
-
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:  # Allows manual execution
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
+  pages: write  # Allow deployment to GitHub Pages
+  id-token: write  # Required for OIDC authentication
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18  # Adjust based on your VitePress setup
+          node-version: 20
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
       - name: Install dependencies
         run: npm install
 
       - name: Build VitePress site
-        run: npm run docs:build  # Adjust if your script is different
+        run: npm run docs:build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/.vitepress/dist  # Adjust based on your output directory
-          keep_files: false
-          force_orphan: true
+          path: docs/.vitepress/dist  
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

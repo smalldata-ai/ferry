@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "ferry",
+  title: "⛴️ ferry",
   description: "Lightweight & scalable data ingestion framework",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
@@ -15,7 +15,7 @@ export default defineConfig({
       {
         text: 'Guides',
         items: [
-          { text: 'Why Ferry', link: '/markdown-examples' },
+          { text: 'Why Ferry', link: '/guides/why-ferry' },
           { text: 'Getting Started', link: '/guides/getting-started' },
           { text: 'Write Disposition', link: '/api-examples' },
           { text: 'Merge Stratergy', link: '/api-examples' },
