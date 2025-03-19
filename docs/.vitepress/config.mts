@@ -4,6 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "⛴️ ferry",
   description: "Lightweight & scalable data ingestion framework",
+  base: "/ferry/",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -79,7 +80,7 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/smalldata-ai/' }
+      { icon: 'github', link: 'https://github.com/smalldata-ai/ferry' }
     ]
   }
 })
