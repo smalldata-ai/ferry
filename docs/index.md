@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Ferry ⛴️"
   text: "Seamless, API-first Data Ingestion for Modern Workflows"
-  tagline: "Fast. Flexible. Observable. The modern way to move data."
+  tagline: "Fast. Flexible. Observable. The intelligent way to move data."
   actions:
     - text: "Get Started →"
       link: /guide/getting-started
@@ -14,13 +14,15 @@ hero:
       theme: alt
 features:
   - title: 🚀 API First, CLI flexibility
-    details: "Seamlessly integrate with gRPC & REST APIs or use the CLI for quick ingestion"
+    details: "Seamlessly integrate with gRPC & REST APIs or use the CLI for quick ingestion."
   - title: 🔄 Multi-Source, Multi-Destination
     details: "Ingest from databases, APIs, streams, or files, and deliver data where you need it."
   - title: 📊 Built-in Observability
     details: "Monitor ingestion metrics, track errors, and get real-time insights."
-  - title: 🏗️ Extensible & Scalable
-    details: "Customize with plugins and scale effortlessly from batch to real-time workloads."
+  - title: 🔄 Smart Incremental Loading
+    details: "Ingest only new or changed data with efficient checkpointing to avoid redundant processing."
+  - title: 🔀 Merge Strategies for Seamless Updates
+    details: "Supports append, upsert, and merge strategies for handling real-time and batch data ingestion."  
   - title: 🤖 AI & Automation Friendly
     details: "Designed for AI-driven workflows, ML pipelines, and automated decisioning."
 ---
