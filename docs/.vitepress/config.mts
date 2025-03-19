@@ -16,7 +16,7 @@ export default defineConfig({
         text: 'Guides',
         items: [
           { text: 'Why Ferry', link: '/markdown-examples' },
-          { text: 'Getting Started', link: '/api-examples' },
+          { text: 'Getting Started', link: '/guides/getting-started' },
           { text: 'Write Disposition', link: '/api-examples' },
           { text: 'Merge Stratergy', link: '/api-examples' },
           { text: 'Incremental Loading', link: '/api-examples' },

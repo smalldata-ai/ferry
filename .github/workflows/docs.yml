@@ -1,0 +1,42 @@
+name: Deploy VitePress to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Change this if your default branch is different
+
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18  # Adjust based on your VitePress setup
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build VitePress site
+        run: npm run docs:build  # Adjust if your script is different
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/.vitepress/dist  # Adjust based on your output directory
+          keep_files: false
+          force_orphan: true
