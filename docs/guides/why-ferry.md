@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# Effortless Data Ingestion Across Multiple Interfaces
+# Effortless Data Ingestion
 
 Ferry is a lightweight, high-performance data ingestion tool designed for modern data workflows. Unlike traditional ETL tools that are often complex and heavyweight, Ferry provides a simple yet powerful way to move data from multiple sources to destinations with minimal setup.
 

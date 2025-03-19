@@ -2,14 +2,11 @@
 outline: deep
 ---
 
-
 # 🚀 Getting Started with Ferry
 
 Welcome to **Ferry ⛴️**, the lightweight and powerful data ingestion tool. Whether you're pulling data from a database, an API, or a file, **Ferry makes ingestion simple, fast, and observable**.
 
 This guide will walk you through installation and your first data ingestion example.
-
----
 
 ## 🛠️ Installation
 
@@ -24,9 +21,8 @@ Verify the installation:
 ferry --version
 ```
 
-
 ## Your First Data Ingestion
-Let's ingest data using cURL with Ferry’s REST API. In this example, we’ll send JSON data to a PostgreSQL database.
+Let's use cURL with Ferry’s REST API to ingest data. In this example, we'll transfer data from a PostgreSQL database to a ClickHouse database.
 
 ### Step 1: Start the Ferry Server
 Run the Ferry service locally:
@@ -36,7 +32,7 @@ ferry serve
 ```
 
 ### Step 2: Send Data Using cURL
-Use cURL to send a sample dataset from an HTTP API to a PostgreSQL database.
+Use cURL to transfer data from a PostgreSQL database to a ClickHouse database.
 
 ```sh
 curl -X POST http://localhost:8000/ingest \

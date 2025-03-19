@@ -1,6 +1,6 @@
 # Ferry
 
-![Ferry](https://github.com/smalldata-ai/ferry)  
+![Ferry](Ferry ⛴️)  
 *A lightweight and scalable data ingestion framework*
 
 ## Overview

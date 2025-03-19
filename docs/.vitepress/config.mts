@@ -9,15 +9,15 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       
-      { text: 'Docs', link: '/markdown-examples' }
+      { text: 'Docs', link: '/guides/getting-started' }
     ],
 
     sidebar: [
       {
         text: 'Guides',
         items: [
-          { text: 'Why Ferry', link: '/guides/why-ferry' },
           { text: 'Getting Started', link: '/guides/getting-started' },
+          { text: 'Why Ferry', link: '/guides/why-ferry' },
           { text: 'Write Disposition', link: '/guides/write-disposition' },
           { text: 'Merge Strategy', link: '/guides/merge-strategy' },
           { text: 'Incremental Loading', link: '/guides/incremental-loading' },
@@ -81,6 +81,11 @@ export default defineConfig({
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/smalldata-ai/ferry' }
-    ]
+    ],
+    footer: {
+      message: 'Released under the MIT License.',
+      copyright: 'Copyright © 2025'
+    }
+
   }
 })
