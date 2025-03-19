@@ -3,13 +3,13 @@ name: Deploy VitePress to GitHub Pages
 on:
   push:
     branches:
-      - main  # Change this if your default branch is different
-  workflow_dispatch:  # Allows manual execution
+      - main  
+  workflow_dispatch: 
 
 permissions:
   contents: read
-  pages: write  # Allow deployment to GitHub Pages
-  id-token: write  # Required for OIDC authentication
+  pages: write  
+  id-token: write  
 
 jobs:
   build:
@@ -31,7 +31,9 @@ jobs:
         run: npm install
 
       - name: Build VitePress site
-        run: npm run docs:build
+        run: |
+          npm run docs:build
+          touch docs/.vitepress/dist/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
