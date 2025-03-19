@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "ferry"
   text: "Effortlessly replicate data from source to destination."
-  tagline: A lightweight and scalable data ingestion framework
+  tagline: Lightweight & scalable data ingestion framework
   actions:
     - theme: brand
       text: Markdown Examples
@@ -15,11 +15,14 @@ hero:
       link: /api-examples
 
 features:
-  - title: Multi-Protocol Support
+  - icon:  🔗 
+    title: Multi-Protocol Support
     details: Supports REST API, gRPC, & CLI for flexible integration.
-  - title: Scalability
+  - icon: 🚀 
+    title: Scalability
     details: Handles large-scale data transfers efficiently.
-  - title: Monitoring & Observability
+  - icon: 👀 
+    title: Monitoring & Observability
     details: Tracks records transferred, volume, and job status.
 ---
 
