@@ -1,6 +1,7 @@
 from typing import Optional
 import dlt
 import logging
+import dlt.cli
 from dlt.common.pipeline import LoadInfo
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
@@ -19,12 +20,14 @@ class PipelineBuider:
 
     def build(self):
         try:
-            destination = self.destination.dlt_target_system(self.model.destination_uri)
+            destination_target = self.destination.dlt_target_system(self.model.destination_uri)
             self.destination_table_name = self.model.get_destination_table_name()
+            default_schema_name = self.destination.default_schema_name()
             self.pipeline = dlt.pipeline(
                 pipeline_name=self.model.identity, 
-                dataset_name= self.model.get_dataset_name(self.destination.default_schema_name()),
-                destination=destination, progress=LogCollector(),)            
+                dataset_name= self.model.get_dataset_name(default_schema_name),
+                destination=destination_target, progress=LogCollector())            
+            
             return self
         except Exception as e:
             logger.exception(f"Failed to create pipeline: {e}")
@@ -34,10 +37,10 @@ class PipelineBuider:
         try:
             run_info: LoadInfo = self.pipeline.run(
                     data=self._build_source_resource(), 
-                    table_name=self.destination_table_name,)
-            logger.info(run_info.metrics)
-            logger.info(run_info.load_packages)
-            logger.info(run_info.writer_metrics_asdict)
+                    table_name=self.destination_table_name)
+            # logger.info(run_info.metrics)
+            # logger.info(run_info.load_packages)
+            # logger.info(run_info.writer_metrics_asdict)
             
         except Exception as e:
             logger.exception(f"Unexpected error in full load: {e}")
