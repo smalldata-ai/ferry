@@ -8,15 +8,16 @@ pytest==8.3.4
 pytest-asyncio==0.25.3
 httpx==0.28.1
 psycopg2==2.9.10
-boto3
-pandas
-duckdb-engine
+boto3==1.37.1
+pandas==2.2.3
+duckdb-engine==0.15.0
 duckdb==1.2.1
-dlt[duckdb]
-dlt[clickhouse]
-dlt[filesystem]
+dlt[duckdb]==1.6.1
+dlt[clickhouse]==1.6.1
+dlt[filesystem]==1.6.1
 clickhouse-sqlalchemy==0.3.2
 clickhouse-connect==0.8.15
+<<<<<<< HEAD
 dlt[snowflake]
 dlt[bigquery]
 dlt[databricks]
@@ -27,5 +28,18 @@ dlt[motherduck]
 dlt[sqlalchemy]
 dlt[qdrant]
 snowflake-sqlalchemy
+=======
+dlt[snowflake]==1.6.1
+dlt[bigquery]==1.6.1
+dlt[databricks]==1.6.1
+dlt[synapse]==1.6.1
+dlt[mssql]==1.6.1
+dlt[redshift]==1.6.1
+dlt[motherduck]==1.6.1
+dlt[sqlalchemy]==1.6.1
+dlt[qdrant]==1.6.1
+dlt[athena]==1.6.1
+snowflake-sqlalchemy==1.7.3
+>>>>>>> 0f09ca6a9d0685c260dbcab6b2879976557665fd
 pymongo==4.11.2
 pandas
