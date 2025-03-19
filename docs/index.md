@@ -23,6 +23,6 @@ features:
     details: Handles large-scale data transfers efficiently.
   - icon: 👀 
     title: Monitoring & Observability
-    details: Tracks records transferred, volume, and job status.
+    details: Tracks records transferred, volume, and job status in real-time.
 ---
 
