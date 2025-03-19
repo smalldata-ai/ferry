@@ -5,7 +5,10 @@ __pycache__/
 
 # C extensions
 *.so
-
+node_modules/
+# Vite
+docs/.vitepress/dist
+docs/.vitepress/cache
 # Distribution / packaging
 .Python
 build/
