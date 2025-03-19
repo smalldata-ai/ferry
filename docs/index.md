@@ -7,7 +7,7 @@ hero:
   tagline: "Fast. Flexible. Observable. The intelligent way to move data."
   actions:
     - text: "Get Started →"
-      link: /guide/getting-started
+      link: /guides/getting-started
       theme: brand
     
 features:

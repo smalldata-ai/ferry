@@ -17,10 +17,10 @@ export default defineConfig({
         items: [
           { text: 'Why Ferry', link: '/guides/why-ferry' },
           { text: 'Getting Started', link: '/guides/getting-started' },
-          { text: 'Write Disposition', link: '/api-examples' },
-          { text: 'Merge Stratergy', link: '/api-examples' },
-          { text: 'Incremental Loading', link: '/api-examples' },
-          { text: 'Monitoring', link: '/api-examples' },
+          { text: 'Write Disposition', link: '/guides/write-disposition' },
+          { text: 'Merge Strategy', link: '/guides/merge-strategy' },
+          { text: 'Incremental Loading', link: '/guides/incremental-loading' },
+          { text: 'Observability', link: '/guides/observability' },
         ]
       },
       {
