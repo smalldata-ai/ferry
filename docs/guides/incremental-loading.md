@@ -11,6 +11,27 @@ Incremental loading in Ferry works by tracking changes in the source data using 
 5. **Update the State Store**: Persist the latest processed state for use in the next incremental load.
 
 
+
+## Example
+```js
+{
+    "identity": "fgXOw4zY"
+    "source_uri": "postgresql://postgres:@localhost:5432/db_name",
+    "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0",
+    "resources": [
+      {
+        "source_table_name": "users",
+        "write_disposition": "append",
+        "incremental_config": { // [!code focus]
+          "incremental_key": "id", // [!code focus]
+          "start_position": 167856, // [!code focus]
+          "end_position": 189654, // [!code focus]
+          "boundary_mode": true // [!code focus]
+        } // [!code focus]
+      }
+    ]
+}
+```
 ## Parameters Table
 
 
@@ -21,5 +42,6 @@ Incremental loading in Ferry works by tracking changes in the source data using 
 | `end_position`    | `integer/datetime` | **(Optional)** The ending value for incremental loading, similar to `start_position`. |
 | `lag_window`      | `float` | **(Optional)** A float value specifying a "look-back" window to include past data relative to the last fetched incremental data. Useful for handling late-arriving records. |
 | `boundary_mode`   | `bool` | **(Optional)** Defines how to include/exclude the start and end cursor positions. Determines whether boundary values are inclusive or exclusive. |
+
 
 
