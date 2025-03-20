@@ -36,8 +36,8 @@ export default defineConfig({
               { text: 'Merge', link: '/guides/wd-merge',
                items: [
                 { text: 'delete-insert', link: '/guides/merge-delete-insert' },
-                { text: 'scd2', link: '/guides/wd-replace' },
-                { text: 'upsert', link: '/guides//merge-upsert' },
+                { text: 'scd2', link: '/guides/merge-scd2' },
+                { text: 'upsert', link: '/guides/merge-upsert' },
               ]
               },
 
