@@ -62,8 +62,8 @@ export default defineConfig({
         text: 'Sources',
         items: [
           { text: 'Postgres', link: '/sources/postgres' },
-          { text: 'MySQL', link: '/sources/postgres' },
-          { text: 'MongoDb', link: '/sources/postgres' },
+          { text: 'MySQL', link: '/sources/mysql' },
+          { text: 'MongoDb', link: '/sources/mongodb' },
           { text: 'DuckDb', link: '/sources/duckdb' },
           { text: 'S3', link: '/sources/s3' },
           { text: 'Sqlite', link: '/sources/sqlite' },

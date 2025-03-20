@@ -6,10 +6,6 @@ title: Using PostgreSQL as a Source in Ferry
 
 Ferry allows you to ingest data **from a PostgreSQL database** and move it to different destinations like **data warehouses, APIs, or other databases**. 
 
-With built-in **incremental loading, merge strategies, and observability**, Ferry makes it easy to extract and transfer data from PostgreSQL efficiently.
-
----
-
 ## 📌 Prerequisites
 
 Before using PostgreSQL as a source, ensure:
@@ -17,14 +13,23 @@ Before using PostgreSQL as a source, ensure:
 - You have a valid **connection string** (`postgres://user:password@host:port/database`).
 - The required table exists in your PostgreSQL database.
 
----
+## `source_uri` Format
+To connect Ferry to a PostgreSQL database, use the following connection string format:
 
-## 🛠️ Ingesting Data from PostgreSQL
+```plaintext
+  postgresql://<username>:<password>@<host>:<port>/<database-name>?sslmode=<sslmode>
+```
 
-You can extract data from a PostgreSQL database using **Ferry’s CLI** or **REST API**.
+### Parameters:
+- **`<username>`** – PostgreSQL username.
+- **`<password>`** – PostgreSQL password.
+- **`<host>`** – Database host (e.g., `localhost` or `db.example.com`).
+- **`<port>`** – PostgreSQL port (default: `5432`).
+- **`<database-name>`** – Name of the database.
+- **`<sslmode>`** – SSL mode (`disable`, `allow`, `prefer`, `require`, `verify-ca`, `verify-full`).
 
-### **CLI Example**
-```sh
-ferry ingest postgres://user:password@host:port/database \
-  --source-table orders \
-  --destination warehouse
+## `source_table_name` Format
+
+```plaintext
+  public.users
+```

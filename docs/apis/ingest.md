@@ -3,7 +3,7 @@ The ingest api is the core api to move data between source and destination.
 
 
 ## Example
-This is a simple api request to move data between `PostgreSQL` database to a `ClickHouse` data warehouse.
+This is a simple api request to move data between source database to a destination data warehouse.
 ```json
 {
   "identity": "string",
