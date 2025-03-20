@@ -12,10 +12,8 @@ The **Upsert Strategy** is used to efficiently update existing records while ins
 - In **event-driven architectures**, where real-time updates are needed in a data pipeline.
 
 ## Example
-```sh
-curl -X POST http://localhost:8000/ingest \
-  -H "Content-Type: application/json" \
-  -d '{
+```js
+{
     "identity": "fgXOw4zY"
     "source_uri": "postgresql://postgres:@localhost:5432/db_name",
     "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0",
@@ -23,16 +21,16 @@ curl -X POST http://localhost:8000/ingest \
       {
         "source_table_name": "users",
         "write_disposition": "merge",
-        "merge_config": {
-            "strategy": "upsert",
-            "upsert_config": {
-                "primary_key": "id",
-                "hard_delete_column": "deleted_at",
-            }
-        }
+        "merge_config": { // [!code focus]
+            "strategy": "upsert", // [!code focus]
+            "upsert_config": { // [!code focus]
+                "primary_key": "id", // [!code focus]
+                "hard_delete_column": "deleted_at", // [!code focus]
+            }// [!code focus] 
+        }// [!code focus]
       }
     ]
-  }'
+}
 ```
 
 ## Parameters Table
@@ -56,4 +54,4 @@ curl -X POST http://localhost:8000/ingest \
 - If this column is present and marked (e.g., `is_deleted = True`), the corresponding record will be removed before inserting new data.
 
 > [!WARNING]
-> If the merge write disposition is used without specifying merge or primary keys, it will default to append mode. In this case, the new data will be inserted from a staging table as a single transaction for most destinations.
+> The primary-key is expected to be unique.De-duplication is not handled in this strategy.

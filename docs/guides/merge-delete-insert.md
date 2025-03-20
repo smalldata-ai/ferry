@@ -13,10 +13,8 @@ The **delete-insert Strategy** is a data update approach where outdated records 
 
 
 ## Example
-```sh
-curl -X POST http://localhost:8000/ingest \
-  -H "Content-Type: application/json" \
-  -d '{
+```js
+{
     "identity": "fgXOw4zY"
     "source_uri": "postgresql://postgres:@localhost:5432/db_name",
     "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0",
@@ -24,18 +22,18 @@ curl -X POST http://localhost:8000/ingest \
       {
         "source_table_name": "users",
         "write_disposition": "merge",
-        "merge_config": {
-            "strategy": "delete-insert",
-            "delete_insert_config": {
-                "primary_key": "id",
-                "merge_key": "user_uid",
-                "hard_delete_column": "deleted_at",
-                "dedup_sort_column": {"registered_at": "asc"}
-            }
-        }
+        "merge_config": { // [!code focus]
+            "strategy": "delete-insert",// [!code focus]
+            "delete_insert_config": { // [!code focus]
+                "primary_key": "id", // [!code focus]
+                "merge_key": "user_uid", // [!code focus]
+                "hard_delete_column": "deleted_at", // [!code focus]
+                "dedup_sort_column": {"registered_at": "asc"} // [!code focus]
+            } // [!code focus]
+        } // [!code focus]
       }
     ]
-  }'
+}
 ```
 ## Parameters Table
 

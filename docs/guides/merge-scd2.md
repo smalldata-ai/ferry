@@ -13,10 +13,8 @@
 - To support **time-travel queries**, enabling analysis of past data states.
 
 ## Example
-```sh
-curl -X POST http://localhost:8000/ingest \
-  -H "Content-Type: application/json" \
-  -d '{
+```js
+{
     "identity": "fgXOw4zY"
     "source_uri": "postgresql://postgres:@localhost:5432/db_name",
     "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0",
@@ -24,19 +22,19 @@ curl -X POST http://localhost:8000/ingest \
       {
         "source_table_name": "users",
         "write_disposition": "merge",
-        "merge_config": {
-            "strategy": "scd2",
-            "scd2_config": {
-                "natural_merge_key": "id",
-                "partition_merge_key": "oo",
-                "validity_column_names": "oo",
-                "active_record_timestamp": "oo",
-                "use_boundary_timestamp": "oo",
-            }
-        }
+        "merge_config": { // [!code focus]
+            "strategy": "scd2", // [!code focus]
+            "scd2_config": { // [!code focus]
+                "natural_merge_key": "id", // [!code focus]
+                "partition_merge_key": "oo", // [!code focus]
+                "validity_column_names": "oo", // [!code focus]
+                "active_record_timestamp": "oo", // [!code focus]
+                "use_boundary_timestamp": "oo", // [!code focus]
+            } // [!code focus]
+        } // [!code focus]
       }
     ]
-  }'
+}
 ```
 
 ## Parameters Table
