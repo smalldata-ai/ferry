@@ -7,9 +7,20 @@ export default defineConfig({
   base: "/ferry/",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    
     nav: [
-      
-      { text: 'Docs', link: '/guides/getting-started' }
+        
+        {
+          text: 'Guide',
+          items: [
+            { text: 'Getting Started', link: '/guides/getting-started' },
+            { text: 'API', link: '/item-2' },
+            { text: 'gRPC', link: '/item-2' },
+            { text: 'CLI', link: '/item-2' },
+            { text: 'Sources', link: '/sources/' },
+            { text: 'Destinations', link: '/sources/' }
+          ]
+        }
     ],
 
     sidebar: [
@@ -85,7 +96,8 @@ export default defineConfig({
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Copyright © 2025'
-    }
+    },
+    
 
   }
 })

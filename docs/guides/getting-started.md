@@ -40,7 +40,10 @@ curl -X POST http://localhost:8000/ingest \
   -d '{
     "identity": ""
     "source_uri": "postgresql://postgres:@localhost:5432/db_name",
-    "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0"
+    "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0",
+    "resources": [
+      {"source_table_name": "users"}
+    ]
   }'
 ```
 
@@ -48,5 +51,7 @@ URI parameters:
 - `identity`: a unique identifier for the pipeline
 - `source_uri`: the source database uri
 - `destination_uri`: the destination database uri
+- `resources`: a list of resources you want to ingest
 
 ### Step 3: Check Data Transfer Status
+
