@@ -47,11 +47,11 @@ curl -X POST http://localhost:8000/ingest \
   }'
 ```
 
-URI parameters:
+Required parameters:
 - `identity`: a unique identifier for the ingestion
 - `source_uri`: the source database uri
 - `destination_uri`: the destination database uri
 - `resources`: a list of resources you want to ingest
 
-### Step 3: Check Data Transfer Status
+
 

@@ -51,9 +51,9 @@ export default defineConfig({
       {
         text: 'API',
         items: [
-          { text: 'Ingest', link: '/rest-api/ingest' },
-          { text: 'Metrics', link: '/rest-api/metrics' },
-          { text: 'Schema', link: '/rest-api/schema' },
+          { text: '/ingest', link: '/apis/ingest' },
+          { text: '/metrics', link: '/apis/metrics' },
+          { text: '/schema', link: '/apis/schema' },
         ]
       },
       { text: 'CLI', link: '/item-2' },
