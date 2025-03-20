@@ -27,6 +27,7 @@ class PipelineBuilder:
                 dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
                 progress=LogCollector(),
+                export_schema_path=".schemas",
             )
             return self
         except Exception as e:
@@ -49,6 +50,7 @@ class PipelineBuilder:
     def _build_source_resources(self):
         """Builds a list of dlt resources"""
         self.source_resources = self.source.dlt_source_system(
+            identity=self.model.identity,
             uri=self.model.source_uri,
             resources=self.model.resources,
         )

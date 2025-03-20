@@ -65,7 +65,7 @@ class SqlDbSource(SourceBase):
             resources_list.append(resource_function())
 
         return DltSource(
-            schema=dlt.Schema("sql_db_source"),
+            schema=dlt.Schema(str(kwargs.get("identity"))),
             section="sql_db_source",
             resources=resources_list
         )
