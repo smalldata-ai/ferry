@@ -58,7 +58,7 @@ class ResourceConfig(BaseModel):
         return WriteDispositionType.REPLACE.value
 
     def get_destination_table_name(self) -> str:
-        return getattr(self.destination_table_name, 'table_name', self.source_table_name) if self.destination_table_name else self.source_table_name
+        return getattr(self.destination_table_name, 'table_name', self.destination_table_name) if self.destination_table_name else self.source_table_name
 
 class IngestModel(BaseModel):
     """Model for loading data between databases with multiple resources"""
@@ -90,4 +90,4 @@ class IngestModel(BaseModel):
         return v
     
     def get_dataset_name(self, default_schema_name: str) -> str:
-        return getattr(self.dataset_name, 'dataset_name', default_schema_name) if self.dataset_name else default_schema_name
+        return getattr(self.dataset_name, 'dataset_name', self.dataset_name) if self.dataset_name else default_schema_name
