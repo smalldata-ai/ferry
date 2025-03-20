@@ -29,8 +29,21 @@ export default defineConfig({
         items: [
           { text: 'Getting Started', link: '/guides/getting-started' },
           { text: 'Why Ferry', link: '/guides/why-ferry' },
-          { text: 'Write Disposition', link: '/guides/write-disposition' },
-          { text: 'Merge Strategy', link: '/guides/merge-strategy' },
+          { text: 'Write Disposition', link: '/guides/write-disposition' ,
+            items: [
+              { text: 'Replace', link: '/guides/wd-replace' },
+              { text: 'Append', link: '/guides/wd-append' },
+              { text: 'Merge', link: '/guides/wd-merge',
+               items: [
+                { text: 'delete-insert', link: '/guides/merge-delete-insert' },
+                { text: 'scd2', link: '/guides/wd-replace' },
+                { text: 'upsert', link: '/guides/wd-replace' },
+              ]
+              },
+
+            ]
+
+          },
           { text: 'Incremental Loading', link: '/guides/incremental-loading' },
           { text: 'Observability', link: '/guides/observability' },
         ]
@@ -43,22 +56,8 @@ export default defineConfig({
           { text: 'Schema', link: '/rest-api/schema' },
         ]
       },
-      {
-        text: 'CLI',
-        items: [
-          { text: 'Ingest', link: '/rest-api/ingest' },
-          { text: 'Metrics', link: '/rest-api/metrics' },
-          { text: 'Schema', link: '/rest-api/schema' },
-        ]
-      },
-      {
-        text: 'gRPC',
-        items: [
-          { text: 'Ingest', link: '/rest-api/ingest' },
-          { text: 'Metrics', link: '/rest-api/metrics' },
-          { text: 'Schema', link: '/rest-api/schema' },
-        ]
-      },
+      { text: 'CLI', link: '/item-2' },
+      { text: 'gRPC', link: '/item-2' },
       {
         text: 'Sources',
         items: [

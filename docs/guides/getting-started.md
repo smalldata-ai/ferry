@@ -38,7 +38,7 @@ Use cURL to transfer data from a `PostgreSQL` database to a `ClickHouse` data wa
 curl -X POST http://localhost:8000/ingest \
   -H "Content-Type: application/json" \
   -d '{
-    "identity": ""
+    "identity": "fgXOw4zY"
     "source_uri": "postgresql://postgres:@localhost:5432/db_name",
     "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0",
     "resources": [
@@ -48,7 +48,7 @@ curl -X POST http://localhost:8000/ingest \
 ```
 
 URI parameters:
-- `identity`: a unique identifier for the pipeline
+- `identity`: a unique identifier for the ingestion
 - `source_uri`: the source database uri
 - `destination_uri`: the destination database uri
 - `resources`: a list of resources you want to ingest
