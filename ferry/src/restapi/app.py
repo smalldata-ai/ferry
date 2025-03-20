@@ -1,6 +1,9 @@
 import logging
 from http.client import HTTPException
 import os
+import string
+import dlt
+
 from fastapi import FastAPI,Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -8,7 +11,8 @@ from pydantic import BaseModel
 import yaml
 
 from ferry.src.data_models.ingest_model import IngestModel
-from ferry.src.data_models.response_models import IngestResponse, LoadStatus
+from ferry.src.data_models.response_models import IngestResponse, LoadStatus, SchemaResponse
+from ferry.src.data_models.schema_request_model import SchemaRequest
 from ferry.src.pipeline_builder import PipelineBuilder
 
 
@@ -17,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-last_sent_schema_hashes = {}
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -41,33 +44,19 @@ def ingest(ingest_model: IngestModel):
         pipeline = PipelineBuilder(model=ingest_model).build()
         pipeline.run()
 
-        schema_file = f"{ingest_model.identity}.schema.yaml"
-        schema_path = os.path.join(".schemas", schema_file)
-
-        schema_data = None
+        pipeline_schema_path = os.path.join(".schemas", f"{ingest_model.identity}.schema.yaml")
         schema_version_hash = None
-        schema_status = None
 
-        if os.path.exists(schema_path):
-            with open(schema_path, "r") as f:
+        if os.path.exists(pipeline_schema_path):
+            with open(pipeline_schema_path, "r") as f:
                 schema_data = yaml.safe_load(f)
             schema_version_hash = schema_data.get("version_hash", "")
-            last_hash = last_sent_schema_hashes.get(schema_file, "")
-
-            if schema_version_hash != last_hash:
-                schema_status = "updated"
-                last_sent_schema_hashes[schema_file] = schema_version_hash
-            else:
-                schema_status = "unchanged"
-                schema_data = None
 
         return IngestResponse(
             status=LoadStatus.SUCCESS.value,
             message="Data Ingestion is completed successfully",
             pipeline_name=pipeline.get_name(),
-            schema_status=schema_status,
             schema_version_hash=schema_version_hash,
-            schema_data=schema_data,
         )
     except Exception as e:
         logger.exception(f" Error processing: {e}")
@@ -75,3 +64,13 @@ def ingest(ingest_model: IngestModel):
             status_code=500,
             content={"status": "error", "message": f"An internal server error occured"}
         )
+
+@app.get("/schema")
+def get_schema(schema_request: SchemaRequest):
+    pipeline = dlt.pipeline(pipeline_name=schema_request.pipeline_name)
+    schema = pipeline.default_schema.to_dict()
+
+    return SchemaResponse(
+        pipeline_name=schema_request.pipeline_name,
+        pipeline_schema=schema,
+    )
