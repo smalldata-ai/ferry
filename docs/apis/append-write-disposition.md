@@ -1,9 +1,10 @@
 # /ferry
-`write_disposition`=`append` appends new data to the destination. 
-This is suitable for stateless data, which doesn’t require modification.
+`write_disposition`=`append` 
+<br>
+Appends new data to the destination.This is suitable for stateless data, which doesn’t require modification.
 [Refer here](/guides/wd-append)
 
-## Example
+## Request Payload
 ```json
 {
   "identity": "string",
@@ -22,9 +23,6 @@ This is suitable for stateless data, which doesn’t require modification.
 ```
 
 ## Parameters Descriptions
-
-
----
 
 #### **Write Disposition (`write_disposition`)** *(Optional)* *(default: replace)*
 Determines how data is written:

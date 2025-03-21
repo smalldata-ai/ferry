@@ -61,9 +61,9 @@ export default defineConfig({
                   { text: 'append', link: '/apis/append-write-disposition' },
                   { text: 'merge', 
                     items: [
-                      { text: 'delete-insert', link: '/apis/ingest1' },
-                      { text: 'scd2', link: '/apis/ingest1' },
-                      { text: 'upsert', link: '/apis/ingest1' }, 
+                      { text: 'delete-insert', link: '/apis/merge-delete-insert' },
+                      { text: 'scd2', link: '/apis/merge-scd2' },
+                      { text: 'upsert', link: '/apis/merge-upsert' }, 
                     ]
                   },
                   
