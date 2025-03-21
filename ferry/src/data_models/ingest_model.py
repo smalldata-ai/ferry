@@ -65,7 +65,7 @@ class ResourceConfig(BaseModel):
     
 
     def get_destination_table_name(self) -> str:
-        return getattr(self.destination_table_name, 'table_name', self.source_table_name) if self.destination_table_name else self.source_table_name
+        return getattr(self.destination_table_name, 'table_name', self.destination_table_name) if self.destination_table_name else self.source_table_name
 
     
 # def pseudonymize_data(self, data: dict) -> dict:
@@ -110,10 +110,3 @@ class IngestModel(BaseModel):
     
     def get_dataset_name(self, default_schema_name: str) -> str:
         return getattr(self.dataset_name, 'dataset_name', default_schema_name) if self.dataset_name else default_schema_name
-    
-    def get_exclude_columns(self) -> List[str]:
-        """Returns a combined list of columns to exclude from all resources."""
-        return list({col for resource in self.resources if resource.exclude_columns for col in resource.exclude_columns})
-
-    
-    
