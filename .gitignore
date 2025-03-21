@@ -194,3 +194,5 @@ destination1_duckdb.duckdb
 check_api.py
 check_dlt.py
 checkdb.py
+schemas
+test.duckdb
