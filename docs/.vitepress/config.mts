@@ -80,30 +80,37 @@ export default defineConfig({
       {
         text: 'Sources',
         items: [
-          { text: 'Postgres', link: '/sources/postgres' },
-          { text: 'MySQL', link: '/sources/mysql' },
-          { text: 'MongoDb', link: '/sources/mongodb' },
+          { text: 'Azure Storage', link: '' },
+          { text: 'Clickhouse', link: '' },
           { text: 'DuckDb', link: '/sources/duckdb' },
+          { text: 'Google Cloud Storage', link: '' },
+          { text: 'Local File', link: '' },
+          { text: 'Mariadb', link: '/sources/mariadb' },
+          { text: 'MongoDb', link: '/sources/mongodb' },
+          { text: 'MySQL', link: '/sources/mysql' },
+          { text: 'Postgres', link: '/sources/postgres' },
           { text: 'S3', link: '/sources/s3' },
           { text: 'Sqlite', link: '/sources/sqlite' },
-          { text: 'Clickhouse', link: '' },
-          { text: 'Mariadb', link: '/sources/mariadb' },
-          { text: 'Azure Storage', link: '' },
-          { text: 'Google Cloud Storage', link: '' },
-          { text: 'Local File', link: '' }
         ]
       },
       {
         text: 'Destinations',
         items: [
-          { text: 'Postgres', link: '/destinations/postgres' },
-          { text: 'Clickhouse', link: '' },
-          { text: 'Duckdb', link: '' },
-          { text: 'Snowflake', link: '' },
-          { text: 'Sqlite', link: '' },
-          { text: 'MySQL', link: '' },
           { text: 'Athena', link: '' },
           { text: 'Bigquery', link: '' },
+          { text: 'Clickhouse', link: '' },
+          { text: 'Duckdb', link: '' },
+          { text: 'Motherduck', link: '' },
+          { text: 'MySQL', link: '' },
+          { text: 'Postgres', link: '/destinations/postgres' },
+          { text: 'Redshift', link: '' },
+          
+          
+          { text: 'Snowflake', link: '' },
+          { text: 'Sqlite', link: '' },
+          
+          
+          
         ]
       }
     ],
