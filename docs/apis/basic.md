@@ -1,9 +1,8 @@
 # /ingest
-
+The ingest api endpoint is the primary endpoint to initiate transfer of data between source and destination.
 
 
 ## Request Payload
-A sample structure for sending an ingest request:
 
 ```json
 {
@@ -37,7 +36,7 @@ A sample structure for sending an ingest request:
 ### **Resources Array**
 Each item in the `resources` array defines how a specific resources should be ingested.
 
-#### **Table Mapping**
+#### **Resource Fields**
 | Field                    | Type    | Required | Description |
 |--------------------------|---------|----------|-------------|
 | **`source_table_name`**  | string  | ✅ Yes   | Name of the source table. |
@@ -58,34 +57,35 @@ curl -X POST http://localhost:8000/ingest \
   }'
 ```
 
-### Move data between Postgres and Clickhouse.
-\+ `destination_table_name`
+### **Move data between S3 and Clickhouse.** 
+*(Optional `destination_table_name`)*
 ```sh
 curl -X POST http://localhost:8000/ingest \
   -H "Content-Type: application/json" \
   -d '{
     "identity": "fgXOw4zY"
-    "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
+    "source_uri": "s3://your-bucket?access_key_id=user_access_key_id&access_key_secret=user_access_key_secret&region=bucket_region",
     "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
     "resources": [
       {
-      "source_table_name": "users",
+      "source_table_name": "users/data/dump.csv",
       "destination_table_name": "dw_users"
       }
     ]
   }'
 ```
 
-### Move data between Postgres and Clickhouse.
-\+ `destination dataset`
+### Move data between Postgres and Duckdb.
+*(Optional `dataset`)*
+
 ```sh
 curl -X POST http://localhost:8000/ingest \
   -H "Content-Type: application/json" \
   -d '{
     "identity": "fgXOw4zY"
     "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
-    "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
-    "dataset": "public"
+    "destination_uri": "duckdb:///my_database.duckdb",
+    "dataset": "main"
     "resources": [
       {
       "source_table_name": "users"      
