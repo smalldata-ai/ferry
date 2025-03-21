@@ -17,11 +17,3 @@ class SqlDbSource(SourceBase):
         sql_source = sql_database(credentials)
 
         return sql_source.with_resources(table_name)
-
-            resources_list.append(resource_function())
-
-        return DltSource(
-            schema=dlt.Schema("sql_db_source"),
-            section="sql_db_source",
-            resources=resources_list
-        )
