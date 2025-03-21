@@ -191,3 +191,6 @@ test.py
 showcase.ipynb
 stroke.duckdb
 destination1_duckdb.duckdb
+check_api.py
+check_dlt.py
+checkdb.py

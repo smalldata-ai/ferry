@@ -4,6 +4,10 @@ from dlt.sources.sql_database import sql_database
 from dlt.extract.source import DltSource
 from ferry.src.data_models.ingest_model import ResourceConfig
 from ferry.src.sources.source_base import SourceBase
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class SqlDbSource(SourceBase):
     
@@ -18,6 +22,9 @@ class SqlDbSource(SourceBase):
 
         for resource_config in resources:
             table_name = resource_config.source_table_name
+            exclude_columns = resource_config.exclude_columns or []
+            logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}")
+
             incremental = None
 
             if resource_config.incremental_config:
@@ -59,8 +66,17 @@ class SqlDbSource(SourceBase):
                 merge_key=merge_key,
                 columns=columns,
             )
-            def resource_function(table_name=table_name):
-                yield from sql_source.with_resources(table_name)
+            def resource_function(table_name=table_name, exclude_columns=exclude_columns):
+                data = sql_source.with_resources(table_name)
+                    
+                for row in data:
+                    if not isinstance(row, dict):
+                        logger.warning(f"Skipping non-dictionary row: {row}")
+                        continue
+                    
+                    filtered_row = {k: v for k, v in row.items() if k not in exclude_columns}
+                    logger.debug(f"Processed row: {filtered_row}")
+                    yield filtered_row
 
             resources_list.append(resource_function())
 

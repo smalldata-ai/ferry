@@ -20,6 +20,8 @@ class ResourceConfig(BaseModel):
     """Configuration for a single resource"""
     source_table_name: str = Field(..., description="Name of the source table")
     destination_table_name: Optional[str] = Field(None, description="Name of the destination table")
+    exclude_columns: Optional[List[str]] = Field(None, description="List of columns to be excluded from ingestion")
+
     incremental_config: Optional[IncrementalConfig] = Field(None, description="Incremental config params for loading data")
     write_disposition: Optional[WriteDispositionType] = Field(WriteDispositionType.REPLACE, description="Write disposition type for loading data")
     replace_config: Optional[ReplaceConfig] = Field(None, description="Configuration for full replace loading")
@@ -46,6 +48,8 @@ class ResourceConfig(BaseModel):
             if self.merge_config is not None:
                 raise ValueError("Only replace_config is accepted when write_disposition is 'replace'")
         return self
+        
+
 
     def build_wd_config(self):
         if self.write_disposition in (WriteDispositionType.APPEND, WriteDispositionType.REPLACE):
@@ -56,9 +60,13 @@ class ResourceConfig(BaseModel):
                 config.update(self.merge_config.scd2_config.build_write_disposition_params())
             return config
         return WriteDispositionType.REPLACE.value
+    
 
     def get_destination_table_name(self) -> str:
         return getattr(self.destination_table_name, 'table_name', self.source_table_name) if self.destination_table_name else self.source_table_name
+
+    
+
 
 class IngestModel(BaseModel):
     """Model for loading data between databases with multiple resources"""
@@ -91,3 +99,10 @@ class IngestModel(BaseModel):
     
     def get_dataset_name(self, default_schema_name: str) -> str:
         return getattr(self.dataset_name, 'dataset_name', default_schema_name) if self.dataset_name else default_schema_name
+    
+    def get_exclude_columns(self) -> List[str]:
+        """Returns a combined list of columns to exclude from all resources."""
+        return list({col for resource in self.resources if resource.exclude_columns for col in resource.exclude_columns})
+
+    
+    
