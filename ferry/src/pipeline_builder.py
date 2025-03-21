@@ -7,6 +7,7 @@ from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.source_factory import SourceFactory
 from dlt.common.runtime.collector import LogCollector
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -49,14 +50,15 @@ class PipelineBuilder:
             raise e
 
     def _build_source_resources(self):
-        """Creates dlt resources for both SQL and S3 with column exclusion support."""
+        """Creates dlt resources for both SQL and S3 with column exclusion and pseudonymization support."""
         self.source_resources = []
 
         for resource_config in self.model.resources:
             table_name = resource_config.source_table_name
             exclude_columns = resource_config.exclude_columns or []
+            pseudonymizing_columns = resource_config.pseudonymizing_columns or []
 
-            logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}")
+            logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}, Pseudonymizing columns: {pseudonymizing_columns}")
 
             incremental = None
             if resource_config.incremental_config:
@@ -90,6 +92,16 @@ class PipelineBuilder:
                 else {}
             )
 
+            def pseudonymize_columns(row):
+                """Pseudonymizes specified columns using SHA-256 hashing."""
+                salt = "WI@N57%zZrmk#88c"
+                for col in pseudonymizing_columns:
+                    if col in row and row[col] is not None:
+                        sh = hashlib.sha256()
+                        sh.update((str(row[col]) + salt).encode())
+                        row[col] = sh.hexdigest()
+                return row
+
             @dlt.resource(
                 name=resource_config.get_destination_table_name(),
                 incremental=incremental,
@@ -111,8 +123,9 @@ class PipelineBuilder:
                         continue
 
                     filtered_row = {k: v for k, v in row.items() if k not in exclude_columns}
-                    logger.debug(f"Processed row: {filtered_row}")
-                    yield filtered_row
+                    pseudonymized_row = pseudonymize_columns(filtered_row)
+                    logger.debug(f"Processed row: {pseudonymized_row}")
+                    yield pseudonymized_row
 
             self.source_resources.append(resource_function())
 

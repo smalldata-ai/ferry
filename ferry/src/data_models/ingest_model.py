@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
+import hashlib
 
 from ferry.src.data_models.incremental_config_model import IncrementalConfig
 from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
@@ -21,6 +22,7 @@ class ResourceConfig(BaseModel):
     source_table_name: str = Field(..., description="Name of the source table")
     destination_table_name: Optional[str] = Field(None, description="Name of the destination table")
     exclude_columns: Optional[List[str]] = Field(None, description="List of columns to be excluded from ingestion")
+    pseudonymizing_columns: Optional[List[str]] = Field(None, description="List of columns to be pseudonymized")
 
     incremental_config: Optional[IncrementalConfig] = Field(None, description="Incremental config params for loading data")
     write_disposition: Optional[WriteDispositionType] = Field(WriteDispositionType.REPLACE, description="Write disposition type for loading data")
@@ -66,7 +68,16 @@ class ResourceConfig(BaseModel):
         return getattr(self.destination_table_name, 'table_name', self.source_table_name) if self.destination_table_name else self.source_table_name
 
     
-
+# def pseudonymize_data(self, data: dict) -> dict:
+#         """Apply pseudonymization to specified columns"""
+#         if self.pseudonymizing_columns:
+#             salt = 'WI@N57%zZrmk#88c'
+#             for col in self.pseudonymizing_columns:
+#                 if col in data:
+#                     sh = hashlib.sha256()
+#                     sh.update((data[col] + salt).encode())
+#                     data[col] = sh.hexdigest()
+#         return data
 
 class IngestModel(BaseModel):
     """Model for loading data between databases with multiple resources"""
