@@ -2,7 +2,8 @@ from typing import List
 import dlt
 from dlt.sources.sql_database import sql_database
 from dlt.extract.source import DltSource
-from ferry.src.data_models.ingest_model import ResourceConfig
+from ferry.src.data_models.ingest_model import ResourceConfig, WriteDispositionType
+from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
 from ferry.src.sources.source_base import SourceBase
 
 class SqlDbSource(SourceBase):
@@ -30,26 +31,21 @@ class SqlDbSource(SourceBase):
                     range_end=incremental_config.get("range_end", None),
                     lag=incremental_config.get("lag_window", 0),
                 )
-            
+
             write_disposition = resource_config.build_wd_config()
 
-            primary_key = (
-                resource_config.merge_config.build_pk_config()
-                if resource_config.merge_config
-                else []
-            )
+            primary_key = []
+            merge_key = []
+            columns = {}
 
-            merge_key = (
-                resource_config.merge_config.build_merge_key()
-                if resource_config.merge_config
-                else []
-            )
-            
-            columns = (
-                resource_config.merge_config.build_columns()
-                if resource_config.merge_config
-                else {}
-            )
+            if resource_config.write_disposition_config and resource_config.write_disposition_config.type == WriteDispositionType.MERGE.value:
+                strategy = resource_config.write_disposition_config.strategy
+                config = resource_config.write_disposition_config.config or {}
+
+                merge_config = MergeConfig(strategy=MergeStrategy(strategy), **config)
+                primary_key = merge_config.build_pk_config()
+                merge_key = merge_config.build_merge_key()
+                columns = merge_config.build_columns()
 
             @dlt.resource(
                 name=resource_config.get_destination_table_name(),

@@ -5,7 +5,7 @@ from enum import Enum
 class ReplaceStrategy(Enum):
     TRUNCATE_INSERT = "truncate-and-insert"
     INSERT_FROM_STAGING = "insert-from-staging"
-    STAGING_OPTIMIZED = "staging-optimized"    
+    STAGING_OPTIMIZED = "staging-optimized"
 
 
 class ReplaceConfig(BaseModel):
