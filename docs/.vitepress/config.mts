@@ -51,15 +51,24 @@ export default defineConfig({
       {
         text: 'API',
         items: [
-          { text: '/ingest', 
+          { text: '/ferry', 
             items: [
               { text: '- source to destination', link: '/apis/basic' },
               { text: '- incremental loading', link: '/apis/incremental-loading' },
-              { text: '- replace write disposition', link: '/apis/replace-write-disposition' },
-              { text: '- append write disposition', link: '/apis/append-write-disposition' },
-              { text: '- merge--delete-insert', link: '/apis/ingest1' },
-              { text: '- merge--scd2', link: '/apis/ingest1' },
-              { text: '- merge--upsert', link: '/apis/ingest1' },
+              { text: '- write disposition', 
+                items: [
+                  { text: 'replace', link: '/apis/replace-write-disposition' },
+                  { text: 'append', link: '/apis/append-write-disposition' },
+                  { text: 'merge', 
+                    items: [
+                      { text: 'delete-insert', link: '/apis/ingest1' },
+                      { text: 'scd2', link: '/apis/ingest1' },
+                      { text: 'upsert', link: '/apis/ingest1' }, 
+                    ]
+                  },
+                  
+                ]
+              }
             ]
           },
           { text: '/metrics', link: '/apis/metrics' },

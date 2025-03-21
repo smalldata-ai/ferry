@@ -1,5 +1,5 @@
-# /ingest
-Including `incremental_config` enables the ingest endpoint to fetch data incrementally from the source.
+# /ferry
+Including `incremental_config` enables the ferry endpoint to fetch data incrementally from the source.
 [Refer](/guides/incremental-loading)
 
 ## Request Payload

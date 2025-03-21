@@ -1,4 +1,4 @@
-# /ingest
+# /ferry
 `write_disposition`=`replace` involves completely refreshing your destination data. 
 All existing records are deleted and replaced with the latest data from the source during the current run.
 [Refer here](/guides/wd-replace)

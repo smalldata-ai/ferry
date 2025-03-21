@@ -1,5 +1,5 @@
-# /ingest
-The ingest api endpoint is the primary endpoint to initiate transfer of data between source and destination.
+# /ferry
+The ferry api endpoint is the primary endpoint to initiate transfer of data between source and destination.
 
 
 ## Request Payload

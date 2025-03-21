@@ -1,9 +1,9 @@
-# /ingest
-
-
+# /ferry
+`write_disposition`=`append` appends new data to the destination. 
+This is suitable for stateless data, which doesn’t require modification.
+[Refer here](/guides/wd-append)
 
 ## Example
-This api request body only moves incremental data between source and destination.
 ```json
 {
   "identity": "string",
