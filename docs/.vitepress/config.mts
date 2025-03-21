@@ -51,7 +51,17 @@ export default defineConfig({
       {
         text: 'API',
         items: [
-          { text: '/ingest', link: '/apis/ingest' },
+          { text: '/ingest', 
+            items: [
+              { text: '- basic', link: '/apis/basic' },
+              { text: '- incremental loading', link: '/apis/incremental-loading' },
+              { text: '- replace write disposition', link: '/apis/replace-write-disposition' },
+              { text: '- append write disposition', link: '/apis/append-write-disposition' },
+              { text: '- merge--delete-insert', link: '/apis/ingest1' },
+              { text: '- merge--scd2', link: '/apis/ingest1' },
+              { text: '- merge--upsert', link: '/apis/ingest1' },
+            ]
+          },
           { text: '/metrics', link: '/apis/metrics' },
           { text: '/schema', link: '/apis/schema' },
         ]
@@ -68,7 +78,7 @@ export default defineConfig({
           { text: 'S3', link: '/sources/s3' },
           { text: 'Sqlite', link: '/sources/sqlite' },
           { text: 'Clickhouse', link: '' },
-          { text: 'Mariadb', link: '' },
+          { text: 'Mariadb', link: '/sources/mariadb' },
           { text: 'Azure Storage', link: '' },
           { text: 'Google Cloud Storage', link: '' },
           { text: 'Local File', link: '' }

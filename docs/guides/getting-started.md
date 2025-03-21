@@ -39,8 +39,8 @@ curl -X POST http://localhost:8000/ingest \
   -H "Content-Type: application/json" \
   -d '{
     "identity": "fgXOw4zY"
-    "source_uri": "postgresql://postgres:@localhost:5432/db_name",
-    "destination_uri": "clickhouse://default:@localhost:9000/dlt?http_port=8123&secure=0",
+    "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
+    "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
     "resources": [
       {"source_table_name": "users"}
     ]
