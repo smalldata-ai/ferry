@@ -22,8 +22,10 @@ class S3Source(SourceBase):
 
         for resource_config in resources:
             table_name = resource_config.source_table_name
-            exclude_columns = resource_config.exclude_columns or []
-            pseudonymizing_columns = resource_config.pseudonymizing_columns or []
+            rules_dict = resource_config.column_rules if resource_config.column_rules else {}
+
+            exclude_columns = rules_dict.get("exclude_columns", [])
+            pseudonymizing_columns = rules_dict.get("pseudonymizing_columns", [])
 
             logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}, Pseudonymizing columns: {pseudonymizing_columns}")
 

@@ -21,11 +21,17 @@ class SqlDbSource(SourceBase):
         resources_list = []
 
         for resource_config in resources:
-            table_name = resource_config.source_table_name
-            exclude_columns = resource_config.exclude_columns or []
-            pseudonymizing_columns = resource_config.pseudonymizing_columns or []
+            table_name = resource_config.source_table_name  # ✅ Assign first
+
+            # ✅ Ensure column_rules exists
+            rules_dict = resource_config.column_rules if resource_config.column_rules else {}
+
+            # ✅ Extract exclude and pseudonymizing columns safely
+            exclude_columns = rules_dict.get("exclude_columns", [])
+            pseudonymizing_columns = rules_dict.get("pseudonymizing_columns", [])
 
             logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}, Pseudonymizing columns: {pseudonymizing_columns}")
+
             
             incremental = None
             if resource_config.incremental_config:
