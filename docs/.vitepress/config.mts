@@ -53,7 +53,7 @@ export default defineConfig({
         items: [
           { text: '/ingest', 
             items: [
-              { text: '- basic', link: '/apis/basic' },
+              { text: '- source to destination', link: '/apis/basic' },
               { text: '- incremental loading', link: '/apis/incremental-loading' },
               { text: '- replace write disposition', link: '/apis/replace-write-disposition' },
               { text: '- append write disposition', link: '/apis/append-write-disposition' },

@@ -2,8 +2,9 @@
 
 
 
-## Example
-This is a simple api request to move data between source database to a destination data warehouse.
+## Request Payload
+A sample structure for sending an ingest request:
+
 ```json
 {
   "identity": "string",
@@ -42,3 +43,76 @@ Each item in the `resources` array defines how a specific resources should be in
 | **`source_table_name`**  | string  | ✅ Yes   | Name of the source table. |
 | **`destination_table_name`** | string  | ❌ No   | Name of the destination table. Defaults to `source_table_name` |
 
+## Example 
+### Move data between Postgres and Clickhouse.
+```sh
+curl -X POST http://localhost:8000/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identity": "fgXOw4zY"
+    "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
+    "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
+    "resources": [
+      {"source_table_name": "users"}
+    ]
+  }'
+```
+
+### Move data between Postgres and Clickhouse.
+\+ `destination_table_name`
+```sh
+curl -X POST http://localhost:8000/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identity": "fgXOw4zY"
+    "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
+    "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
+    "resources": [
+      {
+      "source_table_name": "users",
+      "destination_table_name": "dw_users"
+      }
+    ]
+  }'
+```
+
+### Move data between Postgres and Clickhouse.
+\+ `destination dataset`
+```sh
+curl -X POST http://localhost:8000/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identity": "fgXOw4zY"
+    "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
+    "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
+    "dataset": "public"
+    "resources": [
+      {
+      "source_table_name": "users"      
+      }
+    ]
+  }'
+```
+
+### Move multiple tables from Postgres and Clickhouse.
+
+```sh
+curl -X POST http://localhost:8000/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identity": "fgXOw4zY"
+    "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
+    "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
+    "dataset": "public"
+    "resources": [
+      {
+      "source_table_name": "users",
+      "destination_table_name": "dw_users"      
+      },
+      {
+      "source_table_name": "products",
+      "destination_table_name": "dw_products"      
+      }
+    ]
+  }'
+```
