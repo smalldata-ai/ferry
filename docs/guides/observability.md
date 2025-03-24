@@ -52,12 +52,3 @@ Each phase (Extract, Normalize, Load) captures:
 - Retry or fallback behavior (if implemented)
 
 ---
-
-
-## ✅ Use Cases of Observability
-
-- Debugging failed or partial runs
-- Monitoring data freshness and volume trends
-- Alerting on anomalies or missing data
-- Auditing and compliance
-- Optimizing pipeline performance
