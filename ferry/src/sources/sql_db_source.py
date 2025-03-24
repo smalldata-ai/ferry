@@ -57,15 +57,21 @@ class SqlDbSource(SourceBase):
             )
             def resource_function():
                 data = sql_source.with_resources(table_name)
+                
+                # Only process if necessary
+                if not exclude_columns and not pseudonymizing_columns:
+                    yield from data
+                    return
+                
                 for row in data:
                     if not isinstance(row, dict):
                         logger.warning(f"Skipping non-dictionary row: {row}")
                         continue
 
-                    # Apply transformations only if necessary
                     if exclude_columns:
                         row = {k: v for k, v in row.items() if k not in exclude_columns}
-                    row = self._pseudonymize_columns(row, pseudonymizing_columns)
+                    if pseudonymizing_columns:
+                        row = self._pseudonymize_columns(row, pseudonymizing_columns)
 
                     logger.debug(f"Processed row: {row}")
                     yield row
