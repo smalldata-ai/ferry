@@ -20,7 +20,7 @@ class URIValidator:
 
     # Regex patterns for URI validation
     URI_PATTERNS = {
-        "sql": r"^(?P<scheme>\w+)://(?P<user>\w+)(:(?P<password>[^@]+))?@(?P<host>[\w.-]+)(:(?P<port>\d+))/(?P<db>\w+)",
+        "sql": r"^(?P<scheme>\w+)://(?P<user>\w+)(:(?P<password>[^@]*))?@(?P<host>[\w.-]+)(:(?P<port>\d+))/(?P<db>\w+)",
         "mongodb": r"^mongodb://(?P<user>\w+)(:(?P<password>[^@]+))?@(?P<host>[\w.-]+)(:(?P<port>\d+))/(?P<auth_db>\w+)?\?database=(?P<database>\w+)",
         "snowflake": r"^snowflake://(?P<user>\w+)(:(?P<password>[^@]+))@(?P<account>[\w.-]+)(/(?P<db>\w+))(/(?P<dataset>\w+))",
         "motherduck": r"^md://(?P<database>\w+)\?token=(?P<token>\w+)",

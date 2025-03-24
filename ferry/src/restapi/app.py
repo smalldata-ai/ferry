@@ -6,7 +6,10 @@ from pydantic import BaseModel
 
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.data_models.response_models import IngestResponse, LoadStatus
-from ferry.src.pipeline_builder import PipelineBuider
+from ferry.src.pipeline_builder import PipelineBuilder
+from dlt.common.pipeline import ExtractInfo, NormalizeInfo, LoadInfo
+
+from ferry.src.pipeline_metrics import PipelineMetrics
 
 
 logging.basicConfig(level=logging.INFO)
@@ -30,11 +33,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={"errors": error_dict}
     )
 
-@app.post("/ingest", response_model=IngestResponse)
+@app.post("/ferry", response_model=IngestResponse)
 def ingest(ingest_model: IngestModel):
-    """API endpoint to trigger ingesting data from source to destination"""
+    """API endpoint to ferry data from source to destination"""
     try:
-        pipeline = PipelineBuider(model=ingest_model).build()
+        pipeline = PipelineBuilder(model=ingest_model).build()
         pipeline.run()
         return IngestResponse(
             status=LoadStatus.SUCCESS.value,
@@ -47,3 +50,16 @@ def ingest(ingest_model: IngestModel):
             status_code=500,
             content={"status": "error", "message": f"An internal server error occured"}
         )
+    
+@app.get("/ferry/{identity}/observe")
+def observe(identity: str):
+    """API endpoint to observe a ferry pipeline"""
+    try:
+        result = PipelineMetrics(name=identity).generate_metrics()
+        return result
+    except Exception as e:
+        logger.exception(f" Error processing: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": f"An internal server error occured"}
+        )    

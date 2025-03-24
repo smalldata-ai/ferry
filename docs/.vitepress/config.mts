@@ -71,8 +71,8 @@ export default defineConfig({
               }
             ]
           },
-          { text: '/metrics', link: '/apis/metrics' },
-          { text: '/schema', link: '/apis/schema' },
+          { text: '/ferry/{id}/observe', link: '/apis/observe' },
+          { text: '/ferry/{id}/schema', link: '/apis/schema' },
         ]
       },
       { text: 'CLI', link: '/item-2' },
