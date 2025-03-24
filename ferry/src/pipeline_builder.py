@@ -1,4 +1,3 @@
-from typing import List
 import dlt
 import logging
 import dlt.cli
@@ -12,7 +11,6 @@ from dlt.common.runtime.collector import LogCollector
 logger = logging.getLogger(__name__)
 
 class PipelineBuilder:
-
 
     @classmethod
     def get_pipeline(cls, name: str) :
@@ -34,7 +32,8 @@ class PipelineBuilder:
                 dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
                 progress=LogCollector(),
-                export_schema_path="schemas",
+                # export_schema_path=".schemas",
+                # refresh="drop_resources",
             )
             return self
         except Exception as e:
@@ -50,10 +49,6 @@ class PipelineBuilder:
             logger.info(run_info.metrics)
             logger.info(run_info.load_packages)
             logger.info(run_info.writer_metrics_asdict)
-            # meta_pipeline = dlt.pipeline(pipeline_name="metadata", 
-            #              destination= DestinationFactory.get("duckdb:////Users/nikhil/Code/my_database.duckdb").dlt_target_system("duckdb:////Users/nikhil/Code/my_database.duckdb")
-            #              )
-            # meta_pipeline.run(data=[self.pipeline.last_trace], table_name="trace")
         except Exception as e:
             logger.exception(f"Unexpected error in full load: {e}")
             raise e

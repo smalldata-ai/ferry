@@ -32,5 +32,4 @@ class IncrementalConfig(BaseModel):
             "lag_window": self.lag_window,
             "range_start": "closed" if self.boundary_mode == BoundaryMode.START or self.boundary_mode == BoundaryMode.START_END  else "open",
             "range_end": "closed" if self.boundary_mode == BoundaryMode.END or self.boundary_mode == BoundaryMode.START_END  else "open",
-            "lag_window": self.lag_window,
         }
