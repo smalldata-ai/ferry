@@ -7,12 +7,8 @@ GET /ferry/{id}/observe
 
 | Parameter | Type   | Description                      |
 |-----------|--------|----------------------------------|
-| `id`      | string | Unique identifier of the pipeline instance |
+| `id`      | string | A unique identifier for the ingestion job.|
 
-
-## ✅ Response: 200 OK
-
-Returns observability metrics for the specified pipeline instance.
 
 ## 📊 Response Fields
 
