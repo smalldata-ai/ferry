@@ -53,7 +53,6 @@ class ResourceConfig(BaseModel):
             raise ValueError("Field must be provided")
         return v
 
-
     def build_wd_config(self):
         if self.write_disposition_config is None:
             return WriteDispositionType.REPLACE.value

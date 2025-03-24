@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 class PipelineBuilder:
 
-
     @classmethod
     def get_pipeline(cls, name: str) :
         return dlt.pipeline(pipeline_name=name)
@@ -50,10 +49,6 @@ class PipelineBuilder:
             logger.info(run_info.metrics)
             logger.info(run_info.load_packages)
             logger.info(run_info.writer_metrics_asdict)
-            # meta_pipeline = dlt.pipeline(pipeline_name="metadata", 
-            #              destination= DestinationFactory.get("duckdb:////Users/nikhil/Code/my_database.duckdb").dlt_target_system("duckdb:////Users/nikhil/Code/my_database.duckdb")
-            #              )
-            # meta_pipeline.run(data=[self.pipeline.last_trace], table_name="trace")
         except Exception as e:
             logger.exception(f"Unexpected error in full load: {e}")
             raise e
