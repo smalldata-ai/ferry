@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, ANY
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.destinations.clickhouse_destination import ClickhouseDestination
-from ferry.src.pipeline_builder import PipelineBuider
+from ferry.src.pipeline_builder import PipelineBuilder
 from ferry.src.source_factory import SourceFactory
 from ferry.src.sources.sql_db_source import SqlDbSource
 
