@@ -72,7 +72,6 @@ export default defineConfig({
             ]
           },
           { text: '/ferry/{id}/observe', link: '/apis/observe' },
-          { text: '/ferry/{id}/schema', link: '/apis/schema' },
         ]
       },
       { text: 'CLI', link: '/item-2' },
