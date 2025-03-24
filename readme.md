@@ -38,13 +38,14 @@ You can view the full documentation [here](https://smalldata-ai.github.io/ferry/
 | System                 | Source ✅ | Destination ✅ |
 |------------------------|:--------:|:-------------:|
 | **PostgreSQL** (`postgres`) | ✅ | ✅ |
+| **DuckDb** (`duckdb`) | ✅ | ✅ |
+| **Amazon S3** (`s3`) | ✅ | ✅ |
 | **MySQL** (`mysql`) | ✅ | ✅ |
 | **ClickHouse** (`clickhouse`) | ✅ | ✅ |
-| **Amazon S3** (`s3`) | ✅ | ✅ |
 | **Google Cloud Storage** (`gcs`) | ✅ | ✅ |
-| **HTTP API** (`http_api`) | ✅ | ❌ |
 | **Local Files** (`file`, CSV, JSON, Parquet) | ✅ | ✅ |
-| **Kafka** (`kafka`) | ✅ | ✅ |
+| **Snowflake** (`gcs`) | ✅ | ✅ |
+| **Mongodb** (`gcs`) | ✅ | ❌|
 | **BigQuery** (`bigquery`) | ❌ | ✅ |
 
 🔹 **Incremental loading** is available for **PostgreSQL, MySQL, ClickHouse, and file-based sources**.  
