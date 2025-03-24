@@ -29,34 +29,19 @@ class S3Source(SourceBase):
 
             logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}, Pseudonymizing columns: {pseudonymizing_columns}")
 
-            incremental = None
+            incremental_column = None
             if resource_config.incremental_config:
                 incremental_config = resource_config.incremental_config.build_config()
-                incremental = dlt.sources.incremental(
-                    cursor_path=incremental_config.get("incremental_key", None),
-                    initial_value=incremental_config.get("start_position", None),
-                    range_start=incremental_config.get("range_start", None),
-                    end_value=incremental_config.get("end_position", None),
-                    range_end=incremental_config.get("range_end", None),
-                    lag=incremental_config.get("lag_window", 0),
-                )
+                incremental_column = incremental_config.get("incremental_key", None)
 
             write_disposition = resource_config.build_wd_config()
             primary_key = resource_config.merge_config.build_pk_config() if resource_config.merge_config else []
             merge_key = resource_config.merge_config.build_merge_key() if resource_config.merge_config else []
             columns = resource_config.merge_config.build_columns() if resource_config.merge_config else {}
 
-            file_resource = self._create_file_resource(bucket_name, aws_credentials, table_name)
-
-            def pseudonymize_columns(row):
-                """Pseudonymizes specified columns using SHA-256 hashing."""
-                salt = "WI@N57%zZrmk#88c"
-                for col in pseudonymizing_columns:
-                    if col in row and row[col] is not None:
-                        sh = hashlib.sha256()
-                        sh.update((str(row[col]) + salt).encode())
-                        row[col] = sh.hexdigest()
-                return row
+            # Create file resource with incremental loading based on modification date
+            file_resource = filesystem(f"s3://{bucket_name}", aws_credentials, f"{table_name}*")
+            file_resource.apply_hints(incremental=dlt.sources.incremental("modification_date"))
 
             # Select reader based on file extension
             lower_table_name = table_name.lower()
@@ -71,21 +56,26 @@ class S3Source(SourceBase):
 
             @dlt.resource(
                 name=resource_config.get_destination_table_name(),
-                incremental=incremental,
+                incremental=dlt.sources.incremental(incremental_column) if incremental_column else None,
                 write_disposition=write_disposition,
                 primary_key=primary_key,
                 merge_key=merge_key,
                 columns=columns,
             )
             def resource_function():
-                for row in file_resource | reader():
+                for row in (file_resource | reader()):
                     if not isinstance(row, dict):
                         logger.warning(f"Skipping non-dictionary row: {row}")
                         continue
+                    
+                    # Remove excluded columns
                     filtered_row = {k: v for k, v in row.items() if k not in exclude_columns}
-                    pseudonymized_row = pseudonymize_columns(filtered_row)
-                    logger.debug(f"Processed row: {pseudonymized_row}")
-                    yield pseudonymized_row
+
+                    # Apply pseudonymization
+                    self._pseudonymize_columns(filtered_row, pseudonymizing_columns)
+
+                    logger.debug(f"Processed row: {filtered_row}")
+                    yield filtered_row
 
             resources_list.append(resource_function())
 
@@ -108,8 +98,11 @@ class S3Source(SourceBase):
         )
         return bucket_name, aws_credentials
 
-    def _create_file_resource(self, bucket_name: str, aws_credentials: AwsCredentials, table_name: str):
-        """Creates a dlt file resource with incremental loading."""
-        file_resource = filesystem(f"s3://{bucket_name}", aws_credentials, f"{table_name}*")
-        file_resource.apply_hints(incremental=dlt.sources.incremental("modification_date"))
-        return file_resource
+    def _pseudonymize_columns(self, row, pseudonymizing_columns):
+        """Pseudonymizes specified columns using SHA-256 hashing."""
+        salt = "WI@N57%zZrmk#88c"
+        for col in pseudonymizing_columns:
+            if col in row and row[col] is not None:
+                sh = hashlib.sha256()
+                sh.update((str(row[col]) + salt).encode())
+                row[col] = sh.hexdigest()
