@@ -74,8 +74,8 @@ export default defineConfig({
           { text: '/ferry/{id}/observe', link: '/apis/observe' },
         ]
       },
-      { text: 'CLI', link: '/item-2' },
-      { text: 'gRPC', link: '/item-2' },
+      { text: 'CLI', link: '/cli/coming-soon' },
+      { text: 'gRPC', link: '/gRPC/coming-soon' },
       {
         text: 'Sources',
         items: [
