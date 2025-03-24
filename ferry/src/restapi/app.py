@@ -7,6 +7,9 @@ from pydantic import BaseModel
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.data_models.response_models import IngestResponse, LoadStatus
 from ferry.src.pipeline_builder import PipelineBuilder
+from dlt.common.pipeline import ExtractInfo, NormalizeInfo, LoadInfo
+
+from ferry.src.pipeline_metrics import PipelineMetrics
 
 
 logging.basicConfig(level=logging.INFO)
@@ -48,32 +51,12 @@ def ingest(ingest_model: IngestModel):
             content={"status": "error", "message": f"An internal server error occured"}
         )
     
-@app.get("/ferry/{identity}")
-def ingest(identity: str):
-    """API endpoint to ferry data from source to destination"""
+@app.get("/ferry/{identity}/observe")
+def observe(identity: str):
+    """API endpoint to observe a ferry pipeline"""
     try:
-        pipeline = PipelineBuilder.get_pipeline(name=identity)
-        last_trace = pipeline.last_trace
-        pipeline.run([last_trace])
-
-        
-            
-        # Access the load package info
-            
-        
-        # Iterate over the tables in the load package
-        # for table_name, table_info in load_info.metrics.items():
-        #     print(f"  Table: {table_name}")
-        #     print(f"  Record Count: {table_info.row_count}")
-        #     print("-" * 30)
-        # else:
-        #     print("No trace information available. Run the pipeline first.")
-
-        # for table_name, table_info in normalize_info:
-        #     print(f"Table: {table_name}")
-        #     print(f"Record Count: {table_info['record_count']}")
-        #     print("-" * 30)
-        return {}
+        result = PipelineMetrics(name=identity).generate_metrics()
+        return result
     except Exception as e:
         logger.exception(f" Error processing: {e}")
         return JSONResponse(
