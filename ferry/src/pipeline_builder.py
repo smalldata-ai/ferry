@@ -1,6 +1,8 @@
 import dlt
 import logging
+import dlt.cli
 from dlt.common.pipeline import LoadInfo
+from numpy import identity
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.source_factory import SourceFactory
@@ -10,24 +12,29 @@ logger = logging.getLogger(__name__)
 
 class PipelineBuilder:
 
+
+    @classmethod
+    def get_pipeline(cls, name: str) :
+        return dlt.pipeline(pipeline_name=name)
+
     def __init__(self, model: IngestModel):
         self.model = model
         self.destination = DestinationFactory.get(self.model.destination_uri)
         self.source = SourceFactory.get(self.model.source_uri)
-        self.destination_table_names = []
         self.source_resources = []
 
     def build(self):
         """Builds the pipeline with multiple resources."""
         try:
             destination = self.destination.dlt_target_system(self.model.destination_uri)
+            
             self.pipeline = dlt.pipeline(
                 pipeline_name=self.model.identity,
                 dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
                 progress=LogCollector(),
-                export_schema_path=".schemas",
-                refresh="drop_resources",
+                # export_schema_path=".schemas",
+                # refresh="drop_resources",
             )
             return self
         except Exception as e:
@@ -43,6 +50,10 @@ class PipelineBuilder:
             logger.info(run_info.metrics)
             logger.info(run_info.load_packages)
             logger.info(run_info.writer_metrics_asdict)
+            # meta_pipeline = dlt.pipeline(pipeline_name="metadata", 
+            #              destination= DestinationFactory.get("duckdb:////Users/nikhil/Code/my_database.duckdb").dlt_target_system("duckdb:////Users/nikhil/Code/my_database.duckdb")
+            #              )
+            # meta_pipeline.run(data=[self.pipeline.last_trace], table_name="trace")
         except Exception as e:
             logger.exception(f"Unexpected error in full load: {e}")
             raise e
@@ -54,7 +65,6 @@ class PipelineBuilder:
             uri=self.model.source_uri,
             resources=self.model.resources,
         )
-        self.destination_table_names = [resource_config.get_destination_table_name() for resource_config in self.model.resources]
         return self.source_resources
 
     def get_name(self) -> str:
@@ -63,5 +73,4 @@ class PipelineBuilder:
     def __repr__(self):
         return (f"DataPipeline(source_uri={self.model.source_uri}, "
                 f"destination_uri={self.model.destination_uri}, "
-                f"source_tables={[r.source_table_name for r in self.model.resources]}, "
-                f"destination_tables={self.destination_table_names})")
+                f"source_tables={[r.source_table_name for r in self.model.resources]}, ")

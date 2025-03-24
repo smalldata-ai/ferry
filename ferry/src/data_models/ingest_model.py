@@ -73,11 +73,13 @@ class ResourceConfig(BaseModel):
             if self.write_disposition_config.strategy == MergeStrategy.SCD2.value:
                 config.update(self.write_disposition_config.config or {})
             return config
-        else:
+        else :
             return WriteDispositionType.REPLACE.value
-
+        
     def get_destination_table_name(self) -> str:
-        return getattr(self.destination_table_name, 'table_name', self.destination_table_name) if self.destination_table_name else self.source_table_name
+        if self.destination_table_name is None:
+            return self.source_table_name
+        return self.destination_table_name
 
 class IngestModel(BaseModel):
     """Model for loading data between databases with multiple resources"""

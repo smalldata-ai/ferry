@@ -1,5 +1,5 @@
-from typing import List
 import dlt
+from typing import List
 from dlt.sources.sql_database import sql_database
 from dlt.extract.source import DltSource
 from ferry.src.data_models.ingest_model import ResourceConfig, WriteDispositionType
