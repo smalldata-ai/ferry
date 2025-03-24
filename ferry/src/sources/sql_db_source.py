@@ -21,18 +21,14 @@ class SqlDbSource(SourceBase):
         resources_list = []
 
         for resource_config in resources:
-            table_name = resource_config.source_table_name  # ✅ Assign first
-
-            # ✅ Ensure column_rules exists
+            table_name = resource_config.source_table_name  
             rules_dict = resource_config.column_rules if resource_config.column_rules else {}
 
-            # ✅ Extract exclude and pseudonymizing columns safely
             exclude_columns = rules_dict.get("exclude_columns", [])
             pseudonymizing_columns = rules_dict.get("pseudonymizing_columns", [])
 
             logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}, Pseudonymizing columns: {pseudonymizing_columns}")
 
-            
             incremental = None
             if resource_config.incremental_config:
                 incremental_config = resource_config.incremental_config.build_config()
@@ -44,21 +40,12 @@ class SqlDbSource(SourceBase):
                     range_end=incremental_config.get("range_end", None),
                     lag=incremental_config.get("lag_window", 0),
                 )
-            
+
             write_disposition = resource_config.build_wd_config()
             primary_key = resource_config.merge_config.build_pk_config() if resource_config.merge_config else []
             merge_key = resource_config.merge_config.build_merge_key() if resource_config.merge_config else []
             columns = resource_config.merge_config.build_columns() if resource_config.merge_config else {}
 
-            def pseudonymize_columns(row):
-                """Pseudonymizes specified columns using SHA-256 hashing."""
-                salt = "WI@N57%zZrmk#88c"
-                for col in pseudonymizing_columns:
-                    if col in row and row[col] is not None:
-                        sh = hashlib.sha256()
-                        sh.update((str(row[col]) + salt).encode())
-                        row[col] = sh.hexdigest()
-                return row
 
             @dlt.resource(
                 name=resource_config.get_destination_table_name(),
@@ -74,10 +61,14 @@ class SqlDbSource(SourceBase):
                     if not isinstance(row, dict):
                         logger.warning(f"Skipping non-dictionary row: {row}")
                         continue
-                    filtered_row = {k: v for k, v in row.items() if k not in exclude_columns}
-                    pseudonymized_row = pseudonymize_columns(filtered_row)
-                    logger.debug(f"Processed row: {pseudonymized_row}")
-                    yield pseudonymized_row
+
+                    # Apply transformations only if necessary
+                    if exclude_columns:
+                        row = {k: v for k, v in row.items() if k not in exclude_columns}
+                    row = self._pseudonymize_columns(row, pseudonymizing_columns)
+
+                    logger.debug(f"Processed row: {row}")
+                    yield row
 
             resources_list.append(resource_function())
 

@@ -196,3 +196,8 @@ check_dlt.py
 checkdb.py
 schemas
 test.duckdb
+paraquet_data.parquet
+jsonl_data.jsonl
+create_paraquet.py
+create_jsonl.py
+Chocolate Sales.csv

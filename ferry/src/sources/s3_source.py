@@ -68,14 +68,14 @@ class S3Source(SourceBase):
                         logger.warning(f"Skipping non-dictionary row: {row}")
                         continue
                     
-                    # Remove excluded columns
-                    filtered_row = {k: v for k, v in row.items() if k not in exclude_columns}
+                    # Apply transformations only if needed
+                    if exclude_columns:
+                        row = {k: v for k, v in row.items() if k not in exclude_columns}
+                    if pseudonymizing_columns:
+                        self._pseudonymize_columns(row, pseudonymizing_columns)
 
-                    # Apply pseudonymization
-                    self._pseudonymize_columns(filtered_row, pseudonymizing_columns)
-
-                    logger.debug(f"Processed row: {filtered_row}")
-                    yield filtered_row
+                    logger.debug(f"Processed row: {row}")
+                    yield row
 
             resources_list.append(resource_function())
 
@@ -97,12 +97,3 @@ class S3Source(SourceBase):
             region_name=query_params.get("region", [None])[0]
         )
         return bucket_name, aws_credentials
-
-    def _pseudonymize_columns(self, row, pseudonymizing_columns):
-        """Pseudonymizes specified columns using SHA-256 hashing."""
-        salt = "WI@N57%zZrmk#88c"
-        for col in pseudonymizing_columns:
-            if col in row and row[col] is not None:
-                sh = hashlib.sha256()
-                sh.update((str(row[col]) + salt).encode())
-                row[col] = sh.hexdigest()
