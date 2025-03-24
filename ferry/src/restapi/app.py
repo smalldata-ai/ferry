@@ -1,37 +1,31 @@
 import logging
-from http.client import HTTPException
 import os
-import string
 import dlt
+import yaml
 
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, Request, Query
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import yaml
 
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.data_models.response_models import IngestResponse, LoadStatus, SchemaResponse
-from ferry.src.data_models.schema_request_model import SchemaRequest
 from ferry.src.pipeline_builder import PipelineBuilder
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     error_dict = {}
     for error in exc.errors():
-        field = error['loc'][-1]  
-        message = error['msg']  
+        field = error['loc'][-1]
+        message = error['msg']
         if field not in error_dict:
             error_dict[field] = []
         error_dict[field].append(message)
-
     return JSONResponse(
         status_code=422,
         content={"errors": error_dict}
@@ -59,18 +53,21 @@ def ingest(ingest_model: IngestModel):
             schema_version_hash=schema_version_hash,
         )
     except Exception as e:
-        logger.exception(f" Error processing: {e}")
+        logger.exception(f"Error processing: {e}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"An internal server error occured"}
+            content={"status": "error", "message": "An internal server error occurred"}
         )
 
-@app.get("/schema")
-def get_schema(schema_request: SchemaRequest):
-    pipeline = dlt.pipeline(pipeline_name=schema_request.pipeline_name)
-    schema = pipeline.default_schema.to_dict()
-
-    return SchemaResponse(
-        pipeline_name=schema_request.pipeline_name,
-        pipeline_schema=schema,
-    )
+@app.get("/schema", response_model=SchemaResponse)
+def get_schema(pipeline_name: str = Query(..., description="The name of the pipeline")):
+    try:
+        pipeline = dlt.pipeline(pipeline_name=pipeline_name)
+        schema_string = pipeline.default_schema.to_pretty_yaml()
+        return SchemaResponse(
+            pipeline_name= pipeline_name,
+            pipeline_schema= schema_string,
+        )
+    except Exception as e:
+        logger.exception(f"Error fetching schema: {e}")
+        return JSONResponse(status_code=500, content={"status": "error", "message": "Failed to fetch schema"})

@@ -1,4 +1,3 @@
-from typing import List
 import dlt
 import logging
 from dlt.common.pipeline import LoadInfo
@@ -28,6 +27,7 @@ class PipelineBuilder:
                 destination=destination,
                 progress=LogCollector(),
                 export_schema_path=".schemas",
+                refresh="drop_resources",
             )
             return self
         except Exception as e:

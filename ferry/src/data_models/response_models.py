@@ -19,4 +19,4 @@ class IngestResponse(BaseModel):
 class SchemaResponse(BaseModel):
     """Response model for schema requests."""
     pipeline_name: Optional[str] = Field(None, description="Name of the pipeline")
-    pipeline_schema: Optional[TStoredSchema] = Field(None, description="Schema data")
+    pipeline_schema: Optional[str] = Field(None, description="Schema data")
