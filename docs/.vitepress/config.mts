@@ -14,10 +14,10 @@ export default defineConfig({
           text: 'Guide',
           items: [
             { text: 'Getting Started', link: '/guides/getting-started' },
-            { text: 'API', link: '/item-2' },
-            { text: 'gRPC', link: '/item-2' },
-            { text: 'CLI', link: '/item-2' },
-            { text: 'Sources', link: '/sources/' },
+            { text: 'API', link: '/ferry' },
+            { text: 'gRPC', link: '/gRPC/coming-soon' },
+            { text: 'CLI', link: '/cli/coming-soon' },
+            { text: 'Sources', link: '/sources/postgres' },
             { text: 'Destinations', link: '/sources/' }
           ]
         }
@@ -71,12 +71,11 @@ export default defineConfig({
               }
             ]
           },
-          { text: '/metrics', link: '/apis/metrics' },
-          { text: '/schema', link: '/apis/schema' },
+          { text: '/ferry/{id}/observe', link: '/apis/observe' },
         ]
       },
-      { text: 'CLI', link: '/item-2' },
-      { text: 'gRPC', link: '/item-2' },
+      { text: 'CLI', link: '/cli/coming-soon' },
+      { text: 'gRPC', link: '/gRPC/coming-soon' },
       {
         text: 'Sources',
         items: [

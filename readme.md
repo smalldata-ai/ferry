@@ -19,7 +19,16 @@ pip install ferry
 
 ## Quick Start
 ```sh
-curl -X POST "http://localhost:8000/ingest" -H "Content-Type: application/json" -d '{ "source": "postgresql", "destination": "s3", "config": "config.yaml" }'
+curl -X POST http://localhost:8000/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "identity": "fgXOw4zY"
+    "source_uri": "postgresql://postgres:password@localhost:5432/db_name",
+    "destination_uri": "clickhouse://default:password@localhost:9000/db_name?http_port=8123&secure=0",
+    "resources": [
+      {"source_table_name": "users"}
+    ]
+  }'
 ```
 ## Documentation
 You can view the full documentation [here](https://smalldata-ai.github.io/ferry/guides/getting-started.html).
@@ -29,13 +38,14 @@ You can view the full documentation [here](https://smalldata-ai.github.io/ferry/
 | System                 | Source ✅ | Destination ✅ |
 |------------------------|:--------:|:-------------:|
 | **PostgreSQL** (`postgres`) | ✅ | ✅ |
+| **DuckDb** (`duckdb`) | ✅ | ✅ |
+| **Amazon S3** (`s3`) | ✅ | ✅ |
 | **MySQL** (`mysql`) | ✅ | ✅ |
 | **ClickHouse** (`clickhouse`) | ✅ | ✅ |
-| **Amazon S3** (`s3`) | ✅ | ✅ |
 | **Google Cloud Storage** (`gcs`) | ✅ | ✅ |
-| **HTTP API** (`http_api`) | ✅ | ❌ |
 | **Local Files** (`file`, CSV, JSON, Parquet) | ✅ | ✅ |
-| **Kafka** (`kafka`) | ✅ | ✅ |
+| **Snowflake** (`gcs`) | ✅ | ✅ |
+| **Mongodb** (`gcs`) | ✅ | ❌|
 | **BigQuery** (`bigquery`) | ❌ | ✅ |
 
 🔹 **Incremental loading** is available for **PostgreSQL, MySQL, ClickHouse, and file-based sources**.  
