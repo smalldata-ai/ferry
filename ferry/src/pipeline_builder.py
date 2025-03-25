@@ -61,7 +61,8 @@ class PipelineBuilder:
         return self.pipeline.pipeline_name
     
     def __repr__(self):
-        return (f"DataPipeline(source_uri={self.model.source_uri}, "
+        return (f"DataPipeline(identity={self.model.identity}, "  # Include identity
+                f"source_uri={self.model.source_uri}, "
                 f"destination_uri={self.model.destination_uri}, "
                 f"source_tables={[r.source_table_name for r in self.model.resources]}, "
                 f"destination_tables={[r.get_destination_table_name() for r in self.model.resources]})")
