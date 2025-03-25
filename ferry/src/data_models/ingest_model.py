@@ -9,7 +9,7 @@ from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
 from ferry.src.data_models.replace_config_model import ReplaceConfig, ReplaceStrategy
 from ferry.src.uri_validator import URIValidator
 
-class WriteDispositionType(Enum):
+class WriteDispositionType(str,Enum):
     REPLACE = "replace"
     APPEND = "append"
     MERGE = "merge"
@@ -20,7 +20,9 @@ class SortOrder(Enum):
 
 class WriteDispositionConfig(BaseModel):
     """Configuration and strategy details for different write dispositions."""
-    type: Optional[str] = Field(WriteDispositionType.REPLACE.value, description="Write disposition type for loading data")
+    
+    type: WriteDispositionType = Field(WriteDispositionType.REPLACE.value, description="Type of write disposition")
+    
     strategy: Optional[str] = Field(None, description="Strategy for selected write disposition.")
     config: Optional[dict[str, Any]] = Field(None, description="Extra configuration for the selected disposition and strategy")
 
@@ -56,6 +58,11 @@ class ResourceConfig(BaseModel):
         if not v:
             raise ValueError("Field must be provided")
         return v
+    
+    def validate_type(value):
+        if value not in WriteDispositionType.__members__.values():
+            raise ValueError(f"Unsupported write disposition type: {value}")
+        return value
 
     def build_wd_config(self):
         if self.write_disposition_config is None:
