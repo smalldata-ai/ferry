@@ -52,6 +52,11 @@ class SourceBase(ABC):
             columns=columns,
         )
         def resource_function():
+
+            if not exclude_columns and not pseudonymizing_columns:
+                                yield from data_iterator
+                                return
+
             for row in data_iterator:
                 if not isinstance(row, dict):
                     logger.warning(f"Skipping non-dictionary row: {row}")
