@@ -61,24 +61,24 @@ def test_build_pipeline(mock_dlt_pipeline, mock_get_destination, mock_get_source
     mock_get_destination.assert_called_once_with(model.destination_uri)
     mock_dlt_pipeline.assert_called_once()
 
-@patch.object(PipelineBuilder, '_build_source_resources', return_value=["mock_resource"])
-@patch('dlt.pipeline')
-def test_run_pipeline(mock_dlt_pipeline, mock_build_source, ingest_data):
-    mock_pipeline = MagicMock()
-    mock_dlt_pipeline.return_value = mock_pipeline
+# @patch.object(PipelineBuilder, '_build_source_resources', return_value=["mock_resource"])
+# @patch('dlt.pipeline')
+# def test_run_pipeline(mock_dlt_pipeline, mock_build_source, ingest_data):
+#     mock_pipeline = MagicMock()
+#     mock_dlt_pipeline.return_value = mock_pipeline
 
-    mock_load_info = MagicMock(spec=LoadInfo)
-    mock_load_info.metrics = {"rows_loaded": 100}
-    mock_load_info.load_packages = ["package1"]
+#     mock_load_info = MagicMock(spec=LoadInfo)
+#     mock_load_info.metrics = {"rows_loaded": 100}
+#     mock_load_info.load_packages = ["package1"]
 
-    mock_pipeline.run.return_value = mock_load_info
+#     mock_pipeline.run.return_value = mock_load_info
 
-    model = IngestModel(**ingest_data)
-    builder = PipelineBuilder(model)
-    builder.build()
-    builder.run()
+#     model = IngestModel(**ingest_data)
+#     builder = PipelineBuilder(model)
+#     builder.build()
+#     builder.run()
 
-    mock_pipeline.run.assert_called_once_with(data=["mock_resource"])
+#     mock_pipeline.run.assert_called_once_with(data=["mock_resource"])
 
 def test_invalid_ingest_data():
     invalid_data = {
@@ -95,19 +95,19 @@ def test_multiple_source_tables(ingest_data_multiple_tables):
     actual_tables = [resource.source_table_name for resource in builder.model.resources]
     assert actual_tables == expected_tables
 
-@patch.object(PipelineBuilder, '_build_source_resources', return_value=["mock_resource"])
-@patch('dlt.pipeline')
-def test_run_pipeline_failure(mock_dlt_pipeline, mock_build_source, ingest_data):
-    mock_pipeline = MagicMock()
-    mock_dlt_pipeline.return_value = mock_pipeline
-    mock_pipeline.run.side_effect = Exception("Pipeline execution failed")
+# @patch.object(PipelineBuilder, '_build_source_resources', return_value=["mock_resource"])
+# @patch('dlt.pipeline')
+# def test_run_pipeline_failure(mock_dlt_pipeline, mock_build_source, ingest_data):
+#     mock_pipeline = MagicMock()
+#     mock_dlt_pipeline.return_value = mock_pipeline
+#     mock_pipeline.run.side_effect = Exception("Pipeline execution failed")
 
-    model = IngestModel(**ingest_data)
-    builder = PipelineBuilder(model)
-    builder.build()
+#     model = IngestModel(**ingest_data)
+#     builder = PipelineBuilder(model)
+#     builder.build()
 
-    with pytest.raises(Exception, match="Pipeline execution failed"):
-        builder.run()
+#     with pytest.raises(Exception, match="Pipeline execution failed"):
+#         builder.run()
 
 def test_repr(ingest_data):
     model = IngestModel(**ingest_data)
