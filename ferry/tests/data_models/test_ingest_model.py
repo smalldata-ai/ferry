@@ -7,10 +7,7 @@ from ferry.src.uri_validator import URIValidator
 from ferry.src.data_models.ingest_model import ResourceConfig, WriteDispositionType, IngestModel
 import pytest
 from pydantic import ValidationError
-from ferry.src.data_models.incremental_config_model import IncrementalConfig
-from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
-from ferry.src.data_models.replace_config_model import ReplaceConfig
-from ferry.src.uri_validator import URIValidator
+
 
 def test_resource_config_valid():
     resource = ResourceConfig(source_table_name="source_table")
