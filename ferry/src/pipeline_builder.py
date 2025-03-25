@@ -37,7 +37,7 @@ class PipelineBuilder:
                 pipeline_name=self.model.identity,
                 dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
-                progress=dlt.common.runtime.collector.LogCollector()(),
+                progress=dlt.common.runtime.collector.LogCollector(),
                 # export_schema_path=".schemas",
                 # refresh="drop_resources",
             )
