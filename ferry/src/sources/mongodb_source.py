@@ -4,9 +4,9 @@ from urllib.parse import urlparse, parse_qs
 from ferry.src.sources.source_base import SourceBase
 
 try:
-    from .mongodb import mongodb, mongodb_collection
+    from ferry.src.sources.mongodb import mongodb, mongodb_collection
 except ImportError:
-    from mongodb import mongodb, mongodb_collection
+    from ferry.src.sources.mongodb import mongodb, mongodb_collection
 
 class MongoDbSource(SourceBase):
 
