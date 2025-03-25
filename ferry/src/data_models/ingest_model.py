@@ -28,20 +28,29 @@ class WriteDispositionConfig(BaseModel):
 
     @model_validator(mode='after')
     def validate_write_disposition_config(self) -> 'WriteDispositionConfig':
-        if self.type == WriteDispositionType.APPEND:
-            if self.strategy is not None or self.config is not None:
-                raise ValueError("No strategy or config is accepted when write_disposition type is 'append'")
-        elif self.type == WriteDispositionType.REPLACE:
-            if self.config is not None:
-                raise ValueError("Config is not accepted when write_disposition is 'replace'")
-            if self.strategy is None:
-                self.strategy = ReplaceStrategy.TRUNCATE_INSERT.value
-        elif self.type == WriteDispositionType.MERGE:
-            if self.strategy is None:
-                self.strategy = MergeStrategy.DELETE_INSERT.value
-        else:
-            raise ValueError(f"Unsupported write disposition type: {self.type}")
-        return self
+            if self.type == WriteDispositionType.APPEND:
+                if self.strategy is not None or self.config is not None:
+                    raise ValueError("No strategy or config is accepted when write_disposition type is 'append'")
+            
+            elif self.type == WriteDispositionType.REPLACE:
+                if self.config is not None:
+                    raise ValueError("Config is not accepted when write_disposition is 'replace'")
+                if self.strategy is None:
+                    self.strategy = ReplaceStrategy.TRUNCATE_INSERT.value
+                elif self.strategy not in ReplaceStrategy._value2member_map_:
+                    raise ValueError("Invalid replace strategy")
+            
+            elif self.type == WriteDispositionType.MERGE:
+                if self.strategy is None:
+                    self.strategy = MergeStrategy.DELETE_INSERT.value
+                elif self.strategy not in MergeStrategy._value2member_map_:
+                    raise ValueError("Invalid merge strategy")
+
+            else:
+                raise ValueError(f"Unsupported write disposition type: {self.type}")
+
+            return self
+
 
 class ResourceConfig(BaseModel):
     """Configuration for a single resource"""
