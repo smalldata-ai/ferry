@@ -1,6 +1,8 @@
 from typing import Any, List, Optional, Union
 from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum
+import hashlib
+from typing import List, Optional, Dict
 
 from ferry.src.data_models.incremental_config_model import IncrementalConfig
 from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
@@ -43,6 +45,8 @@ class ResourceConfig(BaseModel):
     """Configuration for a single resource"""
     source_table_name: str = Field(..., description="Name of the source table")
     destination_table_name: Optional[str] = Field(None, description="Name of the destination table")
+    column_rules: Optional[Dict[str, List[str]]] = Field(None, description="Column rules for exclusion and pseudonymization")
+
     incremental_config: Optional[IncrementalConfig] = Field(None, description="Incremental config params for loading data")
     write_disposition_config: Optional[WriteDispositionConfig] = Field(None, description="Write disposition type and configuration for multiple strategies.")
 
