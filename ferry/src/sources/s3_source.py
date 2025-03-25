@@ -1,8 +1,7 @@
 import dlt
 import urllib.parse
-import hashlib
 import logging
-from typing import List
+from typing import List, Optional
 from dlt.common.configuration.specs import AwsCredentials
 from dlt.sources.filesystem import filesystem, read_csv, read_jsonl, read_parquet
 from dlt.extract.source import DltSource
@@ -22,62 +21,25 @@ class S3Source(SourceBase):
 
         for resource_config in resources:
             table_name = resource_config.source_table_name
-            rules_dict = resource_config.column_rules if resource_config.column_rules else {}
-
-            exclude_columns = rules_dict.get("exclude_columns", [])
-            pseudonymizing_columns = rules_dict.get("pseudonymizing_columns", [])
-
-            logger.info(f"Processing table: {table_name}, Excluding columns: {exclude_columns}, Pseudonymizing columns: {pseudonymizing_columns}")
-
-            incremental_column = None
-            if resource_config.incremental_config:
-                incremental_config = resource_config.incremental_config.build_config()
-                incremental_column = incremental_config.get("incremental_key", None)
-
-            write_disposition = resource_config.build_wd_config()
-            primary_key = resource_config.merge_config.build_pk_config() if resource_config.merge_config else []
-            merge_key = resource_config.merge_config.build_merge_key() if resource_config.merge_config else []
-            columns = resource_config.merge_config.build_columns() if resource_config.merge_config else {}
-
-            # Create file resource with incremental loading based on modification date
-            file_resource = filesystem(f"s3://{bucket_name}", aws_credentials, f"{table_name}*")
-            file_resource.apply_hints(incremental=dlt.sources.incremental("modification_date"))
+            logger.info(f"Processing table: {table_name}")
 
             # Select reader based on file extension
-            lower_table_name = table_name.lower()
-            if lower_table_name.endswith(".csv"):
-                reader = read_csv
-            elif lower_table_name.endswith(".jsonl"):
-                reader = read_jsonl
-            elif lower_table_name.endswith(".parquet"):
-                reader = read_parquet
-            else:
-                raise ValueError(f"Unsupported file format for table: {table_name}")
+            reader = self._get_reader(table_name)
 
-            @dlt.resource(
-                name=resource_config.get_destination_table_name(),
-                incremental=dlt.sources.incremental(incremental_column) if incremental_column else None,
-                write_disposition=write_disposition,
-                primary_key=primary_key,
-                merge_key=merge_key,
-                columns=columns,
-            )
-            def resource_function():
-                for row in (file_resource | reader()):
-                    if not isinstance(row, dict):
-                        logger.warning(f"Skipping non-dictionary row: {row}")
-                        continue
-                    
-                    # Apply transformations only if needed
-                    if exclude_columns:
-                        row = {k: v for k, v in row.items() if k not in exclude_columns}
-                    if pseudonymizing_columns:
-                        self._pseudonymize_columns(row, pseudonymizing_columns)
+            # Determine the incremental loading strategy
+            file_incremental = dlt.sources.incremental("modification_date")  # Track file modifications
+            row_incremental = self._get_row_incremental(resource_config)  # Track new records inside files
 
-                    logger.debug(f"Processed row: {row}")
-                    yield row
+            # Create file resource and apply incremental loading hints
+            file_resource = filesystem(f"s3://{bucket_name}", aws_credentials, f"{table_name}*")
+            file_resource.apply_hints(incremental=file_incremental)  # Track modified files
 
-            resources_list.append(resource_function())
+            # Apply both file-based and row-based incremental loading
+            data_iterator = file_resource | reader()
+            if row_incremental:
+                data_iterator = dlt.sources.incremental(row_incremental)(data_iterator)
+
+            resources_list.append(self._create_dlt_resource(resource_config, data_iterator))
 
         return DltSource(
             schema=dlt.Schema(identity),
@@ -97,3 +59,22 @@ class S3Source(SourceBase):
             region_name=query_params.get("region", [None])[0]
         )
         return bucket_name, aws_credentials
+
+    def _get_reader(self, table_name: str):
+        """Returns the appropriate reader function based on file format."""
+        lower_table_name = table_name.lower()
+        if lower_table_name.endswith(".csv"):
+            return read_csv
+        elif lower_table_name.endswith(".jsonl"):
+            return read_jsonl
+        elif lower_table_name.endswith(".parquet"):
+            return read_parquet
+        else:
+            raise ValueError(f"Unsupported file format for table: {table_name}")
+
+    def _get_row_incremental(self, resource_config: ResourceConfig) -> Optional[str]:
+        """Determines the incremental column for row-level filtering."""
+        if resource_config.incremental_config:
+            incremental_config = resource_config.incremental_config.build_config()
+            return incremental_config.get("incremental_key")
+        return None
