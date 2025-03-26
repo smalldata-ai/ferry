@@ -80,14 +80,16 @@ async def auth_middleware(request: Request, call_next):
         required_headers = ["X-Client-Id", "X-Timestamp", "X-Signature"]
         if not all(h in request.headers for h in required_headers):
             raise HTTPException(400, "Missing authentication headers")
-        body = await request.body()
         try:
+            body = await request.body()
             SecretsManager.verify_request(
                 request.headers["X-Client-Id"],
                 request.headers["X-Timestamp"],
                 request.headers["X-Signature"],
                 body
             )
+        except UnicodeDecodeError:
+            raise HTTPException(400, "Malformed request body")
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
         except Exception as e:
