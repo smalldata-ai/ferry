@@ -6,8 +6,8 @@ from ferry.src.sources.mongodb_source import MongoDbSource
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.s3_source import S3Source
-from ferry.src.sources.sql_db_source import SqlDbSource  # Import S3Source
-
+from ferry.src.sources.sql_db_source import SqlDbSource
+from ferry.src.sources.clickhouse_source import ClickHouseSource  # Import ClickHouseSource
 
 class SourceFactory:
     _items = {
@@ -16,7 +16,7 @@ class SourceFactory:
         "duckdb": SqlDbSource,  
         "s3": S3Source, 
         "sqlite": SqlDbSource,
-        "clickhouse": SqlDbSource,
+        "clickhouse": ClickHouseSource, 
         "mysql": SqlDbSource,
         "mssql": SqlDbSource,
         "mariadb": SqlDbSource,
@@ -33,6 +33,6 @@ class SourceFactory:
         parsed_uri = urlparse(uri)
         if parsed_uri.scheme in SourceFactory._items:
             class_ = SourceFactory._items.get(parsed_uri.scheme)
-            return class_()  # Pass the URI to the class constructor
+            return class_()  # Return an instance of the corresponding class
         else:
             raise InvalidSourceException(f"Invalid source URI scheme: {parsed_uri.scheme}")
