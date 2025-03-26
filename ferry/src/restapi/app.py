@@ -3,14 +3,15 @@ import os
 import dlt
 import yaml
 
-from fastapi import FastAPI, Request, Query
+from fastapi import FastAPI, Request, Query, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.data_models.response_models import IngestResponse, LoadStatus, SchemaResponse
 from ferry.src.pipeline_builder import PipelineBuilder
+from ferry.src.security import SecretsManager
+from ferry.main import SECURE_MODE
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -71,3 +72,26 @@ def get_schema(pipeline_name: str = Query(..., description="The name of the pipe
     except Exception as e:
         logger.exception(f"Error fetching schema: {e}")
         return JSONResponse(status_code=500, content={"status": "error", "message": "Failed to fetch schema"})
+    
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    if SECURE_MODE:
+        required_headers = ["X-Client-Id", "X-Timestamp", "X-Signature"]
+        if not all(h in request.headers for h in required_headers):
+            raise HTTPException(400, "Missing authentication headers")
+        body = await request.body()
+        try:
+            SecretsManager.verify_request(
+                request.headers["X-Client-Id"],
+                request.headers["X-Timestamp"],
+                request.headers["X-Signature"],
+                body
+            )
+        except HTTPException as e:
+            return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
+            return JSONResponse(status_code=500, content={"detail": "Internal authentication error"})
+    response = await call_next(request)
+    return response
