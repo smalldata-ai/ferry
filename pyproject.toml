@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ferry"
+version = "0.1.0"
+dependencies = [
+    "typer==0.15.1",
+    "fastapi==0.115.8",
+    "uvicorn==0.34.0",
+    "dlt==1.6.1",
+    "pyyaml",
+    "sqlalchemy==2.0.38",
+    "httpx==0.28.1",
+    "pandas==2.2.3",
+    "pymongo==4.11.2"
+]
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+postgres = ["psycopg2==2.9.10"]
+aws = ["boto3==1.37.1"]
+duckdb = ["duckdb-engine==0.15.0", "duckdb==1.2.1", "dlt[duckdb]==1.6.1"]
+clickhouse = ["clickhouse-sqlalchemy==0.3.2", "clickhouse-connect==0.8.15", "dlt[clickhouse]==1.6.1"]
+snowflake = ["snowflake-sqlalchemy==1.7.3", "dlt[snowflake]==1.6.1"]
+bigquery = ["dlt[bigquery]==1.6.1"]
+databricks = ["dlt[databricks]==1.6.1"]
+synapse = ["dlt[synapse]==1.6.1"]
+mssql = ["dlt[mssql]==1.6.1"]
+redshift = ["dlt[redshift]==1.6.1"]
+motherduck = ["dlt[motherduck]==1.6.1"]
+sqlalchemy = ["dlt[sqlalchemy]==1.6.1"]
+qdrant = ["dlt[qdrant]==1.6.1"]
+athena = ["dlt[athena]==1.6.1"]
+mongodb = ["pymongo==4.11.2"]  # Kept for consistency, though redundant
+filesystem = ["dlt[filesystem]==1.6.1"]
+pendulum = ["dlt-pendulum==3.0.2"]
+testing = ["pytest==8.3.4", "pytest-asyncio==0.25.3"]
+all = [
+    "psycopg2==2.9.10",
+    "boto3==1.37.1",
+    "duckdb-engine==0.15.0",
+    "duckdb==1.2.1",
+    "dlt[duckdb]==1.6.1",
+    "clickhouse-sqlalchemy==0.3.2",
+    "clickhouse-connect==0.8.15",
+    "snowflake-sqlalchemy==1.7.3",
+    "pymongo==4.11.2",
+    "dlt-pendulum==3.0.2",
+    "pytest==8.3.4",
+    "pytest-asyncio==0.25.3"
+]
+
+[project.scripts]
+ferry = "ferry.main:app"
