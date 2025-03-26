@@ -27,6 +27,7 @@ class URIValidator:
         "bigquery": r"^bigquery://(?P<projectId>\w+)\?client_id=(?P<clientId>[a-zA-Z0-9.-]+)&client_secret=(?P<clientSecret>[a-zA-Z0-9-]+)&refresh_token=(?P<refreshToken>.+)",
         "filebased": r"^(?P<scheme>\w+):////(?P<path>.+)",
         "s3": r"^s3://(?P<bucket>[\w.-]+)\?access_key_id=(?P<access_key_id>[a-zA-Z0-9]+)&access_key_secret=(?P<access_key_secret>[a-zA-Z0-9]+)&region=(?P<region>[\w-]+)",
+        "clickhouse": r"^clickhouse://(?P<user>[\w-]+)(:(?P<password>[^@]+))?@(?P<host>[\w.-]+)(:(?P<port>\d+))/(?P<db>[\w-]+)(\?http_port=(?P<http_port>\d+)&secure=(?P<secure>\w+))?",
         "gcs": r"^gs://(?P<bucket>[\w.-]+)(/(?P<key>.+))?",
         "azure": r"^az://(?P<container>[\w.-]+)(/(?P<blob>.+))?",
         "file": r"^file://(?P<path>/[\w./-]+)",
@@ -79,6 +80,8 @@ class URIValidator:
             return f"Invalid file-based URI format: {uri}. Expected format: duckdb://path/to/database"
         elif category == "s3":
             return f"Invalid S3 URI format: {uri}. Expected format: s3://bucket_name?access_key_id=<access_key_id>&access_key_secret=<access_key_secret>&region=<region>"
+        elif category == "sql" and scheme == "clickhouse":
+            return f"Invalid ClickHouse URI format: {uri}. Expected format: clickhouse://user:password@host:port/db_name"
         elif category == "gcs":
             return f"Invalid GCS URI format: {uri}. Expected format: gs://bucket-name/file_key"
         elif category == "azure":
