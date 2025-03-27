@@ -1,9 +1,6 @@
 repos:
-  - repo: local
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
     hooks:
-      - id: detect-special-characters
-        name: Detect Special Characters in API Keys
-        entry: bash .git/hooks/detect-special-characters.sh
-        language: system
-        files: '.*'  # Scan all files
-        pass_filenames: true
+      - id: gitleaks
+        args: ["--staged"]
