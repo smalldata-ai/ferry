@@ -195,3 +195,5 @@ test.py
 showcase.ipynb
 stroke.duckdb
 destination1_duckdb.duckdb
+check.py
+checkdb.py

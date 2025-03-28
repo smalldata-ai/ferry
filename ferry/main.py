@@ -6,7 +6,7 @@ app = typer.Typer()
 
 @app.command()
 def serve(
-    host: str = typer.Option("127.0.0.1", help="Host to run the server on"),
+    host: str = typer.Option("0.0.0.0", help="Host to run the server on"),
     port: int = typer.Option(8001, help="Port to run the server on"),
     reload: bool = typer.Option(True, help="Enable auto-reload for development")
 ):
