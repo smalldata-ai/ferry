@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
 from ferry.src.sources.azure_storage_source import AzureStorageSource
+from ferry.src.sources.clickhouse_source import ClickhouseSource
 from ferry.src.sources.gcs_source import GCSSource
 from ferry.src.sources.local_file_source import LocalFileSource
 from ferry.src.sources.mongodb_source import MongoDbSource
@@ -16,7 +17,7 @@ class SourceFactory:
         "duckdb": SqlDbSource,  
         "s3": S3Source, 
         "sqlite": SqlDbSource,
-        "clickhouse": SqlDbSource,
+        "clickhouse": ClickhouseSource,
         "mysql": SqlDbSource,
         "mssql": SqlDbSource,
         "mariadb": SqlDbSource,
