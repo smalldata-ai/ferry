@@ -35,6 +35,7 @@ class SourceBase(ABC):
         pseudonymizing_columns = resource_config.column_rules.get("pseudonymizing_columns", []) if resource_config.column_rules else []
 
         incremental_column = None
+        primary_key, merge_key, columns = [], [], []
         if resource_config.incremental_config:
             incremental_config = resource_config.incremental_config.build_config()
             incremental_column = incremental_config.get("incremental_key", None)
