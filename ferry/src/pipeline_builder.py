@@ -1,25 +1,17 @@
 import dlt
 import logging
-import dlt.cli
 from dlt.common.pipeline import LoadInfo
-from numpy import identity
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
-import hashlib
-from typing import List
-from dlt.extract.source import DltSource
-from ferry.src.data_models.ingest_model import ResourceConfig
-from ferry.src.sources.source_base import SourceBase
 from ferry.src.source_factory import SourceFactory
-from ferry.src.destination_factory import DestinationFactory
-
+from dlt.extract import DltResource
 
 logger = logging.getLogger(__name__)
 
 class PipelineBuilder:
 
     @classmethod
-    def get_pipeline(cls, name: str) :
+    def get_pipeline(cls, name: str):
         return dlt.pipeline(pipeline_name=name)
 
     def __init__(self, model: IngestModel):
@@ -38,8 +30,6 @@ class PipelineBuilder:
                 dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
                 progress=dlt.common.runtime.collector.LogCollector(),
-                # export_schema_path=".schemas",
-                # refresh="drop_resources",
             )
             return self
         except Exception as e:
@@ -52,12 +42,14 @@ class PipelineBuilder:
             source_resources = []
             
             for resource_config in self.model.resources:
-                source_resource = self.source.dlt_source_system(
+                source_data = self.source.dlt_source_system(
                     uri=self.model.source_uri,
                     resources=[resource_config],  
                     identity=self.model.identity
                 )
-                source_resources.append(source_resource)
+                
+                resource = DltResource.from_data(source_data, name=resource_config.source_table_name)
+                source_resources.append(resource)
 
             run_info = self.pipeline.run(data=source_resources)
             logger.info(run_info.metrics)
@@ -69,12 +61,15 @@ class PipelineBuilder:
             raise e
 
     def _build_source_resources(self):
-        """Builds a list of dlt resources"""
-        self.source_resources = self.source.dlt_source_system(
-            identity=self.model.identity,
-            uri=self.model.source_uri,
-            resources=self.model.resources,
-        )
+        """Builds a list of dlt resources with explicit names."""
+        self.source_resources = [
+            DltResource.from_data(resource, name=resource.source_table_name)
+            for resource in self.source.dlt_source_system(
+                identity=self.model.identity,
+                uri=self.model.source_uri,
+                resources=self.model.resources,
+            )
+        ]
         return self.source_resources
 
     def get_name(self) -> str:
@@ -83,4 +78,4 @@ class PipelineBuilder:
     def __repr__(self):
         return (f"DataPipeline(source_uri={self.model.source_uri}, "
                 f"destination_uri={self.model.destination_uri}, "
-                f"source_tables={[r.source_table_name for r in self.model.resources]}, ")
+                f"source_tables={[r.source_table_name for r in self.model.resources]})")
