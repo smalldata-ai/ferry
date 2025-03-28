@@ -34,4 +34,4 @@ ENV PYTHONPATH="/app"
 EXPOSE 8001
 
 # Change entrypoint to correctly locate main.py
-ENTRYPOINT ["python", "ferry/main.py"]
+CMD ["python", "ferry/main.py", "serve"]
