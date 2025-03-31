@@ -10,7 +10,7 @@ help:
 	@echo "  make test         - Run tests with pytest"
 	@echo "  make lint         - Run ruff linting and formatting"
 	@echo "  make build        - Build the project package"
-	@echo "  make upload       - Upload the release"
+	@echo "  make publish      - Publish the release"
 	@echo "  make run          - Run the application"
 
 
@@ -30,7 +30,7 @@ lint:
 build:
 	uv build
 
-upload:
+publish: build
 	uv publish --index testpypi
 
 run:

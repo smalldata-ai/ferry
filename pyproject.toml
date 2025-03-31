@@ -1,6 +1,6 @@
 [project]
 name = "ferry"
-version = "0.1.1"
+dynamic = ["version"]
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -46,12 +46,15 @@ testing = ["pytest==8.3.4", "pytest-asyncio==0.25.3"]
 ferry = "ferry.main:main"
 
 [build-system]
-requires = ["hatchling==1.27.0"]
+requires = ["hatchling==1.27.0", "hatch-vcs==0.4.0"]
 build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.uv]
 index = [
