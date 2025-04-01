@@ -30,3 +30,4 @@ pymongo==4.11.2
 boto3==1.37.1
 pytest-cov==6.0.0
 psutil
+ggshield 
