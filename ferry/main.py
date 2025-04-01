@@ -1,5 +1,12 @@
+import json
+import os
+from typing import Optional
 import typer
 import uvicorn
+import yaml
+from ferry.src.data_models.ingest_model import IngestModel, ResourceConfig
+from ferry.src.data_models.response_models import LoadStatus
+from ferry.src.pipeline_builder import PipelineBuilder
 from ferry.src.security import SecretsManager
 
 app = typer.Typer()
@@ -57,10 +64,84 @@ def show_secrets():
         typer.echo(f"Error retrieving secrets: {str(e)}")
         raise typer.Exit(1)
 
+
 @app.command()
-def ingest():
-    """Run the ingest command"""
-    typer.echo("Hello CLI")
+def ingest(
+    identity: str = typer.Option(..., "--identity", help="Identity for the run"),
+    source_uri: str = typer.Option(..., "--source-uri", help="Source DB URI"),
+    destination_uri: str = typer.Option(..., "--destination-uri", help="Destination DB URI"),
+    dataset_name: Optional[str] = typer.Option(None, "--dataset-name", help="Schema name"),
+    resources_file: Optional[str] = typer.Option(
+        None, 
+        "--resources-file", 
+        help="Path to a JSON file containing the resources array",
+        exists=True,
+        readable=True,
+        dir_okay=False
+    ),
+    resources_json: Optional[str] = typer.Option(
+        None,
+        "--resources-json",
+        help="JSON string containing the resources array"
+    )
+):
+    """Run data ingestion between source and destination databases"""
+    try:
+        if not resources_file and not resources_json:
+            typer.echo("Error: Either --resources-file or --resources-json must be provided", err=True)
+            raise typer.Exit(1)
+
+        if resources_file:
+            with open(resources_file) as f:
+                resources_data = json.load(f)
+        else:
+            resources_data = json.loads(resources_json)
+
+        resources = [ResourceConfig(**resource) for resource in resources_data]
+
+        ingest_model = IngestModel(
+            identity=identity,
+            source_uri=source_uri,
+            destination_uri=destination_uri,
+            dataset_name=dataset_name,
+            resources=resources
+        )
+
+        typer.echo(f"Starting ingestion with identity: {identity}")
+        pipeline = PipelineBuilder(ingest_model).build()
+        pipeline.run()
+
+        schema_version_hash = None
+        pipeline_schema_path = os.path.join(".schemas", f"{ingest_model.identity}.schema.yaml")
+        
+        if os.path.exists(pipeline_schema_path):
+            try:
+                with open(pipeline_schema_path, "r") as f:
+                    schema_data = yaml.safe_load(f)
+                schema_version_hash = schema_data.get("version_hash", "")
+            except Exception as e:
+                typer.echo(f"Warning: Could not read schema file - {str(e)}", err=True)
+
+        response = {
+            "status": LoadStatus.SUCCESS.value,
+            "message": "Data Ingestion is completed successfully",
+            "pipeline_name": pipeline.get_name(),
+            "schema_version_hash": schema_version_hash
+        }
+        
+        typer.echo(json.dumps(response, indent=2))
+        return 0
+        
+    except json.JSONDecodeError as e:
+        typer.echo(f"Error: Invalid JSON format - {str(e)}", err=True)
+        raise typer.Exit(1)
+    except Exception as e:
+        error_response = {
+            "status": "error",
+            "message": f"An error occurred during ingestion: {str(e)}"
+        }
+        typer.echo(json.dumps(error_response, indent=2), err=True)
+        raise typer.Exit(1)
 
 @app.command()
 def version():
