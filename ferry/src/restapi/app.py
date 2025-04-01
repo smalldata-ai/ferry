@@ -88,8 +88,9 @@ def observe(identity: str):
         logger.exception(f" Error processing: {e}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": f"An internal server error occured"}
-        )    
+            content={"status": "error", "message": "An internal server error occured"},
+        )
+
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
@@ -103,7 +104,7 @@ async def auth_middleware(request: Request, call_next):
                 request.headers["X-Client-Id"],
                 request.headers["X-Timestamp"],
                 request.headers["X-Signature"],
-                body
+                body,
             )
         except UnicodeDecodeError:
             raise HTTPException(400, "Malformed request body")
@@ -111,7 +112,8 @@ async def auth_middleware(request: Request, call_next):
             return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
         except Exception as e:
             logger.error(f"Authentication error: {str(e)}")
-            return JSONResponse(status_code=500, content={"detail": "Internal authentication error"})
+            return JSONResponse(
+                status_code=500, content={"detail": "Internal authentication error"}
+            )
     response = await call_next(request)
     return response
-

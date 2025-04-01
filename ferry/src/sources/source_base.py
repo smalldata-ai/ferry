@@ -33,8 +33,16 @@ class SourceBase(ABC):
 
     def _create_dlt_resource(self, resource_config: ResourceConfig, data_iterator):
         """Creates a DLT resource dynamically."""
-        exclude_columns = resource_config.column_rules.get("exclude_columns", []) if resource_config.column_rules else []
-        pseudonymizing_columns = resource_config.column_rules.get("pseudonymizing_columns", []) if resource_config.column_rules else []
+        exclude_columns = (
+            resource_config.column_rules.get("exclude_columns", [])
+            if resource_config.column_rules
+            else []
+        )
+        pseudonymizing_columns = (
+            resource_config.column_rules.get("pseudonymizing_columns", [])
+            if resource_config.column_rules
+            else []
+        )
         primary_key = None
         merge_key = None
         columns = None

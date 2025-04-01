@@ -16,7 +16,7 @@ def serve(
     host: str = typer.Option("0.0.0.0", help="Host to run the server on"),
     port: int = typer.Option(8001, help="Port to run the server on"),
     reload: bool = typer.Option(True, help="Enable auto-reload for development"),
-    secure: bool = typer.Option(False, help="Enable HMAC authentication")
+    secure: bool = typer.Option(False, help="Enable HMAC authentication"),
 ):
     """Start the FastAPI server for Ferry"""
     global SECURE_MODE
@@ -30,6 +30,7 @@ def serve(
         typer.echo(f"Starting Ferry server on {host}:{port}")
     uvicorn.run("ferry.src.restapi.app:app", host=host, port=port, reload=reload)
 
+
 @generate_app.command("secrets")
 def generate_secrets():
     """Generate new client credentials"""
@@ -42,6 +43,7 @@ def generate_secrets():
     except Exception as e:
         typer.echo(f"Error generating secrets: {str(e)}")
         raise typer.Exit(1)
+
 
 @show_app.command("secrets")
 def show_secrets():
@@ -57,6 +59,7 @@ def show_secrets():
     except Exception as e:
         typer.echo(f"Error retrieving secrets: {str(e)}")
         raise typer.Exit(1)
+
 
 @app.command()
 def ingest():
