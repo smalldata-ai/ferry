@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - feature/packaging
 
 jobs:
   build:
