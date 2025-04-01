@@ -1,12 +1,11 @@
 import pytest
 from pydantic import ValidationError
 from ferry.src.data_models.replace_config_model import ReplaceConfig
-
-
 @pytest.fixture
 def valid_replace_config():
-    return {"strategy": "truncate-and-insert"}
-
+    return {
+        "strategy": "truncate-and-insert"
+    }
 
 @pytest.mark.parametrize(
     "strategy",

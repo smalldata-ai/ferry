@@ -7,12 +7,12 @@ from dlt.destinations.impl.clickhouse.configuration import (
     ClickHouseCredentials,
 )
 
-
 class ClickhouseDestination(DestinationBase):
+
     def default_schema_name(self) -> str:
         return ""
-
-    def dlt_target_system(self, uri: str, **kwargs):  # type: ignore
+    
+    def dlt_target_system(self, uri: str, **kwargs): # type: ignore
         parsed_uri = urlparse(uri)
         query_params = parse_qs(parsed_uri.query)
         credentials = ClickHouseCredentials(

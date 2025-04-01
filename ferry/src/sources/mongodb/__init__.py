@@ -13,7 +13,6 @@ from .helpers import (
     collection_documents,
 )
 
-
 @dlt.source
 def mongodb(
     connection_url: str,

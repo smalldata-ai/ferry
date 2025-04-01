@@ -12,7 +12,6 @@ from ferry.src.destinations.sql_alchemy_destination import SqlAlchemyDestination
 from ferry.src.destinations.syanpse_destination import SynapseDestination
 from ferry.src.exceptions import InvalidDestinationException
 
-
 @pytest.mark.parametrize(
     "uri, expected_class",
     [
@@ -28,18 +27,18 @@ from ferry.src.exceptions import InvalidDestinationException
         ("mssql://user:pass@host/db", MssqlDestination),
         ("athena://bucket_name?", AthenaDestination),
         ("bigquery://project_id?", BigQueryDestination),
-    ],
+        
+    ]
 )
 def test_destination_factory(uri, expected_class):
     """Test that the URI returns the expected destination instance."""
     destination = DestinationFactory.get(uri)
     assert isinstance(destination, expected_class)
 
-
 def test_invalid_destination():
     """Test that an invalid URI scheme raises an InvalidDestinationException."""
     uri = "invalidscheme://user:password@localhost:1234/dbname"
-    with pytest.raises(
-        InvalidDestinationException, match="Invalid destination URI scheme: invalidscheme"
-    ):
+    with pytest.raises(InvalidDestinationException, match="Invalid destination URI scheme: invalidscheme"):
         DestinationFactory.get(uri)
+
+

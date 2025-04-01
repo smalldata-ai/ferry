@@ -197,3 +197,5 @@ stroke.duckdb
 destination1_duckdb.duckdb
 check.py
 checkdb.py
+check_postgresql.py
+win-venv

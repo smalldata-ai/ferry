@@ -1,22 +1,11 @@
 import re
-from urllib.parse import urlparse
-
+from urllib.parse import urlparse, parse_qs
 
 class URIValidator:
     """Validates URIs for different database systems using regex."""
 
     SCHEMES = {
-        "sql": {
-            "postgresql",
-            "postgres",
-            "clickhouse",
-            "redshift",
-            "mysql",
-            "hana",
-            "mssql",
-            "mariadb+pymysql",
-            "mariadb",
-        },
+        "sql": {"postgresql", "postgres", "clickhouse", "redshift", "mysql", "hana", "mssql", "mariadb+pymysql", "mariadb"},
         "filebased": {"duckdb", "sqlite"},
         "mongodb": {"mongodb"},
         "snowflake": {"snowflake"},
@@ -60,6 +49,7 @@ class URIValidator:
 
     @classmethod
     def _apply_regex_validation(cls, category: str, scheme: str, uri: str):
+        
         """Validates the URI using regex matching."""
         pattern = cls.URI_PATTERNS.get(category)
         if not pattern:
@@ -82,15 +72,11 @@ class URIValidator:
         elif category == "snowflake":
             return f"Invalid Snowflake URI format: {uri}. Expected format: snowflake://user:password@account/dbname"
         elif category == "motherduck":
-            return (
-                f"Invalid Motherduck URI format: {uri}. Expected format: md://dbname?token=<token>"
-            )
+            return f"Invalid Motherduck URI format: {uri}. Expected format: md://dbname?token=<token>"
         elif category == "bigquery":
-            return f"Invalid Bigquery URI format: {uri}. Expected format: bigquery://projectId?client_id=<client_id>&client_secret=<client_secret>&refresh_token=<refresh_token>"
+            return f"Invalid Bigquery URI format: {uri}. Expected format: bigquery://projectId?client_id=<client_id>&client_secret=<client_secret>&refresh_token=<refresh_token>"        
         elif category == "filebased":
-            return (
-                f"Invalid file-based URI format: {uri}. Expected format: duckdb://path/to/database"
-            )
+            return f"Invalid file-based URI format: {uri}. Expected format: duckdb://path/to/database"
         elif category == "s3":
             return f"Invalid S3 URI format: {uri}. Expected format: s3://bucket_name?access_key_id=<access_key_id>&access_key_secret=<access_key_secret>&region=<region>"
         elif category == "gcs":

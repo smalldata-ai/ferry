@@ -8,7 +8,6 @@ from ferry.src.sources.s3_source import S3Source
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.sql_db_source import SqlDbSource
 
-
 @pytest.mark.parametrize(
     "uri, expected_class",
     [
@@ -26,13 +25,12 @@ from ferry.src.sources.sql_db_source import SqlDbSource
         ("gs://bucket-name?file_key=data.csv", GCSSource),
         ("az://bucket-name?file_key=data.csv", AzureStorageSource),
         ("file://path/to/file.csv", LocalFileSource),
-    ],
+    ]
 )
 def test_source_factory(uri, expected_class):
     """Test that the URI returns the expected source instance."""
     source = SourceFactory.get(uri)
     assert isinstance(source, expected_class)
-
 
 def test_invalid_source():
     """Test that an invalid URI scheme raises an InvalidSourceException."""

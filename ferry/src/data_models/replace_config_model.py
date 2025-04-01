@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import  Optional
 from enum import Enum
-
 
 class ReplaceStrategy(Enum):
     TRUNCATE_INSERT = "truncate-and-insert"
@@ -11,7 +10,4 @@ class ReplaceStrategy(Enum):
 
 class ReplaceConfig(BaseModel):
     """Configuration for full loading with different replace strategies"""
-
-    strategy: Optional[ReplaceStrategy] = Field(
-        ReplaceStrategy.TRUNCATE_INSERT, description="Strategy for replacing data"
-    )
+    strategy: Optional[ReplaceStrategy] = Field(ReplaceStrategy.TRUNCATE_INSERT, description="Strategy for replacing data")
