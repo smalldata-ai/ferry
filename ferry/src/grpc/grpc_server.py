@@ -106,21 +106,21 @@ class FerryServiceServicer(ferry_pb2_grpc.FerryServiceServicer):
             context.set_details(str(e))
             return ferry_pb2.IngestResponse(status="ERROR", message=str(e))
 
-    def GetObservability(self, request, context):
-        if SECURE_MODE:
-            status, error_msg = validate_request_metadata(context.invocation_metadata(), request.SerializeToString())
-            if status:
-                context.set_code(status)
-                context.set_details(error_msg)
-                return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
-        try:
-            metrics = PipelineMetrics(name=request.identity).generate_metrics()
-            return ferry_pb2.ObservabilityResponse(status="SUCCESS", metrics=str(metrics))
-        except Exception as e:
-            logging.exception("Error in GetObservability")
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
+    # def GetObservability(self, request, context):
+    #     if SECURE_MODE:
+    #         status, error_msg = validate_request_metadata(context.invocation_metadata(), request.SerializeToString())
+    #         if status:
+    #             context.set_code(status)
+    #             context.set_details(error_msg)
+    #             return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
+    #     try:
+    #         metrics = PipelineMetrics(name=request.identity).generate_metrics()
+    #         return ferry_pb2.ObservabilityResponse(status="SUCCESS", metrics=str(metrics))
+    #     except Exception as e:
+    #         logging.exception("Error in GetObservability")
+    #         context.set_code(grpc.StatusCode.INTERNAL)
+    #         context.set_details(str(e))
+    #         return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
 
 def serve(port, secure_mode):
     global SECURE_MODE
