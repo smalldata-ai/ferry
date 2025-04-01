@@ -17,7 +17,7 @@ help:
 venv:
 	@test -d .venv || uv venv
 
-dependencies:
+dependencies: venv
 	uv pip install -r <(uv pip compile pyproject.toml --all-extras)
 
 test:
