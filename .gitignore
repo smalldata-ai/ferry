@@ -199,3 +199,4 @@ check.py
 checkdb.py
 check_postgresql.py
 win-venv
+ferry/.ferry
