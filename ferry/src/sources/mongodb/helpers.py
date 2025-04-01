@@ -30,8 +30,6 @@ else:
     TCursor = Any
 
 try:
-    import pymongoarrow  # type: ignore
-
     PYMONGOARROW_AVAILABLE = True
 except ImportError:
     PYMONGOARROW_AVAILABLE = False
@@ -62,21 +60,13 @@ class CollectionLoader:
         if not self.incremental or not self.last_value:
             return []
 
-        if (
-            self.incremental.row_order == "asc"
-            and self.incremental.last_value_func is max
-        ) or (
-            self.incremental.row_order == "desc"
-            and self.incremental.last_value_func is min
+        if (self.incremental.row_order == "asc" and self.incremental.last_value_func is max) or (
+            self.incremental.row_order == "desc" and self.incremental.last_value_func is min
         ):
             return [(self.cursor_field, ASCENDING)]
 
-        elif (
-            self.incremental.row_order == "asc"
-            and self.incremental.last_value_func is min
-        ) or (
-            self.incremental.row_order == "desc"
-            and self.incremental.last_value_func is max
+        elif (self.incremental.row_order == "asc" and self.incremental.last_value_func is min) or (
+            self.incremental.row_order == "desc" and self.incremental.last_value_func is max
         ):
             return [(self.cursor_field, DESCENDING)]
 
@@ -119,9 +109,7 @@ class CollectionLoader:
         """
         if limit not in (0, None):
             if self.incremental is None or self.incremental.last_value_func is None:
-                logger.warning(
-                    "Using limit without ordering - results may be inconsistent."
-                )
+                logger.warning("Using limit without ordering - results may be inconsistent.")
 
             cursor = cursor.limit(abs(limit))
 
@@ -240,9 +228,7 @@ class CollectionArrowLoader(CollectionLoader):
     Apache Arrow for data processing.
     """
 
-    def load_documents(
-        self, filter_: Dict[str, Any], limit: Optional[int] = None
-    ) -> Iterator[Any]:
+    def load_documents(self, filter_: Dict[str, Any], limit: Optional[int] = None) -> Iterator[Any]:
         """
         Load documents from the collection in Apache Arrow format.
 
@@ -256,9 +242,7 @@ class CollectionArrowLoader(CollectionLoader):
         from pymongoarrow.context import PyMongoArrowContext  # type: ignore
         from pymongoarrow.lib import process_bson_stream  # type: ignore
 
-        context = PyMongoArrowContext.from_schema(
-            None, codec_options=self.collection.codec_options
-        )
+        context = PyMongoArrowContext.from_schema(None, codec_options=self.collection.codec_options)
 
         filter_op = self._filter_op
         _raise_if_intersection(filter_op, filter_)
@@ -296,9 +280,7 @@ class CollectionArrowLoaderParallel(CollectionLoaderParallel):
         _raise_if_intersection(filter_op, filter_)
         filter_op.update(filter_)
 
-        cursor = self.collection.find_raw_batches(
-            filter=filter_op, batch_size=self.chunk_size
-        )
+        cursor = self.collection.find_raw_batches(filter=filter_op, batch_size=self.chunk_size)
         if self._sort_op:
             cursor = cursor.sort(self._sort_op)  # type: ignore
 
@@ -311,9 +293,7 @@ class CollectionArrowLoaderParallel(CollectionLoaderParallel):
 
         cursor = cursor.clone()
 
-        context = PyMongoArrowContext.from_schema(
-            None, codec_options=self.collection.codec_options
-        )
+        context = PyMongoArrowContext.from_schema(None, codec_options=self.collection.codec_options)
 
         for chunk in cursor.skip(batch["skip"]).limit(batch["limit"]):
             process_bson_stream(chunk, context)
@@ -369,9 +349,7 @@ def collection_documents(
         else:
             LoaderClass = CollectionLoader  # type: ignore
 
-    loader = LoaderClass(
-        client, collection, incremental=incremental, chunk_size=chunk_size
-    )
+    loader = LoaderClass(client, collection, incremental=incremental, chunk_size=chunk_size)
     for data in loader.load_documents(limit=limit, filter_=filter_):
         yield data
 
@@ -428,9 +406,7 @@ def convert_arrow_columns(table: Any) -> Any:
 
 
 def client_from_credentials(connection_url: str) -> TMongoClient:
-    client: TMongoClient = MongoClient(
-        connection_url, uuidRepresentation="standard", tz_aware=True
-    )
+    client: TMongoClient = MongoClient(connection_url, uuidRepresentation="standard", tz_aware=True)
     return client
 
 

@@ -10,6 +10,7 @@ app.add_typer(show_app, name="show", help="Show-related commands")
 
 SECURE_MODE = False
 
+
 @app.command()
 def serve(
     host: str = typer.Option("0.0.0.0", help="Host to run the server on"),
@@ -62,10 +63,16 @@ def ingest():
     """Run the ingest command"""
     typer.echo("Hello CLI")
 
+
 @app.command()
 def version():
     """Display the Ferry version"""
     typer.echo("Ferry version 0.1.0")
 
-if __name__ == "__main__":
+
+def main():
     app()
+
+
+if __name__ == "__main__":
+    main()

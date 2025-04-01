@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Dict
+from typing import List, Dict
 import hashlib
 import logging
 import dlt
@@ -10,10 +10,12 @@ from ferry.src.data_models.merge_config_model import MergeConfig, MergeStrategy
 
 logger = logging.getLogger(__name__)
 
-class SourceBase(ABC):
 
+class SourceBase(ABC):
     @abstractmethod
-    def dlt_source_system(self, uri: str, resources: List[ResourceConfig], identity: str) -> DltSource:
+    def dlt_source_system(
+        self, uri: str, resources: List[ResourceConfig], identity: str
+    ) -> DltSource:
         pass
 
     def create_credentials(self, uri: str):
@@ -43,14 +45,16 @@ class SourceBase(ABC):
             incremental_column = incremental_config.get("incremental_key", None)
 
         write_disposition = resource_config.build_wd_config()
-        if resource_config.write_disposition_config and resource_config.write_disposition_config.type == WriteDispositionType.MERGE.value:
+        if (
+            resource_config.write_disposition_config
+            and resource_config.write_disposition_config.type == WriteDispositionType.MERGE.value
+        ):
             strategy = resource_config.write_disposition_config.strategy
             config = resource_config.write_disposition_config.config or {}
             merge_config = MergeConfig(strategy=MergeStrategy(strategy), **config)
             primary_key = merge_config.build_pk_config()
             merge_key = merge_config.build_merge_key()
             columns = merge_config.build_columns()
-        
 
         @dlt.resource(
             name=resource_config.get_destination_table_name(),
@@ -61,10 +65,9 @@ class SourceBase(ABC):
             columns=columns,
         )
         def resource_function():
-
             if not exclude_columns and not pseudonymizing_columns:
-                                yield from data_iterator
-                                return
+                yield from data_iterator
+                return
 
             for row in data_iterator:
                 if not isinstance(row, dict):

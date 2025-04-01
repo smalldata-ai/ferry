@@ -1,17 +1,7 @@
-from http.client import HTTPException
-from fastapi import FastAPI, BackgroundTasks, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from fastapi import FastAPI
 
-from ferry.src.data_models.ingest_model import IngestModel
-from ferry.src.pipeline_builder import PipelineBuider
 
-from ferry.src.restapi.models import (
-    LoadDataRequest, LoadDataResponse
-)
 import logging
-from ferry.src.restapi.models import LoadDataRequest, LoadDataResponse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,8 +14,8 @@ task_status = {}
 # async def validation_exception_handler(request: Request, exc: RequestValidationError):
 #     error_dict = {}
 #     for error in exc.errors():
-#         field = error['loc'][-1]  
-#         message = error['msg']  
+#         field = error['loc'][-1]
+#         message = error['msg']
 #         if field not in error_dict:
 #             error_dict[field] = []
 #         error_dict[field].append(message)
@@ -40,9 +30,9 @@ task_status = {}
 #     """Runs data loading in the background and updates status"""
 #     dataset_key = f"{ingest_model.source_uri}_{ingest_model.destination_uri}"
 #     logger.info(f"🚀 Starting background task for: {dataset_key}")
-    
+
 #     task_status[dataset_key] = "running"  # Mark as running
-    
+
 #     try:
 #         pipeline = Pipeline(model=ingest_model)
 #         pipeline.build().run()
@@ -57,7 +47,7 @@ task_status = {}
 # async def get_status(source_uri: str, destination_uri: str):
 #     """Check the status of a background data load task"""
 #     dataset_key = f"{source_uri}_{destination_uri}"
-    
+
 #     if dataset_key not in task_status:
 #         logger.warning(f" Status check for unknown dataset: {dataset_key}")
 #         return {"source_uri": source_uri, "destination_uri": destination_uri, "status": "unknown"}
@@ -79,14 +69,13 @@ task_status = {}
 #             pipeline_name="pipeline.pipeline_name",
 #             table_processed=ingest_model.source_table_name,
 #         )
-        
+
 #     except Exception as e:
 #         logger.exception(f" Error starting background task: {e}")
 #         return JSONResponse(
 #             status_code=500,
 #             content={"status": "error", "message": f"Failed to start data loading: {str(e)}"}
 #         )
-
 
 
 # @app.post("/load-data", response_model=LoadDataResponse)
@@ -107,4 +96,3 @@ task_status = {}
 #             status_code=500,
 #             content={"status": "error", "message": f"Failed to start data loading: {str(e)}"}
 #         )
-    

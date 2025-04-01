@@ -1,10 +1,14 @@
-[build-system]
-requires = ["setuptools>=64", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "ferry"
-version = "0.1.0"
+dynamic = ["version"]
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "anirudh-69", email = "sanirudh012@gmail.com" },
+    { name = "nikhilfernandes", email = "fernandes.nikhil@gmail.com" },
+    { name = "Shravani1383", email = "shravanimjagtap13@gmail.com" }
+]
+requires-python = ">=3.9"
 dependencies = [
     "typer==0.15.1",
     "fastapi==0.115.8",
@@ -14,9 +18,9 @@ dependencies = [
     "sqlalchemy==2.0.38",
     "httpx==0.28.1",
     "pandas==2.2.3",
-    "pymongo==4.11.2"
+    "ruff>=0.11.2",
+    "pre-commit>=4.2.0",
 ]
-requires-python = ">=3.11"
 
 [project.optional-dependencies]
 postgres = ["psycopg2==2.9.10"]
@@ -33,24 +37,26 @@ motherduck = ["dlt[motherduck]==1.6.1"]
 sqlalchemy = ["dlt[sqlalchemy]==1.6.1"]
 qdrant = ["dlt[qdrant]==1.6.1"]
 athena = ["dlt[athena]==1.6.1"]
-mongodb = ["pymongo==4.11.2"]  # Kept for consistency, though redundant
+mongodb = ["pymongo==4.11.2"]
 filesystem = ["dlt[filesystem]==1.6.1"]
 pendulum = ["dlt-pendulum==3.0.2"]
 testing = ["pytest==8.3.4", "pytest-asyncio==0.25.3"]
-all = [
-    "psycopg2==2.9.10",
-    "boto3==1.37.1",
-    "duckdb-engine==0.15.0",
-    "duckdb==1.2.1",
-    "dlt[duckdb]==1.6.1",
-    "clickhouse-sqlalchemy==0.3.2",
-    "clickhouse-connect==0.8.15",
-    "snowflake-sqlalchemy==1.7.3",
-    "pymongo==4.11.2",
-    "dlt-pendulum==3.0.2",
-    "pytest==8.3.4",
-    "pytest-asyncio==0.25.3"
-]
 
 [project.scripts]
-ferry = "ferry.main:app"
+ferry = "ferry.main:main"
+
+[build-system]
+requires = ["hatchling==1.27.0", "hatch-vcs==0.4.0"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.uv]
+index = [
+    { name = "testpypi", url = "https://test.pypi.org/simple/", publish-url = "https://test.pypi.org/legacy/", priority = 100, explicit = true }
+]

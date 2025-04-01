@@ -20,19 +20,18 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     error_dict = {}
     for error in exc.errors():
-        field = error['loc'][-1]
-        message = error['msg']
+        field = error["loc"][-1]
+        message = error["msg"]
         if field not in error_dict:
             error_dict[field] = []
         error_dict[field].append(message)
-    return JSONResponse(
-        status_code=422,
-        content={"errors": error_dict}
-    )
+    return JSONResponse(status_code=422, content={"errors": error_dict})
+
 
 @app.post("/ferry", response_model=IngestResponse)
 def ingest(ingest_model: IngestModel):
@@ -59,8 +58,9 @@ def ingest(ingest_model: IngestModel):
         logger.exception(f"Error processing: {e}")
         return JSONResponse(
             status_code=500,
-            content={"status": "error", "message": "An internal server error occurred"}
+            content={"status": "error", "message": "An internal server error occurred"},
         )
+
 
 @app.get("/schema", response_model=SchemaResponse)
 def get_schema(pipeline_name: str = Query(..., description="The name of the pipeline")):
@@ -68,13 +68,16 @@ def get_schema(pipeline_name: str = Query(..., description="The name of the pipe
         pipeline = dlt.pipeline(pipeline_name=pipeline_name)
         schema_string = pipeline.default_schema.to_pretty_yaml()
         return SchemaResponse(
-            pipeline_name= pipeline_name,
-            pipeline_schema= schema_string,
+            pipeline_name=pipeline_name,
+            pipeline_schema=schema_string,
         )
     except Exception as e:
         logger.exception(f"Error fetching schema: {e}")
-        return JSONResponse(status_code=500, content={"status": "error", "message": "Failed to fetch schema"})
-    
+        return JSONResponse(
+            status_code=500, content={"status": "error", "message": "Failed to fetch schema"}
+        )
+
+
 @app.get("/ferry/{identity}/observe")
 def observe(identity: str):
     """API endpoint to observe a ferry pipeline"""
@@ -111,3 +114,4 @@ async def auth_middleware(request: Request, call_next):
             return JSONResponse(status_code=500, content={"detail": "Internal authentication error"})
     response = await call_next(request)
     return response
+
