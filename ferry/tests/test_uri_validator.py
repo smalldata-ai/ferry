@@ -2,9 +2,11 @@ import pytest
 from ferry.src.uri_validator import URIValidator
 
 class TestURIValidator:
+
     @pytest.mark.parametrize("uri", [
         "postgresql://user:password@localhost:5432/dbname",
-        "postgresql://admin:admin@127.0.0.1:5432/testdb"
+        "postgresql://admin:admin@127.0.0.1:5432/testdb",
+        "postgresql://user:@localhost:5432/dbname",
     ])
     def test_valid_postgres_uri(self, uri):
         assert URIValidator.validate_uri(uri) == uri

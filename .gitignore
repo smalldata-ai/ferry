@@ -2,10 +2,14 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+uv.lock
 # C extensions
 *.so
-
+node_modules/
+schemas/
+# Vite
+docs/.vitepress/dist
+docs/.vitepress/cache
 # Distribution / packaging
 .Python
 build/
@@ -25,7 +29,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+.ferry/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -191,3 +195,8 @@ test.py
 showcase.ipynb
 stroke.duckdb
 destination1_duckdb.duckdb
+check.py
+checkdb.py
+check_postgresql.py
+win-venv
+ferry/.ferry

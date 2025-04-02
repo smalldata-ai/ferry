@@ -13,6 +13,7 @@ from ferry.src.data_models.ingest_model import IngestModel, ResourceConfig
 from ferry.src.data_models.response_models import LoadStatus
 from ferry.src.pipeline_builder import PipelineBuilder
 from ferry.src.security import SecretsManager
+import subprocess
 
 
 custom_theme = Theme({
@@ -37,7 +38,7 @@ SECURE_MODE = False
 
 @app.command()
 def serve(
-    host: str = typer.Option("127.0.0.1", help="Host to run the server on"),
+    host: str = typer.Option("0.0.0.0", help="Host to run the server on"),
     port: int = typer.Option(8001, help="Port to run the server on"),
     reload: bool = typer.Option(True, help="Enable auto-reload for development"),
     secure: bool = typer.Option(False, help="Enable HMAC authentication")
@@ -68,6 +69,19 @@ def serve(
             border_style="success"
         ))
     uvicorn.run("ferry.src.restapi.app:app", host=host, port=port, reload=reload)
+
+@app.command()
+def serve_grpc(
+    port: int = typer.Option(50051, help="Port to run the gRPC server on"),
+    secure: bool = typer.Option(False, help="Enable HMAC authentication for gRPC")
+):
+    """Start the gRPC server for Ferry"""
+    cmd = ["python", "ferry/src/grpc/grpc_server.py", "--port", str(port)]
+    if secure:
+        cmd.append("--secure")
+    
+    typer.echo(f"Starting Ferry gRPC server on port {port} {'with HMAC authentication' if secure else ''}")
+    subprocess.run(cmd)
 
 @generate_app.command("secrets")
 def generate_secrets():
