@@ -23,6 +23,8 @@ class PipelineBuilder:
     def build(self):
         """Builds the pipeline with multiple resources."""
         try:
+            logger.info(f"Destination URI: {self.model.destination_uri}")
+            print(f"Destination URI: {self.model.destination_uri}")  # Debugging output
             destination = self.destination.dlt_target_system(self.model.destination_uri)
 
             self.pipeline = dlt.pipeline(
@@ -33,6 +35,7 @@ class PipelineBuilder:
                 # export_schema_path="schemas",
                 # refresh="drop_resources",
             )
+            logger.info(f"Pipeline created with name: {self.pipeline.dataset_name}")
             return self
         except Exception as e:
             logger.exception(f"Failed to create pipeline: {e}")
@@ -42,8 +45,10 @@ class PipelineBuilder:
         """Runs the pipeline with multiple resources."""
         try:
             source_resources = []
+            logger.info(f"Running pipeline: {self.pipeline.pipeline_name}")
 
             for resource_config in self.model.resources:
+                logger.info(f"Processing resource: {resource_config.source_table_name}")
                 source_resource = self.source.dlt_source_system(
                     uri=self.model.source_uri,
                     resources=[resource_config],
@@ -51,7 +56,9 @@ class PipelineBuilder:
                 )
                 source_resources.append(source_resource)
 
+            logger.info(f"Source resources prepared: {source_resources}")
             run_info = self.pipeline.run(data=source_resources)
+
             logger.info(run_info.metrics)
             logger.info(run_info.load_packages)
             logger.info(run_info.writer_metrics_asdict)
