@@ -2,7 +2,7 @@
 name = "ferry"
 dynamic = ["version"]
 description = "Add your description here"
-readme = "README.md"
+readme = "readme.md"
 authors = [
     { name = "anirudh-69", email = "sanirudh012@gmail.com" },
     { name = "nikhilfernandes", email = "fernandes.nikhil@gmail.com" },
