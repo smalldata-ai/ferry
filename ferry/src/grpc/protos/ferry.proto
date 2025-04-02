@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package ferry;
+
+service FerryService {
+  rpc IngestData (IngestRequest) returns (IngestResponse);
+  rpc GetObservability (ObservabilityRequest) returns (ObservabilityResponse);
+}
+
+message IngestRequest {
+  string identity = 1;
+  string source_uri = 2;
+  string destination_uri = 3;
+  repeated Resource resources = 4;
+}
+
+message Resource {
+  string source_table_name = 1;
+  string destination_table_name = 2;
+  ColumnRules column_rules = 3;
+  WriteDispositionConfig write_disposition_config = 4;
+}
+
+message ColumnRules {
+  repeated string exclude_columns = 1;
+  repeated string pseudonymizing_columns = 2;
+}
+
+message WriteDispositionConfig {
+  string type = 1;
+}
+
+message IngestResponse {
+  string status = 1;
+  string message = 2;
+  string pipeline_name = 3;
+}
+
+message ObservabilityRequest {
+  string identity = 1;
+}
+
+message ObservabilityResponse {
+  string status = 1;
+  string metrics = 2;
+}

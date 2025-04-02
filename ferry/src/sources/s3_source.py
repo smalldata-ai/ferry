@@ -10,14 +10,11 @@ from ferry.src.data_models.ingest_model import ResourceConfig
 
 logger = logging.getLogger(__name__)
 
-
 class S3Source(SourceBase):
     def __init__(self):
         super().__init__()
 
-    def dlt_source_system(
-        self, uri: str, resources: List[ResourceConfig], identity: str
-    ) -> DltSource:
+    def dlt_source_system(self, uri: str, resources: List[ResourceConfig], identity: str) -> DltSource:
         """Fetch multiple tables from S3 and create a DLT source with resources."""
         bucket_name, aws_credentials = self._parse_s3_uri(uri)
         resources_list = []
@@ -30,12 +27,8 @@ class S3Source(SourceBase):
             reader = self._get_reader(table_name)
 
             # Determine the incremental loading strategy
-            file_incremental = dlt.sources.incremental(
-                "modification_date"
-            )  # Track file modifications
-            row_incremental = self._get_row_incremental(
-                resource_config
-            )  # Track new records inside files
+            file_incremental = dlt.sources.incremental("modification_date")  # Track file modifications
+            row_incremental = self._get_row_incremental(resource_config)  # Track new records inside files
 
             # Create file resource and apply incremental loading hints
             file_resource = filesystem(f"s3://{bucket_name}", aws_credentials, f"{table_name}*")
@@ -48,7 +41,11 @@ class S3Source(SourceBase):
 
             resources_list.append(self._create_dlt_resource(resource_config, data_iterator))
 
-        return DltSource(schema=dlt.Schema(identity), section="s3_source", resources=resources_list)
+        return DltSource(
+            schema=dlt.Schema(identity),
+            section="s3_source",
+            resources=resources_list
+        )
 
     def _parse_s3_uri(self, uri: str):
         """Extracts bucket name and AWS credentials from the URI."""
@@ -59,7 +56,7 @@ class S3Source(SourceBase):
         aws_credentials = AwsCredentials(
             aws_access_key_id=query_params.get("access_key_id", [None])[0],
             aws_secret_access_key=query_params.get("access_key_secret", [None])[0],
-            region_name=query_params.get("region", [None])[0],
+            region_name=query_params.get("region", [None])[0]
         )
         return bucket_name, aws_credentials
 

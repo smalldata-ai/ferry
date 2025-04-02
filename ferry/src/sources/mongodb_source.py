@@ -1,18 +1,20 @@
 import dlt
+from typing import Optional, List
 from urllib.parse import urlparse, parse_qs
 from ferry.src.sources.source_base import SourceBase
 
 try:
-    from ferry.src.sources.mongodb import mongodb_collection
+    from ferry.src.sources.mongodb import mongodb, mongodb_collection
 except ImportError:
-    from ferry.src.sources.mongodb import mongodb_collection
-
+    from ferry.src.sources.mongodb import mongodb, mongodb_collection
 
 class MongoDbSource(SourceBase):
+
     def __init__(self) -> None:
         super().__init__()
-
+    
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):
+        
         try:
             parsed_uri = urlparse(uri)
             query_params = parse_qs(parsed_uri.query)

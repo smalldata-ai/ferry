@@ -4,7 +4,6 @@ from dlt.common.configuration.specs import GcpServiceAccountCredentials
 from dlt.sources.filesystem import filesystem, read_csv, read_jsonl, read_parquet
 from ferry.src.sources.source_base import SourceBase
 
-
 class GCSSource(SourceBase):
     def __init__(self):
         super().__init__()
@@ -12,10 +11,10 @@ class GCSSource(SourceBase):
     def dlt_source_system(self, uri: str, table_name: str, **kwargs):
         """Fetch data from GCS and create a dlt resource."""
         bucket_name, gcp_credentials = self._parse_gcs_uri(uri)
-
+        
         file_resource = self._create_file_resource(bucket_name, gcp_credentials, table_name)
         return self._apply_reader(file_resource, table_name)
-
+    
     def _parse_gcs_uri(self, uri: str):
         """Extracts bucket name and GCP credentials from the URI."""
         parsed_uri = urllib.parse.urlparse(uri)
@@ -29,9 +28,7 @@ class GCSSource(SourceBase):
         )
         return bucket_name, gcp_credentials
 
-    def _create_file_resource(
-        self, bucket_name: str, gcp_credentials: GcpServiceAccountCredentials, table_name: str
-    ):
+    def _create_file_resource(self, bucket_name: str, gcp_credentials: GcpServiceAccountCredentials, table_name: str):
         """Creates a dlt file resource with incremental loading."""
         file_resource = filesystem(f"gs://{bucket_name}", gcp_credentials, f"{table_name}*")
         file_resource.apply_hints(incremental=dlt.sources.incremental("modification_date"))

@@ -1,8 +1,10 @@
 import unittest
+from unittest.mock import patch, MagicMock, ANY
 from ferry.src.sources.s3_source import S3Source
-
+from dlt.common.configuration.specs import AwsCredentials
 
 class TestS3Source(unittest.TestCase):
+
     def setUp(self):
         """Set up a fresh S3Source instance for each test."""
         self.s3_source = S3Source()
@@ -281,7 +283,6 @@ class TestS3Source(unittest.TestCase):
     #     with self.assertRaises(Exception) as context:
     #         self.s3_source.dlt_source_system(uri, table_name)
     #     self.assertIn("Access Denied", str(context.exception))
-
 
 if __name__ == "__main__":
     unittest.main()

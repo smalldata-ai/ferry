@@ -1,6 +1,7 @@
 import typer
 import uvicorn
 from ferry.src.security import SecretsManager
+import subprocess
 
 app = typer.Typer()
 generate_app = typer.Typer()
@@ -10,13 +11,12 @@ app.add_typer(show_app, name="show", help="Show-related commands")
 
 SECURE_MODE = False
 
-
 @app.command()
 def serve(
     host: str = typer.Option("0.0.0.0", help="Host to run the server on"),
     port: int = typer.Option(8001, help="Port to run the server on"),
     reload: bool = typer.Option(True, help="Enable auto-reload for development"),
-    secure: bool = typer.Option(False, help="Enable HMAC authentication"),
+    secure: bool = typer.Option(False, help="Enable HMAC authentication")
 ):
     """Start the FastAPI server for Ferry"""
     global SECURE_MODE
@@ -30,6 +30,18 @@ def serve(
         typer.echo(f"Starting Ferry server on {host}:{port}")
     uvicorn.run("ferry.src.restapi.app:app", host=host, port=port, reload=reload)
 
+@app.command()
+def serve_grpc(
+    port: int = typer.Option(50051, help="Port to run the gRPC server on"),
+    secure: bool = typer.Option(False, help="Enable HMAC authentication for gRPC")
+):
+    """Start the gRPC server for Ferry"""
+    cmd = ["python", "ferry/src/grpc/grpc_server.py", "--port", str(port)]
+    if secure:
+        cmd.append("--secure")
+    
+    typer.echo(f"Starting Ferry gRPC server on port {port} {'with HMAC authentication' if secure else ''}")
+    subprocess.run(cmd)
 
 @generate_app.command("secrets")
 def generate_secrets():
@@ -43,7 +55,6 @@ def generate_secrets():
     except Exception as e:
         typer.echo(f"Error generating secrets: {str(e)}")
         raise typer.Exit(1)
-
 
 @show_app.command("secrets")
 def show_secrets():
@@ -60,22 +71,15 @@ def show_secrets():
         typer.echo(f"Error retrieving secrets: {str(e)}")
         raise typer.Exit(1)
 
-
 @app.command()
 def ingest():
     """Run the ingest command"""
     typer.echo("Hello CLI")
-
 
 @app.command()
 def version():
     """Display the Ferry version"""
     typer.echo("Ferry version 0.1.0")
 
-
-def main():
-    app()
-
-
 if __name__ == "__main__":
-    main()
+    app()

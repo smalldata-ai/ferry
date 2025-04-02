@@ -14,8 +14,8 @@ class SourceFactory:
     _items = {
         "postgres": SqlDbSource,
         "postgresql": SqlDbSource,
-        "duckdb": SqlDbSource,
-        "s3": S3Source,
+        "duckdb": SqlDbSource,  
+        "s3": S3Source, 
         "sqlite": SqlDbSource,
         "clickhouse": ClickhouseSource,
         "mysql": SqlDbSource,
