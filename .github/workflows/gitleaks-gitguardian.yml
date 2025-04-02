@@ -3,10 +3,10 @@ name: GitGuardian Secret Scan
 on:
   push:
     branches:
-      - feature/grpc
+      - main
   pull_request:
     branches:
-      - feature/grpc
+      - main
 
 jobs:
   ggshield-scan:
@@ -22,4 +22,4 @@ jobs:
         env:
           GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
         with:
-          args: "scan path ."
+          args: "secret scan ."
