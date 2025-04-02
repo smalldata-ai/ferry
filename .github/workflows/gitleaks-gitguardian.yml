@@ -3,10 +3,10 @@ name: GitGuardian Secret Scan
 on:
   push:
     branches:
-      - main
+      - feature/grpc
   pull_request:
     branches:
-      - main
+      - feature/grpc
 
 jobs:
   ggshield-scan:
