@@ -49,7 +49,7 @@ class LocalFileSource(SourceBase):
             def data_iterator():
                 for row in file_resource | reader():
                     if row_incremental and row.get(row_incremental.key) <= row_incremental.last_value:
-                        continue  # Skip older records
+                        continue  
                     yield row
 
             resources_list.append(data_iterator)
