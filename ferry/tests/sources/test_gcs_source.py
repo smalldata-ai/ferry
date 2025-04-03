@@ -7,7 +7,6 @@ def mock_gcs_source():
     return GCSSource()
 
 def mock_resources():
-    
     return [
         ResourceConfig(source_table_name="table1", incremental_config=None),
         ResourceConfig(
@@ -24,12 +23,12 @@ def test_dlt_source_system(mock_read_parquet, mock_read_jsonl, mock_read_csv, mo
     gcs_source = mock_gcs_source()
     resources = mock_resources()
 
-   
+    
     mock_file_resource = MagicMock()
     mock_file_resource.apply_hints = MagicMock()
     mock_file_resource.__or__ = MagicMock()  
     
- 
+   
     mock_filesystem.return_value = mock_file_resource
     
     
@@ -46,14 +45,27 @@ def test_dlt_source_system(mock_read_parquet, mock_read_jsonl, mock_read_csv, mo
         "test_identity"
     )
 
+   
+    print(f"dlt_source: {dlt_source}")
+    print(f"Type of dlt_source.resources: {type(dlt_source.resources)}")
+    print(f"dlt_source.resources: {dlt_source.resources}")
+
     
     assert dlt_source.section == "gcs_source"
+    
+    
+    assert isinstance(dlt_source.resources, dict), "dlt_source.resources should be a dictionary"
     assert len(dlt_source.resources) == 2
     
     
-    assert len(dlt_source.resources[0]) == 2
+    first_key = list(dlt_source.resources.keys())[0]
     
+    
+    resource_data = list(dlt_source.resources[first_key])  
+    assert len(resource_data) == 2  
+ 
 
+    
     filtered_data = list(gcs_source._apply_row_incremental(jsonl_data, "incremental_key"))
     assert len(filtered_data) == 1
     assert filtered_data[0]["incremental_key"] == "2024-01-01"
@@ -82,7 +94,7 @@ def test_apply_row_incremental():
         incremental_config=IncrementalConfig(incremental_key="incremental_key")
     )
     
-    
+    # Test data
     data = [
         {"id": 1, "incremental_key": "2024-01-01"},
         {"id": 2},  
@@ -93,8 +105,8 @@ def test_apply_row_incremental():
     incremental_key = gcs_source._get_row_incremental(resource_config)
     assert incremental_key == "incremental_key"
     
-   
     filtered_data = list(gcs_source._apply_row_incremental(data, incremental_key))
+    
    
     assert len(filtered_data) == 2
     assert all("incremental_key" in item for item in filtered_data)
