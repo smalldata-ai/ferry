@@ -27,6 +27,7 @@ class URIValidator:
         "gcs": {"gs"},
         "azure": {"az"},
         "local": {"file"},
+        "kafka": {"kafka"},
     }
 
     # Regex patterns for URI validation
@@ -41,6 +42,8 @@ class URIValidator:
         "gcs": r"^gs://(?P<bucket>[\w.-]+)(/(?P<key>.+))?",
         "azure": r"^az://(?P<container>[\w.-]+)(/(?P<blob>.+))?",
         "file": r"^file://(?P<path>/[\w./-]+)",
+        "kafka": r"^kafka://(?P<bootstrap_servers>[^/]+)(/(?P<topic>[\w.-]+))?$",
+        # "kafka": r"^kafka://(?P<bootstrap_servers>[^?]+)\?group_id=(?P<group_id>[^&]+)&security_protocol=(?P<security_protocol>PLAINTEXT|SASL_PLAINTEXT|SASL_SSL)(&sasl_mechanisms=(?P<sasl_mechanisms>PLAIN|SCRAM-SHA-256|SCRAM-SHA-512)&sasl_username=(?P<sasl_username>[^&]+)&sasl_password=(?P<sasl_password>[^&]+))?$"
     }
 
     @classmethod
@@ -99,5 +102,8 @@ class URIValidator:
             return f"Invalid Azure URI format: {uri}. Expected format: az://container-name/blob"
         elif category == "file":
             return f"Invalid file URI format: {uri}. Expected format: file:///path/to/file"
+        elif category == "kafka":
+            return f"Invalid Kafka URI format: {uri}. Expected format: kafka://<bootstrap_servers>?group_id=<group_id>&security_protocol=<security_protocol>&sasl_mechanisms=<sasl_mechanisms>&sasl_username=<sasl_username>&sasl_password=<sasl_password>"
+
         else:
             return f"Invalid {category} URI format: {uri}. Please check the URI structure."

@@ -200,3 +200,5 @@ checkdb.py
 check_postgresql.py
 win-venv
 ferry/.ferry
+kafka_admin_check.py
+kafka_producer.py

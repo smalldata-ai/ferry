@@ -8,14 +8,15 @@ from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.s3_source import S3Source
 from ferry.src.sources.sql_db_source import SqlDbSource  # Import S3Source
+from ferry.src.sources.kafka_source import KafkaSource
 
 
 class SourceFactory:
     _items = {
         "postgres": SqlDbSource,
         "postgresql": SqlDbSource,
-        "duckdb": SqlDbSource,  
-        "s3": S3Source, 
+        "duckdb": SqlDbSource,
+        "s3": S3Source,
         "sqlite": SqlDbSource,
         "clickhouse": ClickhouseSource,
         "mysql": SqlDbSource,
@@ -26,6 +27,7 @@ class SourceFactory:
         "az": AzureStorageSource,
         "gs": GCSSource,
         "file": LocalFileSource,
+        "kafka": KafkaSource,
     }
 
     @staticmethod
