@@ -38,7 +38,7 @@ class KafkaSource(SourceBase):
 
             kafka_resource = dlt.resource(
                 self._consume_messages(consumer, topic_name),
-                name=resource_config.source_table_name,
+                name=resource_config.destination_table_name,
                 write_disposition="append",
                 primary_key="offset",
                 incremental=incremental_key,
@@ -130,7 +130,7 @@ class KafkaSource(SourceBase):
                     logger.info("No new messages in Kafka, stopping consumer...")
                     break
 
-                for batch in messages.items():
+                for tp, batch in messages.items():
                     for message in batch:
                         record = {
                             "key": message.key.decode("utf-8") if message.key else None,
