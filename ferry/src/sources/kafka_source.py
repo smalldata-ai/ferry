@@ -5,7 +5,7 @@ from dlt.extract.source import DltSource
 from ferry.src.sources.source_base import SourceBase
 from ferry.src.data_models.ingest_model import ResourceConfig
 from urllib.parse import urlparse, parse_qs
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, TopicPartition
 from dlt.extract.incremental import Incremental
 
 logger = logging.getLogger(__name__)
@@ -37,11 +37,11 @@ class KafkaSource(SourceBase):
             )
 
             kafka_resource = dlt.resource(
-                self._consume_messages(consumer),
+                self._consume_messages(consumer, topic_name),
                 name=resource_config.source_table_name,
                 write_disposition="append",
                 primary_key="offset",
-                incremental=incremental_key,  # Fixed incremental
+                incremental=incremental_key,
             )
 
             resources_list.append(kafka_resource)
@@ -97,11 +97,10 @@ class KafkaSource(SourceBase):
         consumer_config = {
             "bootstrap_servers": broker,
             "auto_offset_reset": "earliest",
-            "enable_auto_commit": False,  # Disable auto-commit for manual offset tracking
+            "enable_auto_commit": False,  # Manual offset tracking
             "value_deserializer": lambda x: x.decode("utf-8"),
         }
 
-        # Add security options if provided
         if config["security_protocol"] and config["security_protocol"] != "PLAINTEXT":
             consumer_config["security_protocol"] = config["security_protocol"]
             consumer_config["sasl_mechanism"] = config["sasl_mechanisms"]
@@ -111,21 +110,27 @@ class KafkaSource(SourceBase):
         if config["group_id"]:
             consumer_config["group_id"] = config["group_id"]
 
-        logger.info(f" Kafka Consumer Config: {consumer_config}")  # Debugging config
+        logger.info(f"Kafka Consumer Config: {consumer_config}")
+        consumer = KafkaConsumer(**consumer_config)
 
-        consumer = KafkaConsumer(topic, **consumer_config)
+        # Assign partitions manually
+        partitions = consumer.partitions_for_topic(topic)
+        if partitions:
+            topic_partitions = [TopicPartition(topic, p) for p in partitions]
+            consumer.assign(topic_partitions)
+
         return consumer
 
-    def _consume_messages(self, consumer: KafkaConsumer) -> Iterator[Dict[str, Any]]:
-        """Consumes messages from Kafka and yields structured records."""
+    def _consume_messages(self, consumer: KafkaConsumer, topic: str) -> Iterator[Dict[str, Any]]:
+        """Consumes messages from Kafka and manages offsets."""
         try:
             while True:
-                messages = consumer.poll(timeout_ms=5000)  # Poll with timeout
+                messages = consumer.poll(timeout_ms=5000)
                 if not messages:
-                    logger.info(" No new messages in Kafka, stopping consumer...")
+                    logger.info("No new messages in Kafka, stopping consumer...")
                     break
 
-                for tp, batch in messages.items():
+                for batch in messages.items():
                     for message in batch:
                         record = {
                             "key": message.key.decode("utf-8") if message.key else None,
@@ -134,11 +139,11 @@ class KafkaSource(SourceBase):
                             "partition": message.partition,
                             "timestamp": message.timestamp,
                         }
-                        # logger.info(f" Kafka Record Received: {record}")  # Debug log
-                        yield record  # Pass data to DLT pipeline
+                        yield record
 
-                consumer.commit()  # Ensure offsets are committed
+                    # Manually commit offsets after processing each batch
+                    consumer.commit()
         except Exception as e:
-            logger.error(f" Kafka consumption error: {e}")
+            logger.error(f"Kafka consumption error: {e}")
         finally:
             consumer.close()
