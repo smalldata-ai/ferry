@@ -32,3 +32,4 @@ pytest-cov==6.0.0
 psutil
 ggshield 
 pre-commit
+kafka-python
