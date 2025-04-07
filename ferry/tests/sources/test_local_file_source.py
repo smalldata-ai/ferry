@@ -4,23 +4,30 @@ from typing import List
 from ferry.src.sources.local_file_source import LocalFileSource
 from ferry.src.data_models.ingest_model import ResourceConfig, IncrementalConfig, WriteDispositionConfig, WriteDispositionType
 
+
 class TestLocalFileSource(unittest.TestCase):
     def setUp(self):
         """Setup test environment."""
         self.mock_uri = "file:///tmp/test_data"
-        
-        # Corrected ResourceConfig with all required fields
+
         self.mock_resources: List[ResourceConfig] = [
             ResourceConfig(
                 source_table_name="test_table.csv",
-                primary_key="id",  
+                primary_key="id",
                 destination_table_name="destination_table",
                 column_rules=None,
                 write_disposition_config=WriteDispositionConfig(type=WriteDispositionType.APPEND),
                 incremental_config=IncrementalConfig(incremental_key="updated_at")
             )
         ]
-        
+
+        # Add columns attribute dynamically
+        setattr(self.mock_resources[0], "columns", [
+            {"name": "id"},
+            {"name": "name"},
+            {"name": "updated_at"}
+        ])
+
         self.local_source = LocalFileSource()
 
     @patch("urllib.parse.urlparse")
@@ -38,18 +45,32 @@ class TestLocalFileSource(unittest.TestCase):
 
     @patch("dlt.sources.filesystem")
     @patch("pandas.read_csv")
-   
     def test_dlt_source_system(self, mock_read_csv, mock_filesystem):
         """Test the dlt_source_system function with multiple resources."""
         mock_filesystem.return_value = MagicMock()
         mock_read_csv.return_value = iter([{"id": 1, "name": "Test", "updated_at": "2024-01-01"}])
 
-        self.mock_resources[0].file_pattern = "test_table*.csv"  
+        self.mock_resources[0].file_pattern = "test_table*.csv"
 
-        # ✅ Dynamically add 'columns' attribute before calling the method
-        setattr(self.mock_resources[0], "columns", ["id", "name", "updated_at"])
 
-        result = self.local_source.dlt_source_system(self.mock_uri, self.mock_resources, "test_identity")
+        source_fn = self.local_source.dlt_source_system(self.mock_uri, self.mock_resources, "test_identity")
+        resources = source_fn() 
+        resource_name = self.mock_resources[0].source_table_name
+        self.assertTrue(callable(resources.resources[resource_name]))
+
+         
+        self.assertTrue(callable(source_fn))
+
+        result = source_fn()
+        from dlt.extract.source import DltSource
+        self.assertIsInstance(result, DltSource)
+
+       
+        resource_name = self.mock_resources[0].source_table_name
+        self.assertIn(resource_name, result.resources)
+        self.assertTrue(callable(result.resources[resource_name]))
+
+        self.assertGreater(len(result.resources), 0)
 
 
     def test_get_reader_csv(self):
@@ -76,6 +97,7 @@ class TestLocalFileSource(unittest.TestCase):
         """Test extracting the incremental key from ResourceConfig."""
         result = self.local_source._get_row_incremental(self.mock_resources[0])
         self.assertIsNotNone(result)
+
 
 if __name__ == "__main__":
     unittest.main()
