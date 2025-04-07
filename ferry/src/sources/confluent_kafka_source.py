@@ -135,15 +135,13 @@ class KafkaSource(SourceBase):
                     break
 
                 if message.error():
-                    logger.warning(f"⚠️ Kafka message error: {message.error()}")
+                    logger.warning(f" Kafka message error: {message.error()}")
                     continue
 
                 try:
                     raw_value = message.value()
-                    logger.debug(f"📦 Raw bytes: {raw_value}")
+                    logger.debug(f" Raw bytes: {raw_value}")
 
-                    # Try Avro deserialization
-                    # NEW (skip Avro if not using it)
                     if avro_deserializer:
                         # Use Avro deserializer
                         parsed_value = avro_deserializer(
@@ -167,7 +165,7 @@ class KafkaSource(SourceBase):
                     yield record
 
                 except Exception as e:
-                    logger.error(f"❌ Failed to deserialize or yield message: {e}")
+                    logger.error(f" Failed to deserialize or yield message: {e}")
 
         except Exception as e:
             logger.error(f"Kafka consumption error: {e}")
