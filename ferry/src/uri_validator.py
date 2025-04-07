@@ -43,7 +43,8 @@ class URIValidator:
         "azure": r"^az://(?P<container>[\w.-]+)(/(?P<blob>.+))?",
         "file": r"^file://(?P<path>/[\w./-]+)",
         # "kafka": r"^kafka://(?P<bootstrap_servers>[^/]+)(/(?P<topic>[\w.-]+))?$",
-        "kafka": r"^kafka://(?P<bootstrap_servers>[^?]+)\?group_id=(?P<group_id>[^&]+)&security_protocol=(?P<security_protocol>PLAINTEXT|SASL_PLAINTEXT|SASL_SSL)(&sasl_mechanisms=(?P<sasl_mechanisms>PLAIN|SCRAM-SHA-256|SCRAM-SHA-512)&sasl_username=(?P<sasl_username>[^&]+)&sasl_password=(?P<sasl_password>[^&]+))?$",
+        # "kafka": r"^kafka://(?P<bootstrap_servers>[^?]+)\?group_id=(?P<group_id>[^&]+)&security_protocol=(?P<security_protocol>PLAINTEXT|SASL_PLAINTEXT|SASL_SSL)(&sasl_mechanisms=(?P<sasl_mechanisms>PLAIN|SCRAM-SHA-256|SCRAM-SHA-512)&sasl_username=(?P<sasl_username>[^&]+)&sasl_password=(?P<sasl_password>[^&]+))?$",
+        "kafka": r"^kafka://(?P<bootstrap_servers>[^?]+)\?(group_id=(?P<group_id>[^&]+)&)?security_protocol=(?P<security_protocol>PLAINTEXT|SASL_PLAINTEXT|SASL_SSL)(&sasl_mechanisms=(?P<sasl_mechanisms>PLAIN|SCRAM-SHA-256|SCRAM-SHA-512)&sasl_username=(?P<sasl_username>[^&]+)&sasl_password=(?P<sasl_password>[^&]+))?(&schema_registry=(?P<schema_registry>[^&]+))?",
     }
 
     @classmethod

@@ -8,7 +8,7 @@ from ferry.src.sources.source_base import SourceBase
 from ferry.src.exceptions import InvalidSourceException
 from ferry.src.sources.s3_source import S3Source
 from ferry.src.sources.sql_db_source import SqlDbSource  # Import S3Source
-from ferry.src.sources.kafka_source import KafkaSource
+from ferry.src.sources.confluent_kafka_source import KafkaSource
 
 
 class SourceFactory:
