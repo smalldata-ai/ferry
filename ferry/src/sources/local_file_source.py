@@ -16,7 +16,7 @@ class LocalFileSource(SourceBase):
     def dlt_source_system(self, uri: str, resources: List[ResourceConfig], identity: str):
         """Fetch multiple resources from the local filesystem and create a dlt source."""
         base_path = self._parse_local_uri(uri)
-        resources_list = []
+        resource_funcs = []
 
         for resource_config in resources:
             table_name = resource_config.source_table_name
@@ -25,13 +25,10 @@ class LocalFileSource(SourceBase):
             logger.info(f"Processing table: {table_name}")
             
             row_incremental = self._get_row_incremental(resource_config)
-            
             reader = self._get_reader(table_name, incremental=row_incremental)
 
             file_glob_pattern = resource_config.file_pattern or f"{table_name}*"
-
             file_incremental = dlt.sources.incremental("modification_date")
-            row_incremental = self._get_row_incremental(resource_config)
 
             file_resource = filesystem(bucket_url=base_path, file_glob=file_glob_pattern)
             file_resource.apply_hints(incremental=file_incremental)
@@ -39,26 +36,25 @@ class LocalFileSource(SourceBase):
             @dlt.resource(
                 name=table_name,
                 incremental=row_incremental,
-                write_disposition=resource_config.write_disposition_config,  
-
-                primary_key=getattr(resource_config, "primary_key", None),  
-
+                write_disposition=resource_config.write_disposition_config,
+                primary_key=getattr(resource_config, "primary_key", None),
                 merge_key=resource_config.merge_key,
                 columns=resource_config.columns,
             )
-            def data_iterator():
+            def data_iterator(file_resource=file_resource, reader=reader, row_incremental=row_incremental):
                 for row in file_resource | reader():
                     if row_incremental and row.get(row_incremental.key) <= row_incremental.last_value:
                         continue  
                     yield row
 
-            resources_list.append(data_iterator)
+            resource_funcs.append(data_iterator)
 
-        return dlt.source(
-            schema=dlt.Schema(identity),
-            section="local_file_source",
-            resources=resources_list
-        )
+        
+        @dlt.source(schema=dlt.Schema(identity), section="local_file_source")
+        def local_file_source():
+            return resource_funcs
+
+        return local_file_source
 
     def _parse_local_uri(self, uri: str) -> str:
         """Extracts the base path from a local filesystem URI or native path."""
@@ -67,8 +63,6 @@ class LocalFileSource(SourceBase):
             return parsed_uri.path
         else:
             raise ValueError(f"Unsupported URI scheme for local filesystem: {uri}")
-
-        
 
     def _get_reader(self, table_name: str, incremental=None):
         """Returns the appropriate reader function based on file format and applies incremental filtering."""
@@ -81,7 +75,6 @@ class LocalFileSource(SourceBase):
             return lambda: read_parquet(incremental=incremental)
         else:
             raise ValueError(f"Unsupported file format for table: {table_name}")
-
 
     def _get_row_incremental(self, resource_config: ResourceConfig) -> Optional[dlt.sources.incremental]:
         """Builds incremental filtering for record-level processing."""
