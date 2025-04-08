@@ -202,3 +202,10 @@ win-venv
 ferry/.ferry
 kafka_admin_check.py
 kafka_producer.py
+avro_producer.py
+csv_avro_kafka_producer.py
+kafka_binary_producer.py
+kafka_csv_producer.py
+kafka_json_producer.py
+kafka_paraquet_producer.py
+kafka_string_producer.py

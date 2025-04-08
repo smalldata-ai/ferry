@@ -35,4 +35,4 @@ pre-commit
 kafka-python
 fastavro==1.10.0
 authlib==1.5.2
-confluent-kafka[avro]==1.12.0
+confluent-kafka[avro]

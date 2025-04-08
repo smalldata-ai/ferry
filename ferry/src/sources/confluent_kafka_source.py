@@ -1,3 +1,9 @@
+"""
+Example URI:
+
+kafka://localhost:9092?group_id=mygroup&security_protocol=PLAINTEXT&use_avro=true&schema_registry=http://localhost:8081
+"""
+
 import dlt
 import logging
 from typing import Iterator, List, Dict, Any
@@ -128,29 +134,53 @@ class KafkaSource(SourceBase):
     ) -> Iterator[Dict[str, Any]]:
         try:
             while True:
-                message = consumer.poll(timeout=5.0)  # <-- this is correct for confluent_kafka
+                message = consumer.poll(timeout=5.0)
 
                 if message is None:
                     logger.info("No new messages in Kafka, stopping consumer...")
                     break
 
                 if message.error():
-                    logger.warning(f" Kafka message error: {message.error()}")
+                    logger.warning(f"Kafka message error: {message.error()}")
                     continue
 
                 try:
                     raw_value = message.value()
-                    logger.debug(f" Raw bytes: {raw_value}")
+                    logger.debug(f"Raw bytes: {raw_value}")
+
+                    parsed_value = None
 
                     if avro_deserializer:
-                        # Use Avro deserializer
+                        # Avro Deserialization
                         parsed_value = avro_deserializer(
                             raw_value, SerializationContext(topic, MessageField.VALUE)
                         )
                     else:
-                        # Fallback to JSON
+                        # Fallback to JSON or string
                         decoded_str = raw_value.decode("utf-8", errors="replace")
-                        parsed_value = json.loads(decoded_str)
+                        try:
+                            # Try parsing as JSON
+                            parsed_value = json.loads(decoded_str)
+                        except json.JSONDecodeError:
+                            # Try parsing as CSV-style string with optional headers
+                            values = decoded_str.strip().split(",")
+                            logger.debug(f"CSV-like string split: {values}")
+
+                            # Attempt to infer keys if headers are present in message key
+                            key_str = (
+                                message.key().decode("utf-8", errors="replace")
+                                if message.key()
+                                else None
+                            )
+
+                            if key_str and key_str.startswith("header:"):
+                                headers = key_str.replace("header:", "").split(",")
+                                if len(headers) == len(values):
+                                    parsed_value = dict(zip(headers, values))
+                                else:
+                                    parsed_value = {"raw": decoded_str}
+                            else:
+                                parsed_value = {"raw": decoded_str}
 
                     record = {
                         **parsed_value,
@@ -165,7 +195,7 @@ class KafkaSource(SourceBase):
                     yield record
 
                 except Exception as e:
-                    logger.error(f" Failed to deserialize or yield message: {e}")
+                    logger.error(f"Failed to deserialize or yield message: {e}")
 
         except Exception as e:
             logger.error(f"Kafka consumption error: {e}")
