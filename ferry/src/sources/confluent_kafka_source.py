@@ -2,8 +2,32 @@
 Example URI:
 
 kafka://localhost:9092?group_id=mygroup&security_protocol=PLAINTEXT&use_avro=true&schema_registry=http://localhost:8081
+
+Input:
+{
+    "identity": "test_kafka_194",
+    "source_uri": "kafka://localhost:9092?group_id=test_group&security_protocol=PLAINTEXT&sasl_mechanisms=PLAIN&sasl_username=user&sasl_password=pass&schema_registry=http://localhost:8081&use_avro=true",
+    "destination_uri": "duckdb:////mnt/d/smalldata.ai/Ferry-develop/ferry/test_duckdb_kafka194.duckdb",
+    "resources": [
+        {
+            "source_table_name": "stroke-avro-topic1",
+            "destination_table_name": "avro_table",
+            "write_disposition_config": {
+                "type": "replace"
+            },
+            "source_options": {
+                "batch_size": 100,
+                "batch_timeout": 5,
+                "start_from": "earliest"
+            }
+        }
+    ]
+}
+
+
 """
 
+import time
 import dlt
 import logging
 from typing import Iterator, List, Dict, Any
@@ -34,12 +58,28 @@ class KafkaSource(SourceBase):
         resources_list = []
 
         for resource_config in resources:
+            source_options = resource_config.source_options or {}
+            batch_size = (
+                source_options.batch_size
+                if source_options and source_options.batch_size is not None
+                else 100
+            )
+            batch_timeout = (
+                source_options.batch_timeout
+                if source_options and source_options.batch_timeout is not None
+                else 5.0
+            )
+            start_from = (
+                source_options.start_from
+                if source_options and source_options.start_from is not None
+                else "earliest"
+            )
+
             topic_name = resource_config.source_table_name
             logger.info(f"Processing Kafka topic: {topic_name}")
 
-            # consumer = self._create_kafka_consumer(kafka_broker, topic_name, kafka_config)
             consumer, avro_deserializer = self._create_kafka_consumer(
-                kafka_broker, topic_name, kafka_config
+                kafka_broker, topic_name, kafka_config, start_from
             )
 
             incremental_key = (
@@ -49,7 +89,9 @@ class KafkaSource(SourceBase):
             )
 
             kafka_resource = dlt.resource(
-                self._consume_messages(consumer, topic_name, avro_deserializer),
+                self._consume_messages(
+                    consumer, topic_name, avro_deserializer, batch_size, batch_timeout
+                ),
                 name=resource_config.destination_table_name,
                 write_disposition="append",
                 primary_key="offset",
@@ -86,7 +128,9 @@ class KafkaSource(SourceBase):
 
         return broker, kafka_config
 
-    def _create_kafka_consumer(self, broker: str, topic: str, config: Dict[str, Any]):
+    def _create_kafka_consumer(
+        self, broker: str, topic: str, config: Dict[str, Any], start_from: str
+    ):
         avro_deserializer = None
         if config.get("use_avro"):
             if not config.get("schema_registry"):
@@ -127,18 +171,60 @@ class KafkaSource(SourceBase):
         topic_partitions = [TopicPartition(topic, p) for p in partitions]
         consumer.assign(topic_partitions)
 
+        if start_from == "earliest":
+            for tp in topic_partitions:
+                low, _ = consumer.get_watermark_offsets(tp, timeout=10)
+                tp.offset = low
+                consumer.seek(tp)
+
+        elif start_from == "latest":
+            for tp in topic_partitions:
+                _, high = consumer.get_watermark_offsets(tp, timeout=10)
+                tp.offset = high
+                consumer.seek(tp)
+
+        elif start_from.startswith("timestamp:"):
+            try:
+                ts = int(start_from.split("timestamp:")[1])
+                timestamps = [TopicPartition(topic, p, ts) for p in partitions]
+                offsets = consumer.offsets_for_times(timestamps, timeout=10)
+                for tp in offsets:
+                    if tp.offset != -1:
+                        consumer.seek(tp)
+            except Exception as e:
+                raise ValueError(f"Failed to interpret timestamp in start_from: {e}")
+        else:
+            consumer.assign(topic_partitions)  # default
+
         return consumer, avro_deserializer
 
     def _consume_messages(
-        self, consumer: Consumer, topic: str, avro_deserializer
+        self,
+        consumer: Consumer,
+        topic: str,
+        avro_deserializer,
+        batch_size: int = 100,
+        batch_timeout: float = 5.0,
     ) -> Iterator[Dict[str, Any]]:
         try:
+            batch = []
+            start_time = time.time()
+            idle_poll_seconds = 10
+            empty_polls = 0
             while True:
-                message = consumer.poll(timeout=5.0)
+                message = consumer.poll(timeout=1.0)
 
                 if message is None:
-                    logger.info("No new messages in Kafka, stopping consumer...")
-                    break
+                    empty_polls += 1
+                    if empty_polls >= idle_poll_seconds:
+                        break  # Exit after N consecutive empty polls
+                    if batch and (time.time() - start_time) >= batch_timeout:
+                        for record in batch:
+                            yield record
+                        batch = []
+                        start_time = time.time()
+                    continue
+                empty_polls = 0
 
                 if message.error():
                     logger.warning(f"Kafka message error: {message.error()}")
@@ -151,28 +237,20 @@ class KafkaSource(SourceBase):
                     parsed_value = None
 
                     if avro_deserializer:
-                        # Avro Deserialization
                         parsed_value = avro_deserializer(
                             raw_value, SerializationContext(topic, MessageField.VALUE)
                         )
                     else:
-                        # Fallback to JSON or string
                         decoded_str = raw_value.decode("utf-8", errors="replace")
                         try:
-                            # Try parsing as JSON
                             parsed_value = json.loads(decoded_str)
                         except json.JSONDecodeError:
-                            # Try parsing as CSV-style string with optional headers
                             values = decoded_str.strip().split(",")
-                            logger.debug(f"CSV-like string split: {values}")
-
-                            # Attempt to infer keys if headers are present in message key
                             key_str = (
                                 message.key().decode("utf-8", errors="replace")
                                 if message.key()
                                 else None
                             )
-
                             if key_str and key_str.startswith("header:"):
                                 headers = key_str.replace("header:", "").split(",")
                                 if len(headers) == len(values):
@@ -192,12 +270,21 @@ class KafkaSource(SourceBase):
                         else None,
                     }
 
-                    yield record
+                    batch.append(record)
+
+                    if len(batch) >= batch_size:
+                        for r in batch:
+                            yield r
+                        batch = []
+                        start_time = time.time()
 
                 except Exception as e:
-                    logger.error(f"Failed to deserialize or yield message: {e}")
+                    logger.error(f"Failed to deserialize or process message: {e}")
 
         except Exception as e:
             logger.error(f"Kafka consumption error: {e}")
         finally:
+            if batch:
+                for r in batch:
+                    yield r
             consumer.close()
