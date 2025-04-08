@@ -97,7 +97,10 @@ class KafkaSource(SourceBase):
                 primary_key="offset",
                 incremental=incremental_key,
             )
-
+            data_iterator = self._consume_messages(
+                consumer, topic_name, avro_deserializer, batch_size, batch_timeout
+            )
+            kafka_resource = self._create_dlt_resource(resource_config, data_iterator)
             resources_list.append(kafka_resource)
 
         return DltSource(
