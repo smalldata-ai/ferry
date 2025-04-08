@@ -45,6 +45,8 @@ class PipelineMetrics:
         elif self.last_trace:
             logger.info(f"Using last trace for pipeline '{self.pipeline_name}'")
             self._update_metrics_from_trace(metrics, self.last_trace)
+        else:
+            logger.info(f"Using storage for pipeline '{self.pipeline_name}'")
 
         return metrics
 
@@ -140,69 +142,3 @@ class PipelineMetrics:
                         })
 
    
-        try:
-            load_storage = self.pipeline._get_load_storage()
-            logger.info("Successfully retrieved load storage")
-        except Exception as e:
-            logger.warning(f"Failed to get load storage: {e}")
-            return
-
-        for load_id in load_ids:
-            logger.info(f"Inspecting normalized load_id: {load_id}")
-            try:
-                package_info = load_storage.get_load_package_info(load_id)
-                logger.info(f"Retrieved package info for load_id '{load_id}': {package_info}")
-            except Exception as e:
-                logger.error(f"Failed to get package info for load_id '{load_id}': {e}")
-                continue
-
-            new_jobs = package_info.jobs.get("new_jobs", [])
-            if not new_jobs:
-                logger.warning(f"No new jobs found for load_id '{load_id}'")
-                continue
-
-            for job in new_jobs:
-                file_path = job.file_path
-                file_format = job.job_file_info.file_format
-                table_name = job.job_file_info.table_name
-                logger.info(f"Processing job - File: {file_path}, Format: {file_format}, Table: {table_name}")
-
-                if not os.path.exists(file_path):
-                    logger.warning(f"File does not exist: {file_path}")
-                    continue
-
-                if file_format not in ["jsonl", "typed-jsonl"]:
-                    logger.info(f"Skipping file '{file_path}' - unsupported format: {file_format}")
-                    continue
-
-                try:
-                    file_size = os.path.getsize(file_path)
-                    logger.info(f"File size for '{file_path}': {file_size} bytes")
-                except Exception as e:
-                    logger.error(f"Failed to get file size for '{file_path}': {e}")
-                    continue
-
-                try:
-                    with open(file_path, 'rb') as f:
-                        header = f.read(2)
-                    is_compressed = header == b'\x1f\x8b'
-
-                    if is_compressed:
-                        logger.info(f"Detected gzip compression for '{file_path}'")
-                        with gzip.open(file_path, 'rt', encoding='utf-8') as f:
-                            row_count = sum(1 for _ in f)
-                    else:
-                        logger.info(f"No compression detected for '{file_path}'")
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            row_count = sum(1 for _ in f)
-                    logger.info(f"Row count for '{file_path}': {row_count}")
-                except Exception as e:
-                    logger.error(f"Failed to count rows in '{file_path}': {e}")
-                    continue
-
-                metrics_dict["resource_metrics"].append({
-                    "name": table_name,
-                    "row_count": row_count,
-                    "file_size": file_size
-                })
-                logger.info(f"Added metrics for '{table_name}': row_count={row_count}, file_size={file_size}")
