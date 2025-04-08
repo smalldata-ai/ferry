@@ -45,9 +45,6 @@ class PipelineMetrics:
         elif self.last_trace:
             logger.info(f"Using last trace for pipeline '{self.pipeline_name}'")
             self._update_metrics_from_trace(metrics, self.last_trace)
-        else:
-            logger.info(f"Using storage for pipeline '{self.pipeline_name}'")
-            self._update_metrics_from_storage(metrics)
 
         return metrics
 
@@ -72,37 +69,6 @@ class PipelineMetrics:
                 if step.step_info:
                     self._update_step_info_metrics(step_name, step.step_info, step_metrics)
 
-    def _update_metrics_from_storage(self, metrics: Dict[str, Any]) -> None:
-        """Update metrics from storage when no trace is available"""
-        extracted_packages = self.pipeline.list_extracted_load_packages()
-        normalized_packages = []
-        completed_packages = []
-        
-        try:
-            normalized_packages = self.pipeline.list_normalized_load_packages()
-        except Exception as e:
-            logger.warning(f"Failed to list normalized packages: {e}")
-            
-        try:
-            completed_packages = self.pipeline.list_completed_load_packages()
-        except Exception as e:
-            logger.warning(f"Failed to list completed packages: {e}")
-
-        if extracted_packages:
-            metrics["metrics"]["extract"]["status"] = "completed"
-            metrics["metrics"]["normalize"]["status"] = "pending"
-            metrics["metrics"]["load"]["status"] = "pending"
-            metrics["status"] = "pending"
-            self._add_pending_extract_metrics(extracted_packages, metrics["metrics"]["extract"])
-
-        if normalized_packages:
-            metrics["metrics"]["normalize"]["status"] = "completed"
-            metrics["metrics"]["load"]["status"] = "pending"
-            metrics["status"] = "pending"
-            self._add_pending_normalize_metrics(normalized_packages, metrics["metrics"]["normalize"])
-
-        if completed_packages and not extracted_packages and not normalized_packages:
-            metrics["status"] = "completed"
 
     def _default_metrics(self, error: str = None) -> Dict[str, Any]:
         return {
@@ -173,76 +139,7 @@ class PipelineMetrics:
                             "end_time": ensure_pendulum_datetime(job_metric.finished_at)
                         })
 
-    def _add_pending_extract_metrics(self, load_ids: Sequence[str], metrics_dict: Dict[str, Any]) -> None:
-        logger.info(f"Processing extracted packages for pipeline '{self.pipeline_name}' with load_ids: {load_ids}")
-        try:
-            normalize_storage = self.pipeline._get_normalize_storage()
-            logger.info("Successfully retrieved normalize storage")
-        except Exception as e:
-            logger.error(f"Failed to get normalize storage: {e}")
-            return
-
-        for load_id in load_ids:
-            logger.info(f"Inspecting load_id: {load_id}")
-            try:
-                package_info = normalize_storage.extracted_packages.get_load_package_info(load_id)
-                logger.info(f"Retrieved package info for load_id '{load_id}': {package_info}")
-            except Exception as e:
-                logger.error(f"Failed to get package info for load_id '{load_id}': {e}")
-                continue
-
-            new_jobs = package_info.jobs.get("new_jobs", [])
-            if not new_jobs:
-                logger.warning(f"No new jobs found for load_id '{load_id}'")
-                continue
-
-            for job in new_jobs:
-                file_path = job.file_path
-                file_format = job.job_file_info.file_format
-                table_name = job.job_file_info.table_name
-                logger.info(f"Processing job - File: {file_path}, Format: {file_format}, Table: {table_name}")
-
-                if not os.path.exists(file_path):
-                    logger.warning(f"File does not exist: {file_path}")
-                    continue
-
-                if file_format not in ["jsonl", "typed-jsonl"]:
-                    logger.info(f"Skipping file '{file_path}' - unsupported format: {file_format}")
-                    continue
-
-                try:
-                    file_size = os.path.getsize(file_path)
-                    logger.info(f"File size for '{file_path}': {file_size} bytes")
-                except Exception as e:
-                    logger.error(f"Failed to get file size for '{file_path}': {e}")
-                    continue
-
-                try:
-                    with open(file_path, 'rb') as f:
-                        header = f.read(2)
-                    is_compressed = header == b'\x1f\x8b'
-
-                    if is_compressed:
-                        logger.info(f"Detected gzip compression for '{file_path}'")
-                        with gzip.open(file_path, 'rt', encoding='utf-8') as f:
-                            row_count = sum(1 for _ in f)
-                    else:
-                        logger.info(f"No compression detected for '{file_path}'")
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            row_count = sum(1 for _ in f)
-                    logger.info(f"Row count for '{file_path}': {row_count}")
-                except Exception as e:
-                    logger.error(f"Failed to count rows in '{file_path}': {e}")
-                    continue
-
-                metrics_dict["resource_metrics"].append({
-                    "name": table_name,
-                    "row_count": row_count,
-                    "file_size": file_size
-                })
-                logger.info(f"Added metrics for '{table_name}': row_count={row_count}, file_size={file_size}")
-
-    def _add_pending_normalize_metrics(self, load_ids: Sequence[str], metrics_dict: Dict[str, Any]) -> None:
+   
         try:
             load_storage = self.pipeline._get_load_storage()
             logger.info("Successfully retrieved load storage")
