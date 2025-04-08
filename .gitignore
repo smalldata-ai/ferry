@@ -6,6 +6,7 @@ uv.lock
 # C extensions
 *.so
 node_modules/
+logs/
 schemas/
 # Vite
 docs/.vitepress/dist
