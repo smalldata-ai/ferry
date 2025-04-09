@@ -57,6 +57,16 @@ class FerryLogCollector(Collector):
             "normalize": {"status": "pending"},
             "load": {"status": "pending"},
         }
+        # self.step_tables = {
+        #     "extract": set(),
+        #     "normalize": set(),
+        #     "load": set()
+        # }
+        self.table_stats = {
+            "extract": defaultdict(int),
+            "normalize": defaultdict(int),
+            "load": defaultdict(int),
+        }
 
         if dump_system_stats:
             if importlib.util.find_spec("psutil") is None:
@@ -93,6 +103,16 @@ class FerryLogCollector(Collector):
         print(f"Logging update for {name}: {inc}, total count: {self.counters.get(name, 0)}")
 
         self.counters[counter_key] += inc
+        # Track table name for the current step
+        # Track per-table stats based on the current step
+        if hasattr(self, "step") and isinstance(self.step, str):
+            current_step = self.step.lower()
+            if "extract" in current_step:
+                self.table_stats["extract"][name] += inc
+            elif "normalize" in current_step:
+                self.table_stats["normalize"][name] += inc
+            elif "load" in current_step:
+                self.table_stats["load"][name] += inc
 
         if message:
             self.messages[counter_key] = message
@@ -123,19 +143,44 @@ class FerryLogCollector(Collector):
             }
 
             if hasattr(self, "step") and isinstance(self.step, str):
-                if "extract" in self.step.lower():
-                    log_entry.update({"records_extracted": count})
+                step_lower = self.step.lower()
+
+                if "extract" in step_lower:
+                    log_entry.update(
+                        {
+                            "records_extracted": count,
+                            # "tables": sorted(self.step_tables["extract"]),
+                            "table_stats": dict(self.table_stats["extract"]),
+                        }
+                    )
+
                     self.last_in_process["extract"] = log_entry
                     log_data["extract"] = log_entry.copy()
-                elif "normalize" in self.step.lower():
+
+                elif "normalize" in step_lower:
                     log_data["extract"]["status"] = "completed"
-                    log_entry.update({"files_processed": count})
+                    log_entry.update(
+                        {
+                            "records_extracted": count,
+                            # "tables": sorted(self.step_tables["normalize"]),
+                            "table_stats": dict(self.table_stats["normalize"]),
+                        }
+                    )
+
                     self.last_in_process["normalize"] = log_entry
                     log_data["normalize"] = log_entry.copy()
-                elif "load" in self.step.lower():
+
+                elif "load" in step_lower:
                     log_data["extract"]["status"] = "completed"
                     log_data["normalize"]["status"] = "completed"
-                    log_entry.update({"jobs_loaded": count})
+                    log_entry.update(
+                        {
+                            "records_extracted": count,
+                            # "tables": sorted(self.step_tables["load"]),
+                            "table_stats": dict(self.table_stats["load"]),
+                        }
+                    )
+
                     self.last_in_process["load"] = log_entry
                     log_data["load"] = log_entry.copy()
 
