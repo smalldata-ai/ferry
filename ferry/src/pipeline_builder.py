@@ -4,7 +4,7 @@ import dlt.cli
 from ferry.src.data_models.ingest_model import IngestModel
 from ferry.src.destination_factory import DestinationFactory
 from ferry.src.source_factory import SourceFactory
-
+from ferry.src.log_collector import FerryLogCollector
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class PipelineBuilder:
                 pipeline_name=self.model.identity,
                 dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
-                progress=dlt.common.runtime.collector.LogCollector(),
+                progress=FerryLogCollector(identity=self.model.identity),
                 # export_schema_path="schemas",
                 # refresh="drop_resources",
             )
