@@ -39,6 +39,7 @@ class FerryLogCollector(Collector):
         self.log_period = log_period
         self.logger = logger
         self.log_level = log_level
+        self.files_normalized = set()
 
         # Ensure logs directory exists
         log_dir = "logs"
@@ -51,17 +52,14 @@ class FerryLogCollector(Collector):
         self.last_log_time = None
         self.last_in_process = {}
         self.completed_logs = {}
+        self.normalized_file_stats = defaultdict(int)
 
         self.etl_status = {
             "extract": {"status": "pending"},
             "normalize": {"status": "pending"},
             "load": {"status": "pending"},
         }
-        # self.step_tables = {
-        #     "extract": set(),
-        #     "normalize": set(),
-        #     "load": set()
-        # }
+
         self.table_stats = {
             "extract": defaultdict(int),
             "normalize": defaultdict(int),
@@ -85,10 +83,6 @@ class FerryLogCollector(Collector):
         label: str = None,
         batch_size: int = None,
     ) -> None:
-        # Ignore unwanted tables
-        if name in ["_dlt_pipeline_state", "Resources"]:
-            return
-
         counter_key = f"{name}_{label}" if label else name
 
         if counter_key not in self.counters:
@@ -103,14 +97,14 @@ class FerryLogCollector(Collector):
         print(f"Logging update for {name}: {inc}, total count: {self.counters.get(name, 0)}")
 
         self.counters[counter_key] += inc
-        # Track table name for the current step
-        # Track per-table stats based on the current step
         if hasattr(self, "step") and isinstance(self.step, str):
             current_step = self.step.lower()
             if "extract" in current_step:
                 self.table_stats["extract"][name] += inc
             elif "normalize" in current_step:
                 self.table_stats["normalize"][name] += inc
+                if name == "Files" and label:
+                    self.files_normalized.add(label)
             elif "load" in current_step:
                 self.table_stats["load"][name] += inc
 
@@ -149,7 +143,6 @@ class FerryLogCollector(Collector):
                     log_entry.update(
                         {
                             "records_extracted": count,
-                            # "tables": sorted(self.step_tables["extract"]),
                             "table_stats": dict(self.table_stats["extract"]),
                         }
                     )
@@ -162,8 +155,8 @@ class FerryLogCollector(Collector):
                     log_entry.update(
                         {
                             "records_extracted": count,
-                            # "tables": sorted(self.step_tables["normalize"]),
                             "table_stats": dict(self.table_stats["normalize"]),
+                            "files_normalized": sorted(self.files_normalized),
                         }
                     )
 
@@ -176,7 +169,6 @@ class FerryLogCollector(Collector):
                     log_entry.update(
                         {
                             "records_extracted": count,
-                            # "tables": sorted(self.step_tables["load"]),
                             "table_stats": dict(self.table_stats["load"]),
                         }
                     )
