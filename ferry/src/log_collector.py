@@ -168,11 +168,19 @@ class FerryLogCollector(Collector):
 
                 elif "normalize" in step_lower:
                     log_data["extract"]["status"] = "completed"
+                    normalize_stats = {}
+                    for k, v in self.table_stats["normalize"].items():
+                        if k in {"Files", "Items"} and v > 0:
+                            normalize_stats[k] = v - 1
+                        else:
+                            normalize_stats[k] = v
                     log_entry.update(
                         {
-                            "records_extracted": count,
-                            "table_stats": dict(self.table_stats["normalize"]),
-                            "files_normalized": sorted(self.files_normalized),
+                            "records_extracted": max(count - 1, 0),
+                            "table_stats": normalize_stats,
+                            "files_normalized": sorted(list(self.files_normalized)[:-1])
+                            if self.files_normalized
+                            else [],
                         }
                     )
 
@@ -182,10 +190,14 @@ class FerryLogCollector(Collector):
                 elif "load" in step_lower:
                     log_data["extract"]["status"] = "completed"
                     log_data["normalize"]["status"] = "completed"
+                    load_stats = {
+                        k: (v - 1 if k.lower() == "jobs" and v > 0 else v)
+                        for k, v in self.table_stats["load"].items()
+                    }
                     log_entry.update(
                         {
-                            "records_extracted": count,
-                            "table_stats": dict(self.table_stats["load"]),
+                            "records_extracted": max(count - 1, 0),
+                            "table_stats": load_stats,
                         }
                     )
                     log_entry["status"] = "completed"
