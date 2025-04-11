@@ -17,6 +17,32 @@ class PipelineMetrics:
         self.last_trace = self.pipeline.last_trace
         self.metrics: Dict[str, Any] = {}
 
+    def _load_live_metrics_from_log(self, metrics: Dict[str, Any]) -> None:
+        try:
+            with open(f"logs/{self.pipeline_name}.jsonl", "r", encoding="utf-8") as f:
+                log_data = json.load(f)
+
+            metrics["status"] = "processing"
+            for step in ["extract", "normalize", "load"]:
+                step_data = log_data.get(step, {})
+                step_metrics = metrics["metrics"][step]
+                step_metrics["status"] = step_data.get("status", "pending")
+                step_metrics["error"] = None
+
+                if "table_stats" in step_data:
+                    for name, count in step_data["table_stats"].items():
+                        step_metrics["resource_metrics"].append({"name": name, "row_count": count})
+
+                if "files_normalized" in step_data:
+                    for file_name in step_data["files_normalized"]:
+                        step_metrics["resource_metrics"].append(
+                            {"name": file_name, "type": "normalized_file"}
+                        )
+        except Exception as e:
+            logger.error(f"Failed to read live log: {e}")
+            metrics["status"] = "error"
+            metrics["error"] = f"Live log error: {str(e)}"
+
     def generate_metrics(self) -> Dict[str, Any]:
         try:
             self.pipeline.activate()
@@ -58,30 +84,7 @@ class PipelineMetrics:
             self._update_metrics_from_trace(metrics, self.last_trace)
         elif os.path.exists(f"logs/{self.pipeline_name}.jsonl"):
             logger.info(f"Using live log file for pipeline '{self.pipeline_name}'")
-            try:
-                with open(f"logs/{self.pipeline_name}.jsonl", "r", encoding="utf-8") as f:
-                    log_data = json.load(f)
-
-                metrics["status"] = "processing"
-                for step in ["extract", "normalize", "load"]:
-                    step_data = log_data.get(step, {})
-                    step_metrics = metrics["metrics"][step]
-                    step_metrics["status"] = step_data.get("status", "pending")
-                    step_metrics["error"] = None
-                    if "table_stats" in step_data:
-                        for name, count in step_data["table_stats"].items():
-                            step_metrics["resource_metrics"].append(
-                                {"name": name, "row_count": count}
-                            )
-                    if "files_normalized" in step_data:
-                        for file_name in step_data["files_normalized"]:
-                            step_metrics["resource_metrics"].append(
-                                {"name": file_name, "type": "normalized_file"}
-                            )
-            except Exception as e:
-                logger.error(f"Failed to read live log: {e}")
-                metrics["status"] = "error"
-                metrics["error"] = f"Live log error: {str(e)}"
+            self._load_live_metrics_from_log(metrics)
 
         else:
             logger.info(f"No trace or log file found for pipeline '{self.pipeline_name}'")
