@@ -92,9 +92,12 @@ class FerryLogCollector(Collector):
         if name in {"Resources"}:
             return
 
-        # ignored_tables = {"Resources", "_dlt_pipeline_state"}
-        # if name in ignored_tables or label in ignored_tables:
-        #     return
+        ignored_keywords = {"_dlt_pipeline_state"}
+
+        if any(ignored in name for ignored in ignored_keywords):
+            return
+        if label and any(ignored in label for ignored in ignored_keywords):
+            return
 
         counter_key = f"{name}_{label}" if label else name
 
@@ -199,6 +202,8 @@ class FerryLogCollector(Collector):
     #         log_file.write(json.dumps(log_message, indent=2))  # Optional pretty-print
 
     def _log(self, log_message: dict) -> None:
+        if "_dlt_pipeline_state" in json.dumps(log_message):
+            print("[DEBUG] _dlt_pipeline_state made it to log!")
         """Safely write JSON log with locking to avoid access conflicts (cross-platform safe)."""
         log_message["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 

@@ -21,8 +21,16 @@ class PipelineMetrics:
         try:
             self.pipeline.activate()
         except Exception as e:
-            logger.error(f"Failed to activate pipeline '{self.pipeline_name}': {e}")
-            return self._default_metrics(error=str(e))
+            error_msg = str(e)
+
+            logger.error(f"Failed to activate pipeline '{self.pipeline_name}': {error_msg}")
+
+            # Return "not found" message if metadata or state is missing
+            if "not found" in error_msg.lower() or "no such file or directory" in error_msg.lower():
+                return self._default_metrics(error=f"Pipeline '{self.pipeline_name}' not found")
+
+            return self._default_metrics(error=error_msg)
+            # return self._default_metrics(error=str(e))
 
         metrics = {
             "pipeline_name": self.pipeline_name,
@@ -77,7 +85,7 @@ class PipelineMetrics:
 
         else:
             logger.info(f"No trace or log file found for pipeline '{self.pipeline_name}'")
-
+            metrics["error"] = f"Pipeline '{self.pipeline_name}' not found"
         return metrics
 
     def _update_metrics_from_trace(self, metrics: Dict[str, Any], trace: Any) -> None:
@@ -159,6 +167,9 @@ class PipelineMetrics:
             for metrics in metrics_list:
                 if "resource_metrics" in metrics:
                     for resource_name, resource_metric in metrics["resource_metrics"].items():
+                        if resource_name == "_dlt_pipeline_state":
+                            continue
+
                         logger.info(
                             f"Adding extract metric for '{resource_name}': {resource_metric.items_count} rows, {resource_metric.file_size} bytes"
                         )
@@ -181,6 +192,8 @@ class PipelineMetrics:
             for metrics in metrics_list:
                 if "table_metrics" in metrics:
                     for table_name, table_metric in metrics["table_metrics"].items():
+                        if table_name == "_dlt_pipeline_state":
+                            continue
                         metrics_dict["resource_metrics"].append(
                             {
                                 "name": table_name,
@@ -194,6 +207,9 @@ class PipelineMetrics:
             for metrics in metrics_list:
                 if "job_metrics" in metrics:
                     for job_id, job_metric in metrics["job_metrics"].items():
+                        if job_metric.table_name == "_dlt_pipeline_state":
+                            continue
+
                         metrics_dict["resource_metrics"].append(
                             {
                                 "name": job_metric.table_name,
