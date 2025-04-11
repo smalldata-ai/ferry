@@ -89,8 +89,8 @@ class FerryLogCollector(Collector):
         label: str = None,
         batch_size: int = None,
     ) -> None:
-        # if name in {"Resources", "_dlt_pipeline_state"}:
-        #     return
+        if name in {"Resources"}:
+            return
 
         # ignored_tables = {"Resources", "_dlt_pipeline_state"}
         # if name in ignored_tables or label in ignored_tables:
