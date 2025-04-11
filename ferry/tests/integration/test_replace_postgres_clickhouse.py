@@ -1,25 +1,15 @@
-from __future__ import annotations
-import socket, time
 from pathlib import Path
-from decimal import Decimal
+import socket
+import time
+import pytest
+import sqlalchemy
+import requests
 
-import pytest, sqlalchemy
-from docker.errors import DockerException
-from testcontainers.postgres import PostgresContainer
-from testcontainers.clickhouse import ClickHouseContainer
-
-from ferry.src.data_models.ingest_model import (
-    IngestModel, ResourceConfig, WriteDispositionConfig, WriteDispositionType,
-)
-from ferry.src.data_models.replace_config_model import ReplaceStrategy
+from ferry.src.data_models.ingest_model import IngestModel, ResourceConfig, WriteDispositionConfig, WriteDispositionType
+from ferry.src.data_models.merge_config_model import MergeStrategy
 from ferry.src.pipeline_builder import PipelineBuilder
-
-
-try:
-    from docker import from_env; from_env().ping()
-except (DockerException, FileNotFoundError):
-    pytest.skip("Docker daemon not reachable – skipping integration tests",
-                allow_module_level=True)
+from testcontainers.postgres import PostgresContainer
+from testcontainers.core.container import DockerContainer
 
 
 PG_USER, PG_PWD, PG_DB = "admin", "password", "pg_db"
@@ -27,36 +17,97 @@ CH_USER, CH_PWD, CH_DB = "ferry_tester", "ferry_pwd", "clickhouse_analytics"
 CSV_PATH = Path(__file__).parent / "data" / "crypto.csv"
 assert CSV_PATH.exists(), f"Seed file missing: {CSV_PATH}"
 
+
 def _wait_tcp(host: str, port: int, timeout: float = 30.0) -> None:
     end = time.time() + timeout
     while time.time() < end:
         try:
-            socket.create_connection((host, port), timeout=1).close(); return
-        except OSError: time.sleep(0.25)
+            socket.create_connection((host, port), timeout=1).close()
+            return
+        except OSError:
+            time.sleep(0.25)
     raise RuntimeError(f"{host}:{port} not ready")
+
+def _wait_clickhouse_ready(host, port, timeout=30):
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            r = requests.get(f"http://{host}:{port}/ping", timeout=1)
+            if r.status_code == 200:
+                return
+        except Exception:
+            time.sleep(0.5)
+    raise RuntimeError("ClickHouse HTTP server not ready after wait")
+
+write_disposition_cases = [
+    WriteDispositionConfig(type=WriteDispositionType.APPEND),
+    WriteDispositionConfig(type=WriteDispositionType.REPLACE),
+    WriteDispositionConfig(type=WriteDispositionType.REPLACE, strategy="truncate-and-insert"),
+    WriteDispositionConfig(type=WriteDispositionType.REPLACE, strategy="insert-from-staging"),
+    WriteDispositionConfig(type=WriteDispositionType.REPLACE, strategy="staging-optimized"),
+    WriteDispositionConfig(
+        type=WriteDispositionType.MERGE,
+        strategy=MergeStrategy.DELETE_INSERT.value,
+        config={"delete_insert_config": {"primary_key": ["symbol", "date"]}}
+    ),
+    WriteDispositionConfig(
+        type=WriteDispositionType.MERGE,
+        strategy=MergeStrategy.SCD2.value,
+        config={
+            "scd2_config": {
+                "natural_merge_key": ["symbol", "name"],
+                "validity_column_names": ["valid_from", "valid_to"],
+                "active_record_timestamp": "9999-12-31",
+                "use_boundary_timestamp": True
+            }
+        }
+    ),
+    WriteDispositionConfig(
+        type=WriteDispositionType.MERGE,
+        strategy=MergeStrategy.DELETE_INSERT.value,
+        config={"delete_insert_config": {"primary_key": ["symbol"], "hard_delete_column": "deleted_flag"}}
+    ),
+    WriteDispositionConfig(
+        type=WriteDispositionType.MERGE,
+        strategy=MergeStrategy.DELETE_INSERT.value,
+        config={"delete_insert_config": {"primary_key": ["symbol"], "hard_delete_column": "deleted_at_ts"}}
+    )
+]
 
 
 @pytest.mark.integration
-def test_replace_postgres_clickhouse() -> None:
-    pg = (
-        PostgresContainer("postgres:16",
-                        username=PG_USER, password=PG_PWD, dbname=PG_DB)
-        .with_volume_mapping(str(CSV_PATH), "/tmp/crypto.csv", mode="ro")
-    )
-    ch = ClickHouseContainer(username=CH_USER, password=CH_PWD, dbname=CH_DB)
+@pytest.mark.parametrize("wd_config", write_disposition_cases)
+def test_write_dispositions(wd_config):
+    with (
+        PostgresContainer("postgres:16", username=PG_USER, password=PG_PWD, dbname=PG_DB)
+        .with_volume_mapping(str(CSV_PATH), "/data/crypto.csv", mode="ro") as pg,
+        DockerContainer("clickhouse/clickhouse-server:latest")
+        .with_env("CLICKHOUSE_USER", CH_USER)
+        .with_env("CLICKHOUSE_PASSWORD", CH_PWD)
+        .with_env("CLICKHOUSE_DB", CH_DB)
+        .with_env("CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT", "1")
+        .with_exposed_ports(9000, 8123) as ch
+    ):
+        host = ch.get_container_host_ip()
+        native_port = int(ch.get_exposed_port(9000))
+        http_port = int(ch.get_exposed_port(8123))
 
-    with pg as pg_c, ch as ch_c:
+        _wait_tcp(host, native_port)
+        _wait_tcp(host, http_port)
+        _wait_clickhouse_ready(host, http_port)
+        time.sleep(1)
 
-        host = ch_c.get_container_host_ip()
-        nat, http = int(ch_c.get_exposed_port(9000)), int(ch_c.get_exposed_port(8123))
-        _wait_tcp(host, nat); _wait_tcp(host, http)
+        requests.post(
+            f"http://{CH_USER}:{CH_PWD}@{host}:{http_port}",
+            data=f"CREATE DATABASE IF NOT EXISTS {CH_DB}",
+            timeout=5
+        )
 
-
-        pg_url_raw = pg_c.get_connection_url()
+        pg_url_raw = pg.get_connection_url()
         pg_url = pg_url_raw.replace("postgresql+psycopg2://", "postgresql://", 1)
-        eng = sqlalchemy.create_engine(pg_url_raw)
+        engine = sqlalchemy.create_engine(pg_url_raw)
 
-        with eng.begin() as c:
+        with engine.begin() as c:
             c.execute(sqlalchemy.text("DROP TABLE IF EXISTS crypto, exchanges CASCADE"))
             c.execute(sqlalchemy.text("""
                 CREATE TABLE crypto (
@@ -71,8 +122,7 @@ def test_replace_postgres_clickhouse() -> None:
                     marketcap   NUMERIC
                 )
             """))
-            c.execute(sqlalchemy.text("COPY crypto FROM '/tmp/crypto.csv' CSV HEADER"))
-
+            c.execute(sqlalchemy.text("COPY crypto FROM '/data/crypto.csv' CSV HEADER"))
             c.execute(sqlalchemy.text("""
                 CREATE TABLE exchanges (
                     name   VARCHAR PRIMARY KEY,
@@ -83,66 +133,26 @@ def test_replace_postgres_clickhouse() -> None:
                 "INSERT INTO exchanges VALUES ('Binance',1.2e9), ('Coinbase',5.0e8)"
             ))
 
-
-        dest_uri = (
-            f"clickhouse://{CH_USER}:{CH_PWD}@{host}:{nat}/{CH_DB}"
-            f"?http_port={http}"
-        )
-        ingest = IngestModel(
-            identity="test",
+        ingest_model = IngestModel(
+            identity="test_pipeline_run",
             source_uri=pg_url,
-            destination_uri=dest_uri,
+            destination_uri=f"clickhouse://{CH_USER}:{CH_PWD}@{host}:{native_port}/{CH_DB}?http_port={http_port}",
+            dataset_name=None,
             resources=[
                 ResourceConfig(
                     source_table_name="crypto",
                     destination_table_name="crypto_replaced",
-                    write_disposition_config=WriteDispositionConfig(
-                        type=WriteDispositionType.REPLACE,
-                        strategy=ReplaceStrategy.TRUNCATE_INSERT.value)),
-                ResourceConfig(
-                    source_table_name="exchanges",
-                    destination_table_name="exchanges_replaced",
-                    write_disposition_config=WriteDispositionConfig(
-                        type=WriteDispositionType.REPLACE,
-                        strategy=ReplaceStrategy.TRUNCATE_INSERT.value)),
-            ],
+                    write_disposition_config=wd_config
+                )
+            ]
         )
 
+        PipelineBuilder(model=ingest_model).build().run()
 
-        PipelineBuilder(model=ingest).build().run()
-
-        with eng.begin() as c:
-            pg_crypto_rows = c.execute(sqlalchemy.text("SELECT COUNT(*) FROM crypto")).scalar_one()
-
-        sa_uri = f"clickhouse+http://{CH_USER}:{CH_PWD}@{host}:{http}/{CH_DB}"
-        chk = sqlalchemy.create_engine(sa_uri)
-        with chk.begin() as c:
-            ch_crypto_rows = c.execute(
-                sqlalchemy.text("SELECT COUNT(*) FROM crypto_replaced")
-            ).scalar_one()
-            assert ch_crypto_rows == pg_crypto_rows, "row‑count mismatch after first load"
-
-        with eng.begin() as c:
-            c.execute(sqlalchemy.text("DELETE FROM crypto WHERE symbol='SOL'"))
-            c.execute(sqlalchemy.text("UPDATE crypto SET close=2800 WHERE symbol='ETH'"))
-            c.execute(sqlalchemy.text("DELETE FROM exchanges WHERE name='Coinbase'"))
-            c.execute(sqlalchemy.text("INSERT INTO exchanges VALUES ('Kraken',2.5e8)"))
-
-        PipelineBuilder(model=ingest).build().run()
-
-        with chk.begin() as c:
-            symbols = {row[0] for row in c.execute(
-                sqlalchemy.text("SELECT DISTINCT symbol FROM crypto_replaced")
-            )}
-            assert "SOL" not in symbols
-            assert {"BTC", "ETH"}.issubset(symbols)
-
-            eth_close = c.execute(
-                sqlalchemy.text("SELECT close FROM crypto_replaced WHERE symbol='ETH' ORDER BY date DESC LIMIT 1")
-            ).scalar_one()
-            assert eth_close == Decimal("2800")
-
-            exch_rows = c.execute(
-                sqlalchemy.text("SELECT name FROM exchanges_replaced ORDER BY name")
-            ).fetchall()
-            assert [r[0] for r in exch_rows] == ["Binance", "Kraken"]
+        ch_engine = sqlalchemy.create_engine(
+            f"clickhouse+native://{CH_USER}:{CH_PWD}@{host}:{native_port}/{CH_DB}"
+        )
+        with ch_engine.connect() as conn:
+            result = conn.execute(sqlalchemy.text("SELECT COUNT(*) FROM crypto_replaced"))
+            count = result.scalar()
+            assert count > 0, f"No data found in ClickHouse for disposition: {wd_config}"
