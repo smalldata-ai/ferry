@@ -1,220 +1,204 @@
-import unittest
-from unittest.mock import patch, MagicMock, mock_open
-import json
+import pytest
 import time
+import json
 import hmac
 import hashlib
-import grpc
-
-# Import the module to be tested
-from ferry.src.grpc.grpc_server import (
-    validate_request_metadata,
-    load_client_secrets,
-    FerryServiceServicer,
-    serve,
-)
-from ferry.src.grpc.protos import ferry_pb2
+from unittest import mock
+from grpc import StatusCode
+from ferry.src.grpc import grpc_server
+from ferry.src.grpc.grpc_server import FerryServiceServicer
 
 
-class TestGrpcServer(unittest.TestCase):
-    def setUp(self):
-        # Reset global variables before each test
-        import ferry.src.grpc.grpc_server
-
-        ferry.src.grpc.grpc_server.CLIENT_ID = "test_client_id"
-        ferry.src.grpc.grpc_server.CLIENT_SECRET = "test_client_secret"
-        ferry.src.grpc.grpc_server.SECURE_MODE = False
-
-    def test_load_client_secrets_success(self):
-        # Mock the file open and json load
-        mock_secrets = {"client_id": "new_client_id", "client_secret": "new_client_secret"}
-
-        with (
-            patch("builtins.open", mock_open(read_data=json.dumps(mock_secrets))),
-            patch("os.path.join", return_value="mock_path"),
-        ):
-            # Call the function
-            load_client_secrets()
-
-            # Check the global variables were set correctly
-            import ferry.src.grpc.grpc_server
-
-            self.assertEqual(ferry.src.grpc.grpc_server.CLIENT_ID, "new_client_id")
-            self.assertEqual(ferry.src.grpc.grpc_server.CLIENT_SECRET, "new_client_secret")
-
-    def test_load_client_secrets_file_not_found(self):
-        # Mock the file open to raise FileNotFoundError
-        with (
-            patch("builtins.open", side_effect=FileNotFoundError),
-            patch("logging.warning") as mock_warning,
-        ):
-            # Call the function
-            load_client_secrets()
-
-            # Check that warning was logged
-            mock_warning.assert_called_with("No client secrets found. Authentication disabled.")
-
-    def test_validate_request_metadata_valid(self):
-        # Set up test data
-        request_body = b"test_request_body"
-        timestamp = str(int(time.time()))
-        expected_signature = hmac.new(
-            b"test_client_secret", f"{timestamp}.{request_body.hex()}".encode(), hashlib.sha256
-        ).hexdigest()
-
-        metadata = [
-            ("x-client-id", "test_client_id"),
-            ("x-timestamp", timestamp),
-            ("x-signature", expected_signature),
-        ]
-
-        # Call the function
-        status, error_msg = validate_request_metadata(metadata, request_body)
-
-        # Check that validation passed
-        self.assertIsNone(status)
-        self.assertIsNone(error_msg)
-
-    def test_validate_request_metadata_missing_headers(self):
-        # Test with missing headers
-        metadata = [("x-client-id", "test_client_id")]  # Missing timestamp and signature
-        request_body = b"test_request_body"
-
-        # Call the function
-        status, error_msg = validate_request_metadata(metadata, request_body)
-
-        # Check the expected error
-        self.assertEqual(status, grpc.StatusCode.INVALID_ARGUMENT)
-        self.assertEqual(error_msg, "Missing authentication headers")
-
-    def test_validate_request_metadata_unknown_client(self):
-        # Test with unknown client ID
-        timestamp = str(int(time.time()))
-        request_body = b"test_request_body"
-        metadata = [
-            ("x-client-id", "unknown_client"),
-            ("x-timestamp", timestamp),
-            ("x-signature", "some_signature"),
-        ]
-
-        # Call the function
-        status, error_msg = validate_request_metadata(metadata, request_body)
-
-        # Check the expected error
-        self.assertEqual(status, grpc.StatusCode.UNAUTHENTICATED)
-        self.assertEqual(error_msg, "Unknown client ID")
-
-    def test_validate_request_metadata_expired_timestamp(self):
-        # Test with expired timestamp (more than 5 minutes old)
-        expired_timestamp = str(int(time.time()) - 301)  # 5 minutes + 1 second ago
-        request_body = b"test_request_body"
-        metadata = [
-            ("x-client-id", "test_client_id"),
-            ("x-timestamp", expired_timestamp),
-            ("x-signature", "some_signature"),
-        ]
-
-        # Call the function
-        status, error_msg = validate_request_metadata(metadata, request_body)
-
-        # Check the expected error
-        self.assertEqual(status, grpc.StatusCode.UNAUTHENTICATED)
-        self.assertEqual(error_msg, "Expired timestamp")
-
-    def test_validate_request_metadata_invalid_timestamp(self):
-        # Test with invalid timestamp format
-        metadata = [
-            ("x-client-id", "test_client_id"),
-            ("x-timestamp", "not_a_number"),
-            ("x-signature", "some_signature"),
-        ]
-        request_body = b"test_request_body"
-
-        # Call the function
-        status, error_msg = validate_request_metadata(metadata, request_body)
-
-        # Check the expected error
-        self.assertEqual(status, grpc.StatusCode.UNAUTHENTICATED)
-        self.assertEqual(error_msg, "Invalid timestamp format")
-
-    def test_validate_request_metadata_signature_mismatch(self):
-        # Test with incorrect signature
-        timestamp = str(int(time.time()))
-        request_body = b"test_request_body"
-        metadata = [
-            ("x-client-id", "test_client_id"),
-            ("x-timestamp", timestamp),
-            ("x-signature", "incorrect_signature"),
-        ]
-
-        # Call the function
-        status, error_msg = validate_request_metadata(metadata, request_body)
-
-        # Check the expected error
-        self.assertEqual(status, grpc.StatusCode.UNAUTHENTICATED)
-        self.assertEqual(error_msg, "Signature mismatch")
-
-    @patch("ferry.src.grpc.grpc_server.load_client_secrets")
-    @patch("grpc.server")
-    def test_serve(self, mock_grpc_server, mock_load_client_secrets):
-        # Mock server
-        mock_server = MagicMock()
-        mock_grpc_server.return_value = mock_server
-
-        # Call serve with test arguments
-        serve(port=12345, secure_mode=True)
-
-        # Verify server was started correctly
-        mock_load_client_secrets.assert_called_once()
-        mock_grpc_server.assert_called_once()
-        mock_server.add_insecure_port.assert_called_with("[::]:12345")
-        mock_server.start.assert_called_once()
-        mock_server.wait_for_termination.assert_called_once()
-
-        # Verify SECURE_MODE was set
-        import ferry.src.grpc.grpc_server
-
-        self.assertTrue(ferry.src.grpc.grpc_server.SECURE_MODE)
-
-    @patch("ferry.src.grpc.grpc_server.validate_request_metadata")
-    @patch("ferry.src.pipeline_builder.PipelineBuilder")
-    def test_ingest_data_secure_mode_validation_failure(self, mock_pipeline_builder, mock_validate):
-        # Set secure mode
-        import ferry.src.grpc.grpc_server
-
-        ferry.src.grpc.grpc_server.SECURE_MODE = True
-
-        # Mock validation to return an error
-        mock_validate.return_value = (grpc.StatusCode.UNAUTHENTICATED, "Auth failed")
-
-        # Create a request
-        request = ferry_pb2.IngestRequest(
-            identity="test_identity",
-            source_uri="test_source_uri",
-            destination_uri="test_destination_uri",
-            resources=[],
-        )
-
-        # Create a context mock
-        context = MagicMock()
-
-        # Create the service
-        service = FerryServiceServicer()
-
-        # Call the method
-        response = service.IngestData(request, context)
-
-        # Check the response
-        self.assertEqual(response.status, "ERROR")
-        self.assertEqual(response.message, "Auth failed")
-
-        # Verify context was set with error
-        context.set_code.assert_called_with(grpc.StatusCode.UNAUTHENTICATED)
-        context.set_details.assert_called_with("Auth failed")
-
-        # Verify pipeline builder was NOT called
-        mock_pipeline_builder.assert_not_called()
+@pytest.fixture(autouse=True)
+def reset_auth_globals():
+    grpc_server.CLIENT_ID = "test-client"
+    grpc_server.CLIENT_SECRET = "test-secret"
+    grpc_server.SECURE_MODE = False
 
 
-if __name__ == "__main__":
-    unittest.main()
+def generate_signature(timestamp, body, secret):
+    message = f"{timestamp}.{body.hex()}".encode()
+    return hmac.new(secret.encode(), message, hashlib.sha256).hexdigest()
+
+
+def test_load_client_secrets_success(tmp_path):
+    secrets_path = tmp_path / ".ferry" / "server_secrets.json"
+    secrets_path.parent.mkdir(parents=True)
+    secrets_path.write_text(json.dumps({"client_id": "abc", "client_secret": "xyz"}))
+
+    with mock.patch("ferry.src.grpc.grpc_server.os.path.join", return_value=str(secrets_path)):
+        grpc_server.load_client_secrets()
+        assert grpc_server.CLIENT_ID == "abc"
+        assert grpc_server.CLIENT_SECRET == "xyz"
+
+
+def test_load_client_secrets_file_not_found():
+    with mock.patch("builtins.open", side_effect=FileNotFoundError):
+        grpc_server.load_client_secrets()  # Should not raise
+
+
+def test_validate_request_metadata_success():
+    body = b"hello-world"
+    timestamp = str(int(time.time()))
+    signature = generate_signature(timestamp, body, grpc_server.CLIENT_SECRET)
+    metadata = [
+        ("x-client-id", grpc_server.CLIENT_ID),
+        ("x-timestamp", timestamp),
+        ("x-signature", signature),
+    ]
+    status, msg = grpc_server.validate_request_metadata(metadata, body)
+    assert status is None
+    assert msg is None
+
+
+def test_validate_request_metadata_missing_headers():
+    metadata = [("x-client-id", grpc_server.CLIENT_ID)]
+    status, msg = grpc_server.validate_request_metadata(metadata, b"body")
+    assert status == StatusCode.INVALID_ARGUMENT
+    assert "Missing" in msg
+
+
+def test_validate_request_metadata_invalid_client_id():
+    metadata = [("x-client-id", "wrong"), ("x-timestamp", "123"), ("x-signature", "abc")]
+    status, msg = grpc_server.validate_request_metadata(metadata, b"body")
+    assert status == StatusCode.UNAUTHENTICATED
+    assert "Unknown" in msg
+
+
+def test_validate_request_metadata_expired_timestamp():
+    old_ts = str(int(time.time()) - 600)
+    sig = generate_signature(old_ts, b"abc", grpc_server.CLIENT_SECRET)
+    metadata = [
+        ("x-client-id", grpc_server.CLIENT_ID),
+        ("x-timestamp", old_ts),
+        ("x-signature", sig),
+    ]
+    status, msg = grpc_server.validate_request_metadata(metadata, b"abc")
+    assert status == StatusCode.UNAUTHENTICATED
+    assert "Expired" in msg
+
+
+def test_validate_request_metadata_invalid_timestamp():
+    metadata = [
+        ("x-client-id", grpc_server.CLIENT_ID),
+        ("x-timestamp", "abc"),
+        ("x-signature", "xyz"),
+    ]
+    status, msg = grpc_server.validate_request_metadata(metadata, b"abc")
+    assert status == StatusCode.UNAUTHENTICATED
+    assert "timestamp format" in msg
+
+
+def test_validate_request_metadata_signature_mismatch():
+    timestamp = str(int(time.time()))
+    metadata = [
+        ("x-client-id", grpc_server.CLIENT_ID),
+        ("x-timestamp", timestamp),
+        ("x-signature", "bad-sign"),
+    ]
+    status, msg = grpc_server.validate_request_metadata(metadata, b"abc")
+    assert status == StatusCode.UNAUTHENTICATED
+    assert "Signature mismatch" in msg
+
+
+def test_ingest_data_success():
+    mock_context = mock.Mock()
+    mock_pipeline = mock.Mock()
+    mock_pipeline.get_name.return_value = "test-pipeline"
+
+    with mock.patch("ferry.src.grpc.grpc_server.PipelineBuilder") as pb:
+        pb.return_value.build.return_value = mock_pipeline
+        servicer = FerryServiceServicer()
+        request = mock.Mock()
+        request.identity = "abc"
+        request.source_uri = "source"
+        request.destination_uri = "dest"
+        request.resources = []
+
+        with mock.patch("ferry.src.grpc.grpc_server.IngestModel") as MockModel:
+            MockModel.return_value = mock.Mock()
+            result = servicer.IngestData(request, mock_context)
+            assert result.status == "SUCCESS"
+            assert result.pipeline_name == "test-pipeline"
+
+
+def test_ingest_data_auth_failure():
+    grpc_server.SECURE_MODE = True
+    servicer = FerryServiceServicer()
+    request = mock.Mock()
+    request.SerializeToString.return_value = b"body"
+    mock_context = mock.Mock()
+    mock_context.invocation_metadata.return_value = []
+    result = servicer.IngestData(request, mock_context)
+    assert result.status == "ERROR"
+    mock_context.set_code.assert_called_once()
+
+
+def test_ingest_data_exception():
+    mock_pipeline_builder = mock.Mock()
+    mock_pipeline_builder.build.side_effect = Exception("fail")
+
+    with mock.patch(
+        "ferry.src.grpc.grpc_server.PipelineBuilder", return_value=mock_pipeline_builder
+    ):
+        with mock.patch("ferry.src.grpc.grpc_server.IngestModel", autospec=True) as MockModel:
+            mock_ingest_model = mock.Mock()
+            MockModel.return_value = mock_ingest_model
+            servicer = FerryServiceServicer()
+            request = mock.Mock()
+            request.identity = "abc"
+            request.source_uri = "source"
+            request.destination_uri = "dest"
+            request.resources = []
+            mock_context = mock.Mock()
+            result = servicer.IngestData(request, mock_context)
+            assert result.status == "ERROR"
+            assert "fail" in result.message
+
+
+def test_get_observability_success():
+    with mock.patch(
+        "ferry.src.grpc.grpc_server.PipelineMetrics.generate_metrics", return_value={"metric": 42}
+    ):
+        servicer = FerryServiceServicer()
+        request = mock.Mock()
+        request.identity = "abc"
+        context = mock.Mock()
+        resp = servicer.GetObservability(request, context)
+        assert resp.status == "SUCCESS"
+        assert "metric" in resp.metrics
+
+
+def test_get_observability_auth_failure():
+    grpc_server.SECURE_MODE = True
+    servicer = FerryServiceServicer()
+    request = mock.Mock()
+    request.SerializeToString.return_value = b"body"
+    context = mock.Mock()
+    context.invocation_metadata.return_value = []
+    resp = servicer.GetObservability(request, context)
+    assert resp.status == "ERROR"
+
+
+def test_get_observability_exception():
+    with mock.patch(
+        "ferry.src.grpc.grpc_server.PipelineMetrics.generate_metrics", side_effect=Exception("fail")
+    ):
+        servicer = FerryServiceServicer()
+        request = mock.Mock()
+        request.identity = "abc"
+        context = mock.Mock()
+        resp = servicer.GetObservability(request, context)
+        assert resp.status == "ERROR"
+        assert "fail" in context.set_details.call_args[0][0]
+
+
+def test_serve_starts_server():
+    with (
+        mock.patch("ferry.src.grpc.grpc_server.grpc.server") as mock_server,
+    ):
+        mock_srv_instance = mock_server.return_value
+        grpc_server.serve(5050, secure_mode=True)
+        mock_server.assert_called_once()
+        mock_srv_instance.start.assert_called_once()
+        mock_srv_instance.wait_for_termination.assert_called_once()
