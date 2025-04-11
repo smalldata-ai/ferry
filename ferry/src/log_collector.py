@@ -1,7 +1,9 @@
 # Final
 from collections import defaultdict
 import logging
+import shutil
 import sys
+import tempfile
 from dlt.common.runtime.collector import Collector
 import time
 import json
@@ -13,6 +15,8 @@ from typing import (
     Union,
 )
 import importlib.util
+from filelock import FileLock
+import threading
 
 
 # logger = logging.getLogger(__name__)
@@ -21,6 +25,8 @@ class FerryLogCollector(Collector):
 
     logger: Union[logging.Logger, TextIO]
     log_level: int
+    log_lock = threading.Lock()
+    last_good_log = {}
 
     class CounterInfo(NamedTuple):
         description: str
@@ -83,6 +89,13 @@ class FerryLogCollector(Collector):
         label: str = None,
         batch_size: int = None,
     ) -> None:
+        # if name in {"Resources", "_dlt_pipeline_state"}:
+        #     return
+
+        # ignored_tables = {"Resources", "_dlt_pipeline_state"}
+        # if name in ignored_tables or label in ignored_tables:
+        #     return
+
         counter_key = f"{name}_{label}" if label else name
 
         if counter_key not in self.counters:
@@ -172,17 +185,41 @@ class FerryLogCollector(Collector):
                             "table_stats": dict(self.table_stats["load"]),
                         }
                     )
+                    log_entry["status"] = "completed"
 
                     self.last_in_process["load"] = log_entry
                     log_data["load"] = log_entry.copy()
 
         self._log(log_data)
 
+    # def _log(self, log_message: dict) -> None:
+    #     """Overwrite the log file with a single latest JSON object."""
+    #     log_message["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    #     with open(self.log_file, "w", encoding="utf-8") as log_file:
+    #         log_file.write(json.dumps(log_message, indent=2))  # Optional pretty-print
+
     def _log(self, log_message: dict) -> None:
-        """Overwrite the log file with a single latest JSON object."""
+        """Safely write JSON log with locking to avoid access conflicts (cross-platform safe)."""
         log_message["timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        with open(self.log_file, "w", encoding="utf-8") as log_file:
-            log_file.write(json.dumps(log_message, indent=2))  # Optional pretty-print
+
+        dir_name = os.path.dirname(self.log_file)
+        temp_log_fd, temp_log_path = tempfile.mkstemp(dir=dir_name, suffix=".jsonl")
+
+        try:
+            # Write the log message to a temp file
+            with os.fdopen(temp_log_fd, "w", encoding="utf-8") as tmp_file:
+                json.dump(log_message, tmp_file, indent=2)
+
+            # Lock the main file to avoid race conditions
+            lock_path = f"{self.log_file}.lock"
+            with FileLock(lock_path, timeout=5):
+                shutil.move(temp_log_path, self.log_file)
+
+        except Exception as e:
+            # Clean up temp file on failure
+            if os.path.exists(temp_log_path):
+                os.remove(temp_log_path)
+            raise e
 
     def _start(self, step: str) -> None:
         if not self.counters:  # Don't reset if already initialized
