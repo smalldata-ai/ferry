@@ -11,10 +11,12 @@ from ferry.src.pipeline_builder import PipelineBuilder
 from ferry.src.pipeline_metrics import PipelineMetrics
 from ferry.src.data_models.ingest_model import IngestModel, ResourceConfig, WriteDispositionConfig
 import os
+
 # Global authentication state
 CLIENT_ID = None
 CLIENT_SECRET = None
 SECURE_MODE = False
+
 
 # Load stored client secrets
 def load_client_secrets():
@@ -28,8 +30,8 @@ def load_client_secrets():
     except FileNotFoundError:
         logging.warning("No client secrets found. Authentication disabled.")
 
+
 def validate_request_metadata(metadata, request_body):
-    
     headers = {key: value for key, value in metadata}
     client_id = headers.get("x-client-id")
     timestamp = headers.get("x-timestamp")
@@ -56,21 +58,22 @@ def validate_request_metadata(metadata, request_body):
         return grpc.StatusCode.UNAUTHENTICATED, "Invalid timestamp format"
 
     expected_signature = hmac.new(
-    CLIENT_SECRET.encode(), f"{timestamp}.{request_body.hex()}".encode(), hashlib.sha256
-).hexdigest()
-
+        CLIENT_SECRET.encode(), f"{timestamp}.{request_body.hex()}".encode(), hashlib.sha256
+    ).hexdigest()
 
     if not hmac.compare_digest(expected_signature, signature):
         logging.warning(f"Signature mismatch: {expected_signature} != {signature}")
         return grpc.StatusCode.UNAUTHENTICATED, "Signature mismatch"
-    
+
     return None, None
 
 
 class FerryServiceServicer(ferry_pb2_grpc.FerryServiceServicer):
     def IngestData(self, request, context):
         if SECURE_MODE:
-            status, error_msg = validate_request_metadata(context.invocation_metadata(), request.SerializeToString())
+            status, error_msg = validate_request_metadata(
+                context.invocation_metadata(), request.SerializeToString()
+            )
             if status:
                 context.set_code(status)
                 context.set_details(error_msg)
@@ -87,18 +90,25 @@ class FerryServiceServicer(ferry_pb2_grpc.FerryServiceServicer):
                         destination_table_name=res.destination_table_name or None,
                         column_rules={
                             "exclude_columns": list(res.column_rules.exclude_columns),
-                            "pseudonymizing_columns": list(res.column_rules.pseudonymizing_columns)
-                        } if res.HasField("column_rules") else None,
+                            "pseudonymizing_columns": list(res.column_rules.pseudonymizing_columns),
+                        }
+                        if res.HasField("column_rules")
+                        else None,
                         write_disposition_config=WriteDispositionConfig(
                             type=res.write_disposition_config.type
-                        ) if res.HasField("write_disposition_config") else None
-                    ) for res in request.resources
-                ]
+                        )
+                        if res.HasField("write_disposition_config")
+                        else None,
+                    )
+                    for res in request.resources
+                ],
             )
             pipeline = PipelineBuilder(model=ingest_model).build()
             pipeline.run()
             return ferry_pb2.IngestResponse(
-                status="SUCCESS", message="Data ingestion completed successfully", pipeline_name=pipeline.get_name()
+                status="SUCCESS",
+                message="Data ingestion completed successfully",
+                pipeline_name=pipeline.get_name(),
             )
         except Exception as e:
             logging.exception("Error in IngestData")
@@ -106,34 +116,45 @@ class FerryServiceServicer(ferry_pb2_grpc.FerryServiceServicer):
             context.set_details(str(e))
             return ferry_pb2.IngestResponse(status="ERROR", message=str(e))
 
-    # def GetObservability(self, request, context):
-    #     if SECURE_MODE:
-    #         status, error_msg = validate_request_metadata(context.invocation_metadata(), request.SerializeToString())
-    #         if status:
-    #             context.set_code(status)
-    #             context.set_details(error_msg)
-    #             return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
-    #     try:
-    #         metrics = PipelineMetrics(name=request.identity).generate_metrics()
-    #         return ferry_pb2.ObservabilityResponse(status="SUCCESS", metrics=str(metrics))
-    #     except Exception as e:
-    #         logging.exception("Error in GetObservability")
-    #         context.set_code(grpc.StatusCode.INTERNAL)
-    #         context.set_details(str(e))
-    #         return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
+    def GetObservability(self, request, context):
+        if SECURE_MODE:
+            status, error_msg = validate_request_metadata(
+                context.invocation_metadata(), request.SerializeToString()
+            )
+            if status:
+                context.set_code(status)
+                context.set_details(error_msg)
+                return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
+
+        try:
+            metrics = PipelineMetrics(name=request.identity).generate_metrics()
+            return ferry_pb2.ObservabilityResponse(
+                status="SUCCESS",
+                metrics=json.dumps(
+                    metrics, indent=2, sort_keys=True, default=str
+                ),  # <- beautified!
+            )
+
+        except Exception as e:
+            logging.exception("Error in GetObservability")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
+
 
 def serve(port, secure_mode):
     global SECURE_MODE
     SECURE_MODE = secure_mode
     load_client_secrets()
-    
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     ferry_pb2_grpc.add_FerryServiceServicer_to_server(FerryServiceServicer(), server)
     server.add_insecure_port(f"[::]:{port}")
-    
+
     logging.info(f"Starting gRPC server on port {port} with secure mode: {secure_mode}")
     server.start()
     server.wait_for_termination()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Start the Ferry gRPC server.")

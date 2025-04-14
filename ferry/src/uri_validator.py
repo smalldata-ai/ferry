@@ -1,11 +1,22 @@
 import re
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
+
 
 class URIValidator:
     """Validates URIs for different database systems using regex."""
 
     SCHEMES = {
-        "sql": {"postgresql", "postgres", "clickhouse", "redshift", "mysql", "hana", "mssql", "mariadb+pymysql", "mariadb"},
+        "sql": {
+            "postgresql",
+            "postgres",
+            "clickhouse",
+            "redshift",
+            "mysql",
+            "hana",
+            "mssql",
+            "mariadb+pymysql",
+            "mariadb",
+        },
         "filebased": {"duckdb", "sqlite"},
         "mongodb": {"mongodb"},
         "snowflake": {"snowflake"},
@@ -16,6 +27,7 @@ class URIValidator:
         "gcs": {"gs"},
         "azure": {"az"},
         "local": {"file"},
+        "kafka": {"kafka"},
     }
 
     # Regex patterns for URI validation
@@ -25,11 +37,14 @@ class URIValidator:
         "snowflake": r"^snowflake://(?P<user>\w+)(:(?P<password>[^@]+))@(?P<account>[\w.-]+)(/(?P<db>\w+))(/(?P<dataset>\w+))",
         "motherduck": r"^md://(?P<database>\w+)\?token=(?P<token>\w+)",
         "bigquery": r"^bigquery://(?P<projectId>\w+)\?client_id=(?P<clientId>[a-zA-Z0-9.-]+)&client_secret=(?P<clientSecret>[a-zA-Z0-9-]+)&refresh_token=(?P<refreshToken>.+)",
-        "filebased": r"^(?P<scheme>\w+):////(?P<path>.+)",
+        "filebased": r"^(?P<scheme>\w+)://(/)?(?P<path>[a-zA-Z]:[\\/].+|/.+)",
         "s3": r"^s3://(?P<bucket>[\w.-]+)\?access_key_id=(?P<access_key_id>[a-zA-Z0-9]+)&access_key_secret=(?P<access_key_secret>[a-zA-Z0-9]+)&region=(?P<region>[\w-]+)",
         "gcs": r"^gs://(?P<bucket>[\w.-]+)(/(?P<key>.+))?",
         "azure": r"^az://(?P<container>[\w.-]+)(/(?P<blob>.+))?",
         "file": r"^file://(?P<path>/[\w./-]+)",
+        # "kafka": r"^kafka://(?P<bootstrap_servers>[^/]+)(/(?P<topic>[\w.-]+))?$",
+        # "kafka": r"^kafka://(?P<bootstrap_servers>[^?]+)\?group_id=(?P<group_id>[^&]+)&security_protocol=(?P<security_protocol>PLAINTEXT|SASL_PLAINTEXT|SASL_SSL)(&sasl_mechanisms=(?P<sasl_mechanisms>PLAIN|SCRAM-SHA-256|SCRAM-SHA-512)&sasl_username=(?P<sasl_username>[^&]+)&sasl_password=(?P<sasl_password>[^&]+))?$",
+        "kafka": r"^kafka://(?P<bootstrap_servers>[^?]+)\?(group_id=(?P<group_id>[^&]+)&)?security_protocol=(?P<security_protocol>PLAINTEXT|SASL_PLAINTEXT|SASL_SSL)(&sasl_mechanisms=(?P<sasl_mechanisms>PLAIN|SCRAM-SHA-256|SCRAM-SHA-512)&sasl_username=(?P<sasl_username>[^&]+)&sasl_password=(?P<sasl_password>[^&]+))?(&schema_registry=(?P<schema_registry>[^&]+))?",
     }
 
     @classmethod
@@ -49,7 +64,6 @@ class URIValidator:
 
     @classmethod
     def _apply_regex_validation(cls, category: str, scheme: str, uri: str):
-        
         """Validates the URI using regex matching."""
         pattern = cls.URI_PATTERNS.get(category)
         if not pattern:
@@ -72,11 +86,15 @@ class URIValidator:
         elif category == "snowflake":
             return f"Invalid Snowflake URI format: {uri}. Expected format: snowflake://user:password@account/dbname"
         elif category == "motherduck":
-            return f"Invalid Motherduck URI format: {uri}. Expected format: md://dbname?token=<token>"
+            return (
+                f"Invalid Motherduck URI format: {uri}. Expected format: md://dbname?token=<token>"
+            )
         elif category == "bigquery":
-            return f"Invalid Bigquery URI format: {uri}. Expected format: bigquery://projectId?client_id=<client_id>&client_secret=<client_secret>&refresh_token=<refresh_token>"        
+            return f"Invalid Bigquery URI format: {uri}. Expected format: bigquery://projectId?client_id=<client_id>&client_secret=<client_secret>&refresh_token=<refresh_token>"
         elif category == "filebased":
-            return f"Invalid file-based URI format: {uri}. Expected format: duckdb://path/to/database"
+            return (
+                f"Invalid file-based URI format: {uri}. Expected format: duckdb://path/to/database"
+            )
         elif category == "s3":
             return f"Invalid S3 URI format: {uri}. Expected format: s3://bucket_name?access_key_id=<access_key_id>&access_key_secret=<access_key_secret>&region=<region>"
         elif category == "gcs":
@@ -85,5 +103,8 @@ class URIValidator:
             return f"Invalid Azure URI format: {uri}. Expected format: az://container-name/blob"
         elif category == "file":
             return f"Invalid file URI format: {uri}. Expected format: file:///path/to/file"
+        elif category == "kafka":
+            return f"Invalid Kafka URI format: {uri}. Expected format: kafka://<bootstrap_servers>?group_id=<group_id>&security_protocol=<security_protocol>&sasl_mechanisms=<sasl_mechanisms>&sasl_username=<sasl_username>&sasl_password=<sasl_password>"
+
         else:
             return f"Invalid {category} URI format: {uri}. Please check the URI structure."
