@@ -1,0 +1,12 @@
+{
+  "extract": {
+    "status": "pending"
+  },
+  "normalize": {
+    "status": "pending"
+  },
+  "load": {
+    "status": "pending"
+  },
+  "timestamp": "2025-04-14 08:00:31"
+}
