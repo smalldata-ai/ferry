@@ -127,12 +127,30 @@ class FerryServiceServicer(ferry_pb2_grpc.FerryServiceServicer):
                 return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
 
         try:
-            metrics = PipelineMetrics(name=request.identity).generate_metrics()
+            raw_metrics = PipelineMetrics(name=request.identity).generate_metrics()
+
+            # Reorder the metrics section
+            ordered_metrics = {
+                "extract": raw_metrics["metrics"].get("extract"),
+                "normalize": raw_metrics["metrics"].get("normalize"),
+                "load": raw_metrics["metrics"].get("load"),
+            }
+
+            # Rebuild the full metrics dict with ordered metrics
+            ordered_full = {
+                "pipeline_name": raw_metrics.get("pipeline_name"),
+                "start_time": raw_metrics.get("start_time"),
+                "end_time": raw_metrics.get("end_time"),
+                "status": raw_metrics.get("status"),
+                "destination_type": raw_metrics.get("destination_type"),
+                "source_type": raw_metrics.get("source_type"),
+                "error": raw_metrics.get("error"),
+                "metrics": ordered_metrics,
+            }
+
             return ferry_pb2.ObservabilityResponse(
                 status="SUCCESS",
-                metrics=json.dumps(
-                    metrics, indent=2, sort_keys=True, default=str
-                ),  # <- beautified!
+                metrics=json.dumps(ordered_full, indent=2, default=str),
             )
 
         except Exception as e:
