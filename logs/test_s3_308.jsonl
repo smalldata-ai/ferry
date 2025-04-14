@@ -1,0 +1,18 @@
+{
+  "extract": {
+    "elapsed_time": 508.88,
+    "rate": 77.29,
+    "status": "in-process",
+    "records_extracted": 39332,
+    "table_stats": {
+      "flights1m_parquet": 39332
+    }
+  },
+  "normalize": {
+    "status": "pending"
+  },
+  "load": {
+    "status": "pending"
+  },
+  "timestamp": "2025-04-14 08:09:25"
+}
