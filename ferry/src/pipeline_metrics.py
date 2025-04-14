@@ -25,19 +25,23 @@ class PipelineMetrics:
             metrics["status"] = "processing"
             for step in ["extract", "normalize", "load"]:
                 step_data = log_data.get(step, {})
+                if not step_data:
+                    logger.warning(f"No data found for step '{step}' in live log.")
                 step_metrics = metrics["metrics"][step]
                 step_metrics["status"] = step_data.get("status", "pending")
                 step_metrics["error"] = None
 
-                if "table_stats" in step_data:
-                    for name, count in step_data["table_stats"].items():
+                table_stats = step_data.get("table_stats", {})
+                if isinstance(table_stats, dict):
+                    for name, count in table_stats.items():
                         step_metrics["resource_metrics"].append({"name": name, "row_count": count})
 
                 if "files_normalized" in step_data:
-                    for file_name in step_data["files_normalized"]:
+                    for file_name in step_data.get("files_normalized", []):
                         step_metrics["resource_metrics"].append(
                             {"name": file_name, "type": "normalized_file"}
                         )
+
         except Exception as e:
             logger.error(f"Failed to read live log: {e}")
             metrics["status"] = "error"
