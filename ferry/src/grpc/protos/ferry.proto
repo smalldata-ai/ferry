@@ -19,6 +19,7 @@ message Resource {
   string destination_table_name = 2;
   ColumnRules column_rules = 3;
   WriteDispositionConfig write_disposition_config = 4;
+  SourceOptions source_options = 5; 
 }
 
 message ColumnRules {
@@ -28,6 +29,12 @@ message ColumnRules {
 
 message WriteDispositionConfig {
   string type = 1;
+}
+
+message SourceOptions {
+  int32 batch_size = 1;
+  int32 batch_timeout = 2;
+  string start_from = 3;
 }
 
 message IngestResponse {

@@ -12,6 +12,7 @@ docs/.vitepress/dist
 docs/.vitepress/cache
 # Distribution / packaging
 .Python
+logs/
 build/
 develop-eggs/
 dist/
