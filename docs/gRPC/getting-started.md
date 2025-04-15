@@ -16,8 +16,10 @@ python ferry/main.py serve-grpc
 By default, this starts the server on port `50051`.
 
 ### Change the port to anuthing you want
-python ferry/main.py serve-grpc --port 60000
 
+```bash
+python ferry/main.py serve-grpc --port 60000
+```
 
 ### 🔐 Secure Mode (HMAC Authentication)
 
