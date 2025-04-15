@@ -15,7 +15,7 @@ export default defineConfig({
           items: [
             { text: 'Getting Started', link: '/guides/getting-started' },
             { text: 'API', link: '/ferry' },
-            { text: 'gRPC', link: '/gRPC/' },
+            { text: 'gRPC', link: '/gRPC/getting-started.md' },
             { text: 'CLI', link: '/cli/coming-soon' },
             { text: 'Sources', link: '/sources/postgres' },
             { text: 'Destinations', link: '/sources/' }
