@@ -126,38 +126,57 @@ class FerryServiceServicer(ferry_pb2_grpc.FerryServiceServicer):
                 context.set_details(error_msg)
                 return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
 
-        try:
-            raw_metrics = PipelineMetrics(name=request.identity).generate_metrics()
+        retries = 3
+        delay = 1.5  # seconds
 
-            # Reorder the metrics section
-            ordered_metrics = {
-                "extract": raw_metrics["metrics"].get("extract"),
-                "normalize": raw_metrics["metrics"].get("normalize"),
-                "load": raw_metrics["metrics"].get("load"),
-            }
+        for attempt in range(retries):
+            try:
+                raw_metrics = PipelineMetrics(name=request.identity).generate_metrics()
 
-            # Rebuild the full metrics dict with ordered metrics
-            ordered_full = {
-                "pipeline_name": raw_metrics.get("pipeline_name"),
-                "start_time": raw_metrics.get("start_time"),
-                "end_time": raw_metrics.get("end_time"),
-                "status": raw_metrics.get("status"),
-                "destination_type": raw_metrics.get("destination_type"),
-                "source_type": raw_metrics.get("source_type"),
-                "error": raw_metrics.get("error"),
-                "metrics": ordered_metrics,
-            }
+                if (
+                    raw_metrics["status"] == "error"
+                    or "not found" in (raw_metrics.get("error") or "").lower()
+                ):
+                    if attempt < retries - 1:
+                        time.sleep(delay)
+                        continue
+                    context.set_code(grpc.StatusCode.NOT_FOUND)
+                    context.set_details(f"Pipeline '{request.identity}' not found")
+                    return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
 
-            return ferry_pb2.ObservabilityResponse(
-                status="SUCCESS",
-                metrics=json.dumps(ordered_full, indent=2, default=str),
-            )
+                # Reorder the metrics section
+                ordered_metrics = {
+                    "extract": raw_metrics["metrics"].get("extract"),
+                    "normalize": raw_metrics["metrics"].get("normalize"),
+                    "load": raw_metrics["metrics"].get("load"),
+                }
 
-        except Exception as e:
-            logging.exception("Error in GetObservability")
-            context.set_code(grpc.StatusCode.INTERNAL)
-            context.set_details(str(e))
-            return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
+                # Rebuild the full metrics dict with ordered metrics
+                ordered_full = {
+                    "pipeline_name": raw_metrics.get("pipeline_name"),
+                    "start_time": raw_metrics.get("start_time"),
+                    "end_time": raw_metrics.get("end_time"),
+                    "status": raw_metrics.get("status"),
+                    "destination_type": raw_metrics.get("destination_type"),
+                    "source_type": raw_metrics.get("source_type"),
+                    "error": raw_metrics.get("error"),
+                    "metrics": ordered_metrics,
+                }
+
+                return ferry_pb2.ObservabilityResponse(
+                    status="SUCCESS",
+                    metrics=json.dumps(ordered_full, indent=2, default=str),
+                )
+
+            except Exception as e:
+                logging.warning(f"Observability fetch failed on attempt {attempt + 1}: {e}")
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                    continue
+                logging.exception("Error in GetObservability")
+                context.set_code(grpc.StatusCode.INTERNAL)
+                context.set_details(str(e))
+                return ferry_pb2.ObservabilityResponse(status="ERROR", metrics="")
 
 
 def serve(port, secure_mode):

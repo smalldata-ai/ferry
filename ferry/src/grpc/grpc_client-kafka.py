@@ -13,7 +13,7 @@ client_secret = creds.client_secret
 
 # Define the test request for Kafka
 request = ferry_pb2.IngestRequest(
-    identity="test_kafka_279",
+    identity="test_kafka_600",
     source_uri=(
         "kafka://localhost:9092?"
         "group_id=test_group&"
@@ -24,7 +24,7 @@ request = ferry_pb2.IngestRequest(
         "schema_registry=http://localhost:8081&"
         "use_avro=true"
     ),
-    destination_uri="duckdb:////mnt/d/smalldata.ai/Ferry-develop/ferry/Output_db/test_duckdb_kafka279.duckdb",
+    destination_uri="duckdb:////mnt/d/smalldata.ai/Ferry-develop/ferry/Output_db/test_duckdb_kafka600.duckdb",
     resources=[
         ferry_pb2.Resource(
             source_table_name="stroke-data-avro",

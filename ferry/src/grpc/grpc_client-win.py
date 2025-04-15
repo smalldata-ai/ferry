@@ -13,9 +13,9 @@ client_secret = creds.client_secret
 
 # Define the test request
 request = ferry_pb2.IngestRequest(
-    identity="test_s3_249",
+    identity="test_s3_271",
     source_uri="",
-    destination_uri="duckdb:///D:/smalldata.ai/Ferry-develop/ferry/Output_db/s3_test247.duckdb",
+    destination_uri="duckdb:///D:/smalldata.ai/Ferry-develop/ferry/Output_db/s3_test271.duckdb",
     resources=[
         ferry_pb2.Resource(
             source_table_name="data.csv",
