@@ -70,3 +70,8 @@ def containers():
             "host": host,
             "ports": {"native": native_port, "http": http_port}
         }
+
+@pytest.fixture(scope="function")
+def crypto_rows():
+    with CSV_PATH.open() as f:
+        return f.readlines()[1:]
