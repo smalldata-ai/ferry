@@ -1,15 +1,20 @@
 import pytest
 import sqlalchemy
 from sqlalchemy import text
-from pathlib import Path
 
-from ferry.src.data_models.ingest_model import IngestModel, ResourceConfig, WriteDispositionConfig, WriteDispositionType
+from ferry.src.data_models.ingest_model import (
+    IngestModel,
+    ResourceConfig,
+    WriteDispositionConfig,
+    WriteDispositionType
+)
+from ferry.src.data_models.merge_config_model import MergeStrategy
 from ferry.src.pipeline_builder import PipelineBuilder
 
-from ferry.tests.integration.docker_setup import CH_USER, CH_PWD, CH_DB, containers, crypto_rows
+from ferry.tests.integration.docker_setup import containers, crypto_rows
 
 @pytest.mark.integration
-def test_append_with_incremental(containers, crypto_rows):
+def test_merge_with_delete_insert(containers, crypto_rows):
     pg_url = containers["pg_url"]
     clickhouse_uri = containers["clickhouse_uri"]
     ch_native = containers["clickhouse_native_uri"]
@@ -43,25 +48,34 @@ def test_append_with_incremental(containers, crypto_rows):
             ))
 
     model1 = IngestModel(
-        identity="append_incr_test_1",
+        identity="merge_delete_insert_test_1",
         source_uri=pg_url,
         destination_uri=clickhouse_uri,
         resources=[
             ResourceConfig(
                 source_table_name="prices",
-                destination_table_name="prices_incr",
-                write_disposition_config=WriteDispositionConfig(type=WriteDispositionType.APPEND)
+                destination_table_name="prices_merge",
+                write_disposition_config=WriteDispositionConfig(
+                    type=WriteDispositionType.MERGE,
+                    strategy=MergeStrategy.DELETE_INSERT.value,
+                    config={
+                        "delete_insert_config": {
+                            "primary_key": ["symbol", "date"],
+                            "merge_key": ["symbol", "date"]
+                        }
+                    }
+                )
             )
         ]
     )
     PipelineBuilder(model1).build().run()
 
     with ch_engine.connect() as conn:
-        rows_phase1 = conn.execute(text("SELECT count(*) FROM prices_incr")).scalar()
+        rows_phase1 = conn.execute(text("SELECT count(*) FROM prices_merge")).scalar()
         assert rows_phase1 == 3
 
     with pg_engine.begin() as conn:
-        for line in crypto_rows[3:6]:
+        for line in crypto_rows[1:4]:
             name, symbol, date, high, low, open_, close, volume, marketcap = line.strip().split(",")
             conn.execute(text("""
                 INSERT INTO prices VALUES (:name, :symbol, :date, :high, :low, :open, :close, :volume, :marketcap)
@@ -72,21 +86,30 @@ def test_append_with_incremental(containers, crypto_rows):
             ))
 
     model2 = IngestModel(
-        identity="append_incr_test_2",
+        identity="merge_delete_insert_test_2",
         source_uri=pg_url,
         destination_uri=clickhouse_uri,
         resources=[
             ResourceConfig(
                 source_table_name="prices",
-                destination_table_name="prices_incr",
-                write_disposition_config=WriteDispositionConfig(type=WriteDispositionType.APPEND)
+                destination_table_name="prices_merge",
+                write_disposition_config=WriteDispositionConfig(
+                    type=WriteDispositionType.MERGE,
+                    strategy=MergeStrategy.DELETE_INSERT.value,
+                    config={
+                        "delete_insert_config": {
+                            "primary_key": ["symbol", "date"],
+                            "merge_key": ["symbol", "date"]
+                        }
+                    }
+                )
             )
         ]
     )
     PipelineBuilder(model2).build().run()
 
     with ch_engine.connect() as conn:
-        rows = conn.execute(text("SELECT symbol, date FROM prices_incr ORDER BY symbol, date")).fetchall()
-        assert len(rows) == 9
-        symbols = {row[0] for row in rows}
+        rows_phase2 = conn.execute(text("SELECT symbol, date FROM prices_merge ORDER BY symbol, date")).fetchall()
+        assert len(rows_phase2) == 4
+        symbols = {row[0] for row in rows_phase2}
         assert len(symbols) == 1
