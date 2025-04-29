@@ -2,6 +2,7 @@ import logging
 import os
 import dlt
 import yaml
+import time
 
 from fastapi import FastAPI, Request, Query, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -39,7 +40,7 @@ def ingest(ingest_model: IngestModel):
     try:
         pipeline = PipelineBuilder(model=ingest_model).build()
         pipeline.run()
-
+        time.sleep(1.5)  # Allow logs and pipeline registration to settle
         pipeline_schema_path = os.path.join(".schemas", f"{ingest_model.identity}.schema.yaml")
         schema_version_hash = None
 
@@ -81,22 +82,34 @@ def get_schema(pipeline_name: str = Query(..., description="The name of the pipe
 @app.get("/ferry/{identity}/observe")
 def observe(identity: str):
     """API endpoint to observe a ferry pipeline"""
-    try:
-        result = PipelineMetrics(name=identity).generate_metrics()
+    retries = 3
+    delay = 3  # seconds
 
-        if result["status"] == "error" or "not found" in (result.get("error") or "").lower():
-            raise HTTPException(status_code=404, detail=f"Pipeline '{identity}' not found")
+    for attempt in range(retries):
+        try:
+            result = PipelineMetrics(name=identity).generate_metrics()
 
-        return result
+            if result["status"] == "error" or "not found" in (result.get("error") or "").lower():
+                if attempt < retries - 1:
+                    time.sleep(delay)
+                    continue
+                raise HTTPException(status_code=404, detail=f"Pipeline '{identity}' not found")
 
-    except HTTPException as e:
-        raise e  # Reraise explicitly
-    except Exception as e:
-        logger.exception(f"Error processing observe for '{identity}': {e}")
-        return JSONResponse(
-            status_code=500,
-            content={"status": "error", "message": "An internal server error occurred"},
-        )
+            return result
+
+        except HTTPException as e:
+            raise e
+        except Exception as e:
+            logger.exception(
+                f"Error processing observe for '{identity}' on attempt {attempt + 1}: {e}"
+            )
+            if attempt < retries - 1:
+                time.sleep(delay)
+                continue
+            return JSONResponse(
+                status_code=500,
+                content={"status": "error", "message": "An internal server error occurred"},
+            )
 
 
 @app.middleware("http")

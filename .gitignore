@@ -12,6 +12,7 @@ docs/.vitepress/dist
 docs/.vitepress/cache
 # Distribution / packaging
 .Python
+logs/
 build/
 develop-eggs/
 dist/
@@ -212,3 +213,4 @@ kafka_string_producer.py
 Checkdb
 kafka_producers
 Output_db
+gRPC Commands

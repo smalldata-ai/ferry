@@ -15,7 +15,7 @@ export default defineConfig({
           items: [
             { text: 'Getting Started', link: '/guides/getting-started' },
             { text: 'API', link: '/ferry' },
-            { text: 'gRPC', link: '/gRPC/coming-soon' },
+            { text: 'gRPC', link: '/gRPC/getting-started' },
             { text: 'CLI', link: '/cli/coming-soon' },
             { text: 'Sources', link: '/sources/postgres' },
             { text: 'Destinations', link: '/sources/' }
@@ -75,7 +75,7 @@ export default defineConfig({
         ]
       },
       { text: 'CLI', link: '/cli/coming-soon' },
-      { text: 'gRPC', link: '/gRPC/coming-soon' },
+      { text: 'gRPC', link: '/gRPC/getting-started' },
       {
         text: 'Sources',
         items: [
@@ -90,6 +90,8 @@ export default defineConfig({
           { text: 'Postgres', link: '/sources/postgres' },
           { text: 'S3', link: '/sources/s3' },
           { text: 'Sqlite', link: '/sources/sqlite' },
+          { text: 'Kafka', link: '/sources/kafka' },
+
         ]
       },
       {
