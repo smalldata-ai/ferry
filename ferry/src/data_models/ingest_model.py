@@ -23,10 +23,9 @@ class SortOrder(Enum):
 class WriteDispositionConfig(BaseModel):
     """Configuration and strategy details for different write dispositions."""
 
-    type: WriteDispositionType = Field(
-        WriteDispositionType.REPLACE.value, description="Type of write disposition"
-    )
-
+    
+    type: WriteDispositionType = Field(WriteDispositionType.REPLACE, description="Type of write disposition")
+    
     strategy: Optional[str] = Field(None, description="Strategy for selected write disposition.")
     config: Optional[dict[str, Any]] = Field(
         None, description="Extra configuration for the selected disposition and strategy"

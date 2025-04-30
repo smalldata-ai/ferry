@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 uv.lock
+logs
 # C extensions
 *.so
 node_modules/
