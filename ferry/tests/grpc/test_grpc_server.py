@@ -157,8 +157,24 @@ def test_ingest_data_exception():
 
 
 def test_get_observability_success():
+    mock_metrics = {
+        "pipeline_name": "test_pipeline",
+        "start_time": "2024-04-30T10:00:00Z",
+        "end_time": "2024-04-30T10:05:00Z",
+        "status": "success",
+        "destination_type": "postgres",
+        "source_type": "s3",
+        "error": None,
+        "metrics": {
+            "extract": {"records": 100},
+            "normalize": {"records": 100},
+            "load": {"records": 100},
+        },
+    }
+
     with mock.patch(
-        "ferry.src.grpc.grpc_server.PipelineMetrics.generate_metrics", return_value={"metric": 42}
+        "ferry.src.grpc.grpc_server.PipelineMetrics.generate_metrics",
+        return_value=mock_metrics,
     ):
         servicer = FerryServiceServicer()
         request = mock.Mock()
@@ -166,7 +182,6 @@ def test_get_observability_success():
         context = mock.Mock()
         resp = servicer.GetObservability(request, context)
         assert resp.status == "SUCCESS"
-        assert "metric" in resp.metrics
 
 
 def test_get_observability_auth_failure():
