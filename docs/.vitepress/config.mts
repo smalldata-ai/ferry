@@ -14,9 +14,8 @@ export default defineConfig({
           text: 'Guide',
           items: [
             { text: 'Getting Started', link: '/guides/getting-started' },
-            { text: 'API', link: '/ferry' },
+            { text: 'API', link: '/apis/basic.html' },
             { text: 'gRPC', link: '/gRPC/getting-started' },
-            { text: 'CLI', link: '/cli/coming-soon' },
             { text: 'Sources', link: '/sources/postgres' },
             { text: 'Destinations', link: '/sources/' }
           ]
@@ -74,7 +73,6 @@ export default defineConfig({
           { text: '/ferry/{id}/observe', link: '/apis/observe' },
         ]
       },
-      { text: 'CLI', link: '/cli/coming-soon' },
       { text: 'gRPC', link: '/gRPC/getting-started' },
       {
         text: 'Sources',
