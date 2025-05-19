@@ -77,10 +77,9 @@ export default defineConfig({
       {
         text: 'Sources',
         items: [
-          { text: 'Azure Storage', link: '' },
-          { text: 'Clickhouse', link: '' },
+          { text: 'Clickhouse', link: '/sources/clickhouse' },
           { text: 'DuckDb', link: '/sources/duckdb' },
-          { text: 'Google Cloud Storage', link: '' },
+          { text: 'Google Cloud Storage', link: '/sources/google_cloud_storage' },
           { text: 'Local File', link: '' },
           { text: 'Mariadb', link: '/sources/mariadb' },
           { text: 'MongoDb', link: '/sources/mongodb' },
@@ -103,13 +102,8 @@ export default defineConfig({
           { text: 'MySQL', link: '' },
           { text: 'Postgres', link: '/destinations/postgres' },
           { text: 'Redshift', link: '' },
-          
-          
           { text: 'Snowflake', link: '' },
           { text: 'Sqlite', link: '' },
-          
-          
-          
         ]
       }
     ],
