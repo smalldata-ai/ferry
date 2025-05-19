@@ -93,16 +93,15 @@ export default defineConfig({
       {
         text: 'Destinations',
         items: [
-          { text: 'Athena', link: '' },
-          { text: 'Bigquery', link: '' },
-          { text: 'Clickhouse', link: '' },
-          { text: 'Duckdb', link: '' },
-          { text: 'Motherduck', link: '' },
-          { text: 'MySQL', link: '' },
+          { text: 'Athena', link: '/destinations/athena' },
+          { text: 'Bigquery', link: '/destinations/bigquery' },
+          { text: 'Clickhouse', link: '/destinations/clickhouse' },
+          { text: 'Duckdb', link: '/destinations/duckdb' },
+          { text: 'Motherduck', link: '/destinations/motherduck' },
+          { text: 'MySQL', link: '/destinations/mysql' },
           { text: 'Postgres', link: '/destinations/postgres' },
-          { text: 'Redshift', link: '' },
-          { text: 'Snowflake', link: '' },
-          { text: 'Sqlite', link: '' },
+          { text: 'Snowflake', link: '/destinations/snowflake' },
+          { text: 'Sqlite', link: '/destinations/sqlite' },
         ]
       }
     ],
