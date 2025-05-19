@@ -11,7 +11,7 @@ from ferry.src.data_models.ingest_model import (
 from ferry.src.data_models.merge_config_model import MergeStrategy
 from ferry.src.pipeline_builder import PipelineBuilder
 
-from ferry.tests.integration.docker_setup import containers
+from ferry.tests.integration.conftest import containers
 from testcontainers.postgres import PostgresContainer
 
 @pytest.mark.integration

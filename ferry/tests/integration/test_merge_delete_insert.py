@@ -11,7 +11,7 @@ from ferry.src.data_models.ingest_model import (
 from ferry.src.data_models.merge_config_model import MergeStrategy
 from ferry.src.pipeline_builder import PipelineBuilder
 
-from ferry.tests.integration.docker_setup import containers, crypto_rows
+from ferry.tests.integration.conftest import containers, crypto_rows
 
 @pytest.mark.integration
 def test_merge_with_delete_insert(containers, crypto_rows):

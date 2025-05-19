@@ -6,7 +6,7 @@ from pathlib import Path
 from ferry.src.data_models.ingest_model import IngestModel, ResourceConfig, WriteDispositionConfig, WriteDispositionType
 from ferry.src.pipeline_builder import PipelineBuilder
 
-from ferry.tests.integration.docker_setup import CH_USER, CH_PWD, CH_DB, containers, crypto_rows
+from ferry.tests.integration.conftest import CH_USER, CH_PWD, CH_DB, containers, crypto_rows
 
 @pytest.mark.integration
 def test_append_with_incremental(containers, crypto_rows):
