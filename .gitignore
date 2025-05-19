@@ -2,7 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+uv.lock
+logs
 # C extensions
 *.so
 node_modules/
@@ -12,6 +13,7 @@ docs/.vitepress/dist
 docs/.vitepress/cache
 # Distribution / packaging
 .Python
+logs/
 build/
 develop-eggs/
 dist/
@@ -29,7 +31,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+.ferry/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -195,3 +197,21 @@ test.py
 showcase.ipynb
 stroke.duckdb
 destination1_duckdb.duckdb
+check.py
+checkdb.py
+check_postgresql.py
+win-venv
+ferry/.ferry
+kafka_admin_check.py
+kafka_producer.py
+avro_producer.py
+csv_avro_kafka_producer.py
+kafka_binary_producer.py
+kafka_csv_producer.py
+kafka_json_producer.py
+kafka_paraquet_producer.py
+kafka_string_producer.py
+Checkdb
+kafka_producers
+Output_db
+gRPC Commands

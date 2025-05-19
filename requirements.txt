@@ -7,7 +7,6 @@ sqlalchemy==2.0.38
 pytest==8.3.4
 pytest-asyncio==0.25.3
 httpx==0.28.1
-psycopg2==2.9.10
 boto3==1.37.1
 pandas==2.2.3
 duckdb-engine==0.15.0
@@ -26,6 +25,10 @@ dlt[redshift]==1.6.1
 dlt[motherduck]==1.6.1
 dlt[sqlalchemy]==1.6.1
 dlt[qdrant]==1.6.1
-dlt[athena]==1.6.1
 snowflake-sqlalchemy==1.7.3
 pymongo==4.11.2
+boto3==1.37.1
+pytest-cov==6.0.0
+psutil
+ggshield 
+pre-commit
