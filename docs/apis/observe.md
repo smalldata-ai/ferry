@@ -20,6 +20,7 @@ GET /ferry/{id}/observe
 | `start_time`    | datetime | Timestamp when the pipeline started  |
 | `end_time`      | datetime | Timestamp when the pipeline ended    |
 | `status`        | string   | Status of the pipeline run           |
+| `error`        | string   | Errors if any in pipeline run           |
 | `metrics`       | object   | Detailed observability per phase     |
 
 ---
@@ -31,8 +32,9 @@ GET /ferry/{id}/observe
 | `start_time`    | datetime     | When extract phase started               |
 | `end_time`      | datetime     | When extract phase ended                 |
 | `status`        | string       | Status of the extract phase              |
+| `error`        | object/null  | Errors encountered during extraction     |
 | `resource_metrics` | array| List of extracted resource_metrics and metadata    |
-| `errors`        | object/null  | Errors encountered during extraction     |
+
 
 
 ### `metrics.normalize`
@@ -42,7 +44,17 @@ GET /ferry/{id}/observe
 | `start_time`       | datetime     | When normalize phase started            |
 | `end_time`         | datetime     | When normalize phase ended              |
 | `status`           | string       | Status of the normalize phase           |
+| `error`        | object/null  | Errors encountered during extraction     |
 | `resource_metrics` | array| Normalized resources and file statistics|
+
+### `metrics.normalize`
+
+| Field              | Type         | Description                             |
+|--------------------|--------------|-----------------------------------------|
+| `start_time`       | datetime     | When normalize phase started            |
+| `end_time`         | datetime     | When normalize phase ended              |
+| `status`           | string       | Status of the normalize phase           |
+| `error`        | object/null  | Errors encountered during extraction     |
 
 #### `resource_metrics[]` 
 
