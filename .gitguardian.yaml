@@ -1,0 +1,5 @@
+# .gitguardian.yaml
+paths:
+  - matches: ferry/tests/integration/**/*
+    ignore: true
+    reason: "Test directory with dummy credentials"
