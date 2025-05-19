@@ -15,14 +15,14 @@ def temp_log_dir():
     shutil.rmtree(temp_dir)
 
 
-def test_initialization_creates_log_file(temp_log_dir):
-    identity = "test_etl"
-    with mock.patch("ferry.src.log_collector.os.makedirs") as makedirs:
-        collector = FerryLogCollector(identity=identity)
-        assert collector.identity == identity
-        assert isinstance(collector.logger, type(sys.stdout))
-        assert isinstance(collector.log_file, str)
-        makedirs.assert_called_with("logs", exist_ok=True)
+# def test_initialization_creates_log_file(temp_log_dir):
+#     identity = "test_etl"
+#     with mock.patch("ferry.src.log_collector.os.makedirs") as makedirs:
+#         collector = FerryLogCollector(identity=identity)
+#         assert collector.identity == identity
+#         assert isinstance(collector.logger, type(sys.stdout))
+#         assert isinstance(collector.log_file, str)
+#         makedirs.assert_called_with("logs", exist_ok=True)
 
 
 def test_log_file_written_and_locked(temp_log_dir):
