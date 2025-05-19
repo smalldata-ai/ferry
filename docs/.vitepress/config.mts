@@ -80,7 +80,6 @@ export default defineConfig({
           { text: 'Clickhouse', link: '/sources/clickhouse' },
           { text: 'DuckDb', link: '/sources/duckdb' },
           { text: 'Google Cloud Storage', link: '/sources/google_cloud_storage' },
-          { text: 'Local File', link: '' },
           { text: 'Mariadb', link: '/sources/mariadb' },
           { text: 'MongoDb', link: '/sources/mongodb' },
           { text: 'MySQL', link: '/sources/mysql' },
