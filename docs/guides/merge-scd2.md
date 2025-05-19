@@ -21,10 +21,10 @@
     "resources": [
       {
         "source_table_name": "users",
-        "write_disposition": "merge",
-        "merge_config": { // [!code focus]
-            "strategy": "scd2", // [!code focus]
-            "scd2_config": { // [!code focus]
+        "write_disposition_config": { // [!code focus]
+          "type": "merge" // [!code focus]
+          "strategy": "scd2" // [!code focus]
+          "config": { // [!code focus]
                 "natural_merge_key": "id", // [!code focus]
                 "partition_merge_key": "oo", // [!code focus]
                 "validity_column_names": "oo", // [!code focus]

@@ -12,7 +12,9 @@ This mode ensures historical data is preserved while continuously adding new ent
     "resources": [
       {
         "source_table_name": "logs",
-        "write_disposition": "append" // [!code focus]
+        "write_disposition_config": { // [!code focus]
+          "type": "append" // [!code focus]
+        } // [!code focus]
       }
     ]
   }

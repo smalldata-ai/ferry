@@ -20,14 +20,14 @@ The **Upsert Strategy** is used to efficiently update existing records while ins
     "resources": [
       {
         "source_table_name": "users",
-        "write_disposition": "merge",
-        "merge_config": { // [!code focus]
-            "strategy": "upsert", // [!code focus]
-            "upsert_config": { // [!code focus]
+        "write_disposition_config": { // [!code focus]
+          "type": "merge" // [!code focus]
+          "strategy": "upsert" // [!code focus]
+          "config": { // [!code focus]
                 "primary_key": "id", // [!code focus]
                 "hard_delete_column": "deleted_at", // [!code focus]
-            }// [!code focus] 
-        }// [!code focus]
+            } // [!code focus]
+        } // [!code focus]
       }
     ]
 }

@@ -16,10 +16,10 @@ Involves completely refreshing your destination data. All existing records are d
     {
       "source_table_name": "string",
       "destination_table_name": "string",
-      "write_disposition": "replace",
-      "replace_config": {
-        "strategy": "truncate-and-insert"
-      }
+      "write_disposition_config": { 
+          "type": "replace", 
+          "strategy": "insert-from-staging"
+      } 
     }
   ]
 }
@@ -27,16 +27,13 @@ Involves completely refreshing your destination data. All existing records are d
 
 ## Parameters Descriptions
 
-#### **Write Disposition (`write_disposition`)** *(Optional)* *(default: replace)*
+#### **Write Disposition (`write_disposition_config`)** *(Optional)* *(default type: replace)*
 
 | Field                | Type    | Required | Description |
 |----------------------|---------|----------|-------------|
-| **`write_disposition`** | string | ✅ Yes  | Strategy for writing data (`replace`, `append`, `merge`). |
-
-#### **Replace Configuration (`replace_config`)** *(Mandatory when `write_disposition` is `replace`)*
-| Field        | Type    | Required | Description |
-|-------------|---------|----------|-------------|
+| **`type`** | string | ✅ Yes  | Strategy for writing data (`replace`, `append`, `merge`). |
 | **`strategy`** | string | ✅ Yes | Defines how replacement is handled (e.g., `truncate-and-insert`,`insert-from-staging`,`staging-optimized`). |
+
 
 
 ### **Move data between S3 and Snowflake.** 
@@ -52,10 +49,9 @@ curl -X POST http://localhost:8000/ingest \
       {
       "source_table_name": "/users/data/dump.csv",
       "destination_table_name": "dw_users",
-      "write_disposition": "replace",
-      "replace_config": {
-          "strategy": "staging-optimized"
-        }
+      "write_disposition_config": {
+        "type": "replace",
+        "strategy": "staging-optimized"
       }
     ]
   }'
@@ -74,10 +70,9 @@ curl -X POST http://localhost:8000/ingest \
       {
       "source_table_name": "public.users",
       "destination_table_name": "dw_users",
-      "write_disposition": "replace",
-      "replace_config": {
-          "strategy": "insert-from-staging"
-        }
+      "write_disposition_config": {
+        "type": "replace",
+        "strategy": "staging-optimized"
       }
     ]
   }'

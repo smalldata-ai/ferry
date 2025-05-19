@@ -15,7 +15,9 @@ Appends new data to the destination.This is suitable for stateless data, which d
     {
       "source_table_name": "string",
       "destination_table_name": "string",
-      "write_disposition": "append"
+      "write_disposition_config": { 
+          "type": "append"
+      } 
       
     }
   ]
@@ -24,8 +26,8 @@ Appends new data to the destination.This is suitable for stateless data, which d
 
 ## Parameters Descriptions
 
-#### **Write Disposition (`write_disposition`)** *(Optional)* *(default: replace)*
+#### **Write Disposition (`write_disposition_config`)** *(Optional)* *(default: replace)*
 Determines how data is written:
 | Field                | Type    | Required | Description |
 |----------------------|---------|----------|-------------|
-| **`write_disposition`** | string | ✅ Yes  | Strategy for writing data (`replace`, `append`, `merge`). |
+| **`type`** | string | ✅ Yes  | Strategy for writing data (`replace`, `append`, `merge`). |

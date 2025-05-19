@@ -37,9 +37,9 @@ The staging-optimized strategy builds upon `insert-from-staging` but includes op
     "resources": [
       {
         "source_table_name": "users",
-        "write_disposition": "replace", // [!code focus]
-        "replace_config": { // [!code focus]
-          "strategy": "insert-from-staging" // [!code focus]
+        "write_disposition_config": { // [!code focus]
+          "type": "replace", // [!code focus]
+          "strategy": "insert-from-staging", // [!code focus]
         } // [!code focus]
       }
     ]

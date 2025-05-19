@@ -21,10 +21,10 @@ The **delete-insert Strategy** is a data update approach where outdated records 
     "resources": [
       {
         "source_table_name": "users",
-        "write_disposition": "merge",
-        "merge_config": { // [!code focus]
-            "strategy": "delete-insert",// [!code focus]
-            "delete_insert_config": { // [!code focus]
+        "write_disposition_config": { // [!code focus]
+          "type": "merge" // [!code focus]
+          "strategy": "delete-insert" // [!code focus]
+          "config": { // [!code focus]
                 "primary_key": "id", // [!code focus]
                 "merge_key": "user_uid", // [!code focus]
                 "hard_delete_column": "deleted_at", // [!code focus]
