@@ -36,11 +36,11 @@ class PipelineMetrics:
                     for name, count in table_stats.items():
                         step_metrics["resource_metrics"].append({"name": name, "row_count": count})
 
-                if "files_normalized" in step_data:
-                    for file_name in step_data.get("files_normalized", []):
-                        step_metrics["resource_metrics"].append(
-                            {"name": file_name, "type": "normalized_file"}
-                        )
+                # if "files_normalized" in step_data:
+                #     for file_name in step_data.get("files_normalized", []):
+                #         step_metrics["resource_metrics"].append(
+                #             {"name": file_name, "type": "normalized_file"}
+                #         )
 
         except Exception as e:
             logger.error(f"Failed to read live log: {e}")

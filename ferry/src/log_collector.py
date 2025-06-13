@@ -178,9 +178,9 @@ class FerryLogCollector(Collector):
                         {
                             "records_extracted": max(count - 1, 0),
                             "table_stats": normalize_stats,
-                            "files_normalized": sorted(list(self.files_normalized)[:-1])
-                            if self.files_normalized
-                            else [],
+                            # "files_normalized": sorted(list(self.files_normalized)[:-1])
+                            # if self.files_normalized
+                            # else [],
                         }
                     )
 

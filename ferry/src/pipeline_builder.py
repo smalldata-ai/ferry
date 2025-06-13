@@ -30,7 +30,7 @@ class PipelineBuilder:
                 dataset_name=self.model.get_dataset_name(self.destination.default_schema_name()),
                 destination=destination,
                 progress=FerryLogCollector(identity=self.model.identity),
-                # export_schema_path="schemas",
+                export_schema_path="schemas",
                 # refresh="drop_resources",
             )
             return self
