@@ -8,7 +8,7 @@ Ferry allows you to ingest data **into a MySQL database**
 
 ## 📌 Prerequisites
 
-Before using MySQL as a source, ensure:
+Before using MySQL as a destination, ensure:
 - MySQL is running and accessible.
 - You have a valid **connection string** (`mysql://user:password@host:port/database`).
 - The user has **write access** to the database.

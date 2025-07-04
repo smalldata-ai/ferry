@@ -8,7 +8,7 @@ Ferry allows you to ingest data **into a Destination database** from variety of 
 
 ## 📌 Prerequisites
 
-Before using PostgreSQL as a source, ensure:
+Before using PostgreSQL as a destination, ensure:
 - PostgreSQL is running and accessible.
 - You have a valid **connection string** (`postgres://user:password@host:port/database`).
 
