@@ -8,20 +8,21 @@ Ferry allows you to ingest data **into a Destination database** from variety of 
 
 ## 📌 Prerequisites
 
-Before using DuckDB as a destination, ensure:
-- DuckDB is installed (`pip install duckdb` if using Python).
-- You have a valid **database file** (`.duckdb`) or an **in-memory** database.
+Before using MotherDuck as a destination, ensure:
+- Motherduck Account is created.
+- Token is generated and valid.
 
 
 ## `destination_uri` Format
-To connect Ferry to a DuckDB database, use the following connection string format:
+To connect Ferry to a MotherDuck database, use the following connection string format:
 
 ```plaintext
-  duckdb:///<path-to-database>.duckdb
+  md://ferrytest?token=token
 ```
 
 ### Parameters:
-- **`<path-to-database>`** – Path to the DuckDB database file (e.g., `/path/to/database.duckdb`).
+- **`<account-identifier>`** – MotherDuck account Identifier.
+- **`<token>`** – MotherDuck access token.
 
 ## `destination_table_name` Format
 
